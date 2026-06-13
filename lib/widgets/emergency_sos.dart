@@ -1,19 +1,11 @@
 import 'package:flutter/material.dart';
-
-// Local color tokens (kept private/prefixed so this file can be dropped
-// into a project alongside main.dart / search_page.dart without
-// clashing with their top-level color constants).
-const Color _kBackground = Color(0xFFEBF3FB);
-const Color _kPrimaryGreen = Color(0xFF008000);
-const Color _kPrimaryBlue = Color(0xFF0b6cb9);
-const Color _kErrorRed = Color(0xFFFF4B4B);
-const Color _kAmber = Color(0xFFF59E0B);
+import '../theme/app_colors.dart';
 
 /// Simple data holder for an emergency contact row.
 class EmergencyContact {
   final String name;
   final String number;
-  final bool isServiceContact; // true -> red phone icon, false -> blue people icon
+  final bool isServiceContact;
 
   const EmergencyContact({
     required this.name,
@@ -22,33 +14,19 @@ class EmergencyContact {
   });
 }
 
-const List<EmergencyContact> _kEmergencyContacts = [
-  EmergencyContact(name: "Nigeria Emergency Services", number: "112", isServiceContact: true),
+const List<EmergencyContact> kEmergencyContacts = [
+  EmergencyContact(
+      name: "Nigeria Emergency Services", number: "112", isServiceContact: true),
   EmergencyContact(name: "Police", number: "199", isServiceContact: true),
   EmergencyContact(name: "Mom", number: "+234 803 123 4567"),
   EmergencyContact(name: "Dad", number: "+234 805 234 5678"),
   EmergencyContact(name: "Best Friend", number: "+234 807 345 6789"),
 ];
 
-/// Global toggle. Defaults to "visible everywhere". Pages that should NOT
-/// show the SOS button (onboarding, sign in/up, KYC, etc.) flip this to
-/// true while they're on screen — wrap their build output with
-/// [HideEmergencySos] to do that automatically.
+/// Global toggle. Flip to true on pages that should NOT show the SOS button.
 final ValueNotifier<bool> hideEmergencySosButton = ValueNotifier<bool>(false);
 
-/// Wrap an "excluded" page's returned widget with this. While that page is
-/// mounted, the global SOS button is hidden; it reappears automatically
-/// once the page is disposed (i.e. the user navigates away).
-///
-/// Usage (onboarding, sign in, sign up, KYC screens, etc.):
-/// ```dart
-/// @override
-/// Widget build(BuildContext context) {
-///   return HideEmergencySos(
-///     child: Scaffold(...),
-///   );
-/// }
-/// ```
+/// Wrap an excluded page's widget with this to auto-hide the SOS button.
 class HideEmergencySos extends StatefulWidget {
   final Widget child;
   const HideEmergencySos({super.key, required this.child});
@@ -74,31 +52,42 @@ class _HideEmergencySosState extends State<HideEmergencySos> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Drop this once into `MaterialApp.builder`. It overlays the pulsing SOS
-/// button on top of every screen in the app, unless
-/// [hideEmergencySosButton] is currently true.
-class GlobalEmergencySosOverlay extends StatelessWidget {
-  const GlobalEmergencySosOverlay({super.key});
+/// Wrap every page Scaffold with this instead of placing the overlay in
+/// MaterialApp.builder. This ensures the SOS button's context is always
+/// inside a Navigator, so showModalBottomSheet works correctly.
+///
+/// Usage:
+/// ```dart
+/// return SosScaffold(
+///   child: Scaffold(...),
+/// );
+/// ```
+class SosScaffold extends StatelessWidget {
+  final Widget child;
+  const SosScaffold({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<bool>(
-      valueListenable: hideEmergencySosButton,
-      builder: (context, hide, _) {
-        if (hide) return const SizedBox.shrink();
-        return const Positioned(
-          right: 16,
-          bottom: 110,
-          child: EmergencySosButton(),
-        );
-      },
+    return Stack(
+      children: [
+        child,
+        ValueListenableBuilder<bool>(
+          valueListenable: hideEmergencySosButton,
+          builder: (context, hide, _) {
+            if (hide) return const SizedBox.shrink();
+            return const Positioned(
+              right: 16,
+              bottom: 110,
+              child: EmergencySosButton(),
+            );
+          },
+        ),
+      ],
     );
   }
 }
 
-
-/// ~55% and 100% opacity in a loop, never disappearing completely.
-/// Tapping it opens the Emergency SOS bottom sheet.
+/// Pulsing red SOS button. Tapping opens the Emergency SOS bottom sheet.
 class EmergencySosButton extends StatefulWidget {
   const EmergencySosButton({super.key});
 
@@ -152,10 +141,11 @@ class _EmergencySosButtonState extends State<EmergencySosButton>
               width: 48,
               height: 48,
               decoration: const BoxDecoration(
-                color: _kErrorRed,
+                color: kErrorRed,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.warning_amber_rounded, color: Colors.white),
+              child:
+                  const Icon(Icons.warning_amber_rounded, color: Colors.white),
             ),
           );
         },
@@ -164,10 +154,7 @@ class _EmergencySosButtonState extends State<EmergencySosButton>
   }
 }
 
-/// Emergency SOS bottom sheet (slides up from the bottom).
-/// Matches the two screenshots: red header with trip details, contact
-/// list with radio + call buttons, live location card, action buttons,
-/// and the "Activate Emergency" CTA.
+/// Emergency SOS bottom sheet.
 class EmergencySosSheet extends StatefulWidget {
   const EmergencySosSheet({super.key});
 
@@ -186,7 +173,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
       heightFactor: 0.92,
       child: Container(
         decoration: const BoxDecoration(
-          color: _kBackground,
+          color: kBackground,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         clipBehavior: Clip.antiAlias,
@@ -203,10 +190,11 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
                     const SizedBox(height: 20),
                     const Text(
                       "Select contacts to alert",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 10),
-                    ..._kEmergencyContacts.map(_contactRow),
+                    ...kEmergencyContacts.map(_contactRow),
                     const SizedBox(height: 6),
                     _liveLocationCard(),
                     const SizedBox(height: 16),
@@ -219,7 +207,8 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
                         child: Text(
                           "Select at least one contact to activate emergency",
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12, color: _kErrorRed),
+                          style:
+                              TextStyle(fontSize: 12, color: kErrorRed),
                         ),
                       ),
                   ],
@@ -232,28 +221,27 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
     );
   }
 
-  // Red gradient header with shield icon, title/subtitle, close button.
   Widget _header() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 18, 16, 20),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [_kErrorRed, Color(0xFFFF7676)],
+          colors: [kErrorRed, Color(0xFFFF7676)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withOpacity(0.25),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.shield_outlined, color: Colors.white, size: 22),
+            child:
+                const Icon(Icons.shield_outlined, color: Colors.white, size: 22),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -263,10 +251,9 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
                 Text(
                   "Emergency SOS",
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
                 ),
                 SizedBox(height: 2),
                 Text(
@@ -281,10 +268,11 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
             child: Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withOpacity(0.25),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.close, color: Colors.white, size: 18),
+              child:
+                  const Icon(Icons.close, color: Colors.white, size: 18),
             ),
           ),
         ],
@@ -292,14 +280,13 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
     );
   }
 
-  // Amber "Current Trip Details" card.
   Widget _tripDetailsCard() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _kAmber.withOpacity(0.12),
-        border: Border.all(color: _kAmber.withOpacity(0.45)),
+        color: kAmber.withOpacity(0.12),
+        border: Border.all(color: kAmber.withOpacity(0.4)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -307,24 +294,28 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
         children: [
           Row(
             children: const [
-              Icon(Icons.warning_amber_rounded, color: _kAmber, size: 18),
-              SizedBox(width: 8),
+              Icon(Icons.warning_amber_rounded, size: 16, color: kAmber),
+              SizedBox(width: 6),
               Text(
                 "Current Trip Details",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          const Text("Driver: Adebayo Johnson", style: TextStyle(fontSize: 12.5)),
+          const Text("Driver: Adebayo Johnson",
+              style: TextStyle(fontSize: 12.5)),
           const SizedBox(height: 2),
-          const Text("Route: Abuja → Lagos", style: TextStyle(fontSize: 12.5)),
+          const Text("Route: Abuja → Lagos",
+              style: TextStyle(fontSize: 12.5)),
           const SizedBox(height: 2),
-          const Text("Vehicle: Toyota Camry (Grey) - ABC-123-XY", style: TextStyle(fontSize: 12.5)),
+          const Text("Vehicle: Toyota Camry (Grey) - ABC-123-XY",
+              style: TextStyle(fontSize: 12.5)),
           const SizedBox(height: 8),
           Row(
             children: const [
-              Icon(Icons.location_on_outlined, size: 14, color: Colors.black54),
+              Icon(Icons.location_on_outlined,
+                  size: 14, color: Colors.black54),
               SizedBox(width: 4),
               Text(
                 "Approaching Lokoja Junction",
@@ -337,7 +328,6 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
     );
   }
 
-  // Single contact row: leading icon, name + number, radio, green call button.
   Widget _contactRow(EmergencyContact contact) {
     final bool isSelected = selectedContactNumber == contact.number;
 
@@ -348,7 +338,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isSelected ? _kPrimaryGreen : Colors.black.withOpacity(0.06),
+          color: isSelected ? kPrimaryGreen : Colors.black.withOpacity(0.06),
           width: isSelected ? 1.4 : 1,
         ),
       ),
@@ -358,14 +348,17 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: contact.isServiceContact
-                  ? _kErrorRed.withOpacity(0.12)
-                  : _kPrimaryBlue.withOpacity(0.12),
+                  ? kErrorRed.withOpacity(0.12)
+                  : kPrimaryBlue.withOpacity(0.12),
               shape: BoxShape.circle,
             ),
             child: Icon(
-              contact.isServiceContact ? Icons.call : Icons.people_alt_outlined,
+              contact.isServiceContact
+                  ? Icons.call
+                  : Icons.people_alt_outlined,
               size: 16,
-              color: contact.isServiceContact ? _kErrorRed : _kPrimaryBlue,
+              color:
+                  contact.isServiceContact ? kErrorRed : kPrimaryBlue,
             ),
           ),
           const SizedBox(width: 10),
@@ -375,16 +368,17 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
               children: [
                 Text(
                   contact.name,
-                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                      fontSize: 13.5, fontWeight: FontWeight.w600),
                 ),
                 Text(
                   contact.number,
-                  style: const TextStyle(fontSize: 11.5, color: Colors.black54),
+                  style:
+                      const TextStyle(fontSize: 11.5, color: Colors.black54),
                 ),
               ],
             ),
           ),
-          // Selection radio
           InkWell(
             onTap: () {
               setState(() {
@@ -397,9 +391,9 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
               height: 20,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isSelected ? _kPrimaryGreen : Colors.transparent,
+                color: isSelected ? kPrimaryGreen : Colors.transparent,
                 border: Border.all(
-                  color: isSelected ? _kPrimaryGreen : Colors.black26,
+                  color: isSelected ? kPrimaryGreen : Colors.black26,
                   width: 1.5,
                 ),
               ),
@@ -409,16 +403,17 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
             ),
           ),
           const SizedBox(width: 10),
-          // Call button
           InkWell(
             onTap: () {
-              // TODO: launch dialer with contact.number
+              // TODO: launch_url tel:${contact.number}
             },
             borderRadius: BorderRadius.circular(100),
             child: Container(
               padding: const EdgeInsets.all(9),
-              decoration: const BoxDecoration(color: _kPrimaryGreen, shape: BoxShape.circle),
-              child: const Icon(Icons.call, color: Colors.white, size: 14),
+              decoration: const BoxDecoration(
+                  color: kPrimaryGreen, shape: BoxShape.circle),
+              child:
+                  const Icon(Icons.call, color: Colors.white, size: 14),
             ),
           ),
         ],
@@ -426,20 +421,19 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
     );
   }
 
-  // "Live Location Sharing" info card with blue outline.
   Widget _liveLocationCard() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _kPrimaryBlue.withOpacity(0.05),
-        border: Border.all(color: _kPrimaryBlue.withOpacity(0.35)),
+        color: kPrimaryBlue.withOpacity(0.05),
+        border: Border.all(color: kPrimaryBlue.withOpacity(0.35)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [
-          Icon(Icons.location_on_outlined, color: _kPrimaryBlue, size: 18),
+          Icon(Icons.location_on_outlined, color: kPrimaryBlue, size: 18),
           SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -447,12 +441,14 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
               children: [
                 Text(
                   "Live Location Sharing",
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      fontSize: 13.5, fontWeight: FontWeight.w600),
                 ),
                 SizedBox(height: 2),
                 Text(
                   "Selected contacts will receive real-time location updates and trip details",
-                  style: TextStyle(fontSize: 11.5, color: Colors.black54),
+                  style:
+                      TextStyle(fontSize: 11.5, color: Colors.black54),
                 ),
               ],
             ),
@@ -462,7 +458,6 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
     );
   }
 
-  // "Call Police" + "Contact Support" buttons.
   Widget _actionButtonsRow() {
     return Row(
       children: [
@@ -470,9 +465,9 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
           child: _secondaryButton(
             label: "Call Police",
             icon: Icons.call,
-            color: _kPrimaryBlue,
+            color: kPrimaryBlue,
             onTap: () {
-              // TODO: launch dialer with 199
+              // TODO: launch_url tel:199
             },
           ),
         ),
@@ -481,9 +476,9 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
           child: _secondaryButton(
             label: "Contact Support",
             icon: Icons.chat_bubble_outline,
-            color: _kPrimaryGreen,
+            color: kPrimaryGreen,
             onTap: () {
-              // TODO: navigate to support
+              // TODO: navigate to support chat
             },
           ),
         ),
@@ -503,7 +498,8 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
       child: Container(
         height: 48,
         alignment: Alignment.center,
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(
+            color: color, borderRadius: BorderRadius.circular(12)),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
@@ -512,7 +508,10 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
             const SizedBox(width: 8),
             Text(
               label,
-              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -520,7 +519,6 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
     );
   }
 
-  // "Activate Emergency" — grey/disabled until a contact is selected, red once enabled.
   Widget _activateButton() {
     return InkWell(
       onTap: canActivate
@@ -534,7 +532,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
         height: 52,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: canActivate ? _kErrorRed : const Color(0xFFD9D9D9),
+          color: canActivate ? kErrorRed : const Color(0xFFD9D9D9),
           borderRadius: BorderRadius.circular(100),
         ),
         child: Row(

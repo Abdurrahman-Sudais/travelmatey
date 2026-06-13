@@ -2,6 +2,10 @@ import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'widgets/emergency_sos.dart';
+import 'pages/search_page.dart';
+import 'pages/bookings_page.dart';
+import 'pages/profile_page.dart';
+import 'theme/app_colors.dart';
 
 void main() => runApp(
   DevicePreview(enabled: !kReleaseMode, builder: (context) => const MyApp()),
@@ -20,17 +24,12 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       useInheritedMediaQuery: true,
       locale: DevicePreview.locale(context),
-      builder: (context, child) {
-        // Chain DevicePreview's builder, then overlay the global SOS button
-        // on top of whatever screen is currently showing.
-        final previewed = DevicePreview.appBuilder(context, child);
-        return Stack(children: [previewed, const GlobalEmergencySosOverlay()]);
-      },
+      builder: DevicePreview.appBuilder,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         fontFamily: 'Poppins',
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFEBF6FD),
+          seedColor: kBackground,
           brightness: Brightness.light,
         ),
       ),
@@ -38,18 +37,6 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
-
-// Shared colors / tokens
-const Color kBackground = Color(0xFFEBF3FB);
-const Color kPrimaryGreen = Color(0xFF008000);
-const Color kPrimaryBlue = Color(0xFF0b6cb9);
-const Color kErrorRed = Color(0xFFFF4B4B);
-const Color kAmber = Color(0xFFF59E0B);
-const Gradient kPrimaryGradient = LinearGradient(
-  colors: [kPrimaryBlue, kPrimaryGreen],
-  begin: Alignment.centerLeft,
-  end: Alignment.centerRight,
-);
 
 class PopularRoute {
   final String from;
@@ -85,41 +72,45 @@ class _HomePageState extends State<HomePage> {
     PopularRoute(from: 'Abuja', to: 'Kaduna', price: '₦12,000', available: 6),
   ];
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kBackground,
-      body: Stack(
-        children: [
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _appbarRow(),
-                  const SizedBox(height: 16),
-                  _searchBar(),
-                  const SizedBox(height: 20),
-                  _sectionTitle('Your Activity'),
-                  const SizedBox(height: 10),
-                  _activityRow(),
-                  const SizedBox(height: 20),
-                  _sectionTitle('Popular Routes'),
-                  const SizedBox(height: 10),
-                  ...popularRoutes.map(_popularRouteCard),
-                ],
-              ),
-            ),
-          ),
-          // Bottom navigation bar
-          Align(alignment: Alignment.bottomCenter, child: _bottomNavBar()),
-        ],
-      ),
-    );
+  void _goTo(Widget page) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 
-  // Header: "Find Your Ride" + subtitle + notification bell with badge
+  @override
+  Widget build(BuildContext context) {
+    return SosScaffold(
+      child: Scaffold(
+        backgroundColor: kBackground,
+        body: Stack(
+          children: [
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _appbarRow(),
+                    const SizedBox(height: 16),
+                    _searchBar(),
+                    const SizedBox(height: 20),
+                    _sectionTitle('Your Activity'),
+                    const SizedBox(height: 10),
+                    _activityRow(),
+                    const SizedBox(height: 20),
+                    _sectionTitle('Popular Routes'),
+                    const SizedBox(height: 10),
+                    ...popularRoutes.map(_popularRouteCard),
+                  ],
+                ),
+              ),
+            ),
+            Align(alignment: Alignment.bottomCenter, child: _bottomNavBar()),
+          ],
+        ),
+      ), // Scaffold
+    ); // SosScaffold
+  }
+
   Widget _appbarRow() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,44 +181,46 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Blue -> green gradient "Search Rides" bar
   Widget _searchBar() {
-    return Container(
-      height: 110,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: kPrimaryGradient,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: kPrimaryGreen.withOpacity(0.25),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.25),
-              shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: () => _goTo(const SearchPage()),
+      child: Container(
+        height: 110,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: kPrimaryGradient,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: kPrimaryGreen.withOpacity(0.25),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
-            child: const Icon(Icons.search, color: Colors.white, size: 22),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            "Search Rides",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.25),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.search, color: Colors.white, size: 22),
             ),
-          ),
-        ],
+            const SizedBox(height: 10),
+            const Text(
+              "Search Rides",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -239,7 +232,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Bookings / Completed / Rating cards
   Widget _activityRow() {
     return Row(
       children: [
@@ -249,6 +241,7 @@ class _HomePageState extends State<HomePage> {
             iconColor: kPrimaryBlue,
             value: "12",
             label: "Bookings",
+            onTap: () => _goTo(const BookingsPage()),
           ),
         ),
         const SizedBox(width: 10),
@@ -258,6 +251,7 @@ class _HomePageState extends State<HomePage> {
             iconColor: kPrimaryGreen,
             value: "10",
             label: "Completed",
+            onTap: () => _goTo(const BookingsPage()),
           ),
         ),
         const SizedBox(width: 10),
@@ -278,114 +272,119 @@ class _HomePageState extends State<HomePage> {
     required Color iconColor,
     required String value,
     required String label,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: iconColor, size: 22),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 11, color: Colors.black54),
-          ),
-        ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: iconColor, size: 22),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: Colors.black54),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // "Lagos > Abuja   ₦25,000 / 12 available" row card
   Widget _popularRouteCard(PopularRoute route) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Row(
+    return GestureDetector(
+      onTap: () => _goTo(const SearchPage()),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      route.from,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.chevron_right,
+                    size: 16,
+                    color: Colors.black38,
+                  ),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      route.to,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Flexible(
-                  child: Text(
-                    route.from,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+                Text(
+                  route.price,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: kPrimaryGreen,
                   ),
                 ),
-                const SizedBox(width: 4),
-                const Icon(
-                  Icons.chevron_right,
-                  size: 16,
-                  color: Colors.black38,
-                ),
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Text(
-                    route.to,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                const SizedBox(height: 2),
+                Text(
+                  "${route.available} available",
+                  style: const TextStyle(fontSize: 11, color: Colors.black54),
                 ),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                route.price,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: kPrimaryGreen,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                "${route.available} available",
-                style: const TextStyle(fontSize: 11, color: Colors.black54),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  // Bottom nav: Home | Bookings (badge) | Wallet | Chats | Profile
   Widget _bottomNavBar() {
     return Container(
       decoration: BoxDecoration(
@@ -406,10 +405,19 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _navItem(Icons.home_filled, "Home", active: true),
-              _navItem(Icons.calendar_month_outlined, "Bookings", badge: "2"),
+              _navItem(
+                Icons.calendar_month_outlined,
+                "Bookings",
+                badge: "2",
+                onTap: () => _goTo(const BookingsPage()),
+              ),
               _navItem(Icons.account_balance_wallet_outlined, "Wallet"),
               _navItem(Icons.chat_bubble_outline, "Chats"),
-              _navItem(Icons.person_outline, "Profile"),
+              _navItem(
+                Icons.person_outline,
+                "Profile",
+                onTap: () => _goTo(const ProfilePage()),
+              ),
             ],
           ),
         ),
@@ -422,39 +430,43 @@ class _HomePageState extends State<HomePage> {
     String label, {
     bool active = false,
     String? badge,
+    VoidCallback? onTap,
   }) {
     final color = active ? kPrimaryGreen : Colors.black54;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Icon(icon, color: color, size: 22),
-            if (badge != null)
-              Positioned(
-                top: -4,
-                right: -6,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: kErrorRed,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    badge,
-                    style: const TextStyle(color: Colors.white, fontSize: 9),
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(icon, color: color, size: 22),
+              if (badge != null)
+                Positioned(
+                  top: -4,
+                  right: -6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: kErrorRed,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      badge,
+                      style: const TextStyle(color: Colors.white, fontSize: 9),
+                    ),
                   ),
                 ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 10, color: color)),
-      ],
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(label, style: TextStyle(fontSize: 10, color: color)),
+        ],
+      ),
     );
   }
 }

@@ -1,15 +1,6 @@
 import 'package:flutter/material.dart';
-
-// Shared colors / tokens
-const Color kBackground = Color(0xFFEBF3FB);
-const Color kPrimaryGreen = Color(0xFF008000);
-const Color kPrimaryBlue = Color(0xFF0b6cb9);
-const Color kErrorRed = Color(0xFFFF4B4B);
-const Gradient kPrimaryGradient = LinearGradient(
-  colors: [kPrimaryBlue, kPrimaryGreen],
-  begin: Alignment.centerLeft,
-  end: Alignment.centerRight,
-);
+import '../theme/app_colors.dart';
+import '../widgets/emergency_sos.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -33,7 +24,8 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return SosScaffold(
+      child: Scaffold(
       backgroundColor: kBackground,
       body: Stack(
         children: [
@@ -47,7 +39,8 @@ class _SearchPageState extends State<SearchPage> {
                   const SizedBox(height: 12),
                   const Text(
                     "Search Rides",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style:
+                        TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
                   const Text(
@@ -83,7 +76,8 @@ class _SearchPageState extends State<SearchPage> {
                   const SizedBox(height: 20),
                   const Text(
                     "Number of Passengers",
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
                   _passengerCounter(),
@@ -101,10 +95,10 @@ class _SearchPageState extends State<SearchPage> {
           ),
         ],
       ),
-    );
+    ), // Scaffold
+    ); // SosScaffold
   }
 
-  // "< Back"
   Widget _backButton() {
     return InkWell(
       onTap: () => Navigator.maybePop(context),
@@ -112,10 +106,8 @@ class _SearchPageState extends State<SearchPage> {
         mainAxisSize: MainAxisSize.min,
         children: const [
           Icon(Icons.chevron_left, size: 22, color: Colors.black87),
-          Text(
-            "Back",
-            style: TextStyle(fontSize: 14, color: Colors.black87),
-          ),
+          Text("Back",
+              style: TextStyle(fontSize: 14, color: Colors.black87)),
         ],
       ),
     );
@@ -132,13 +124,13 @@ class _SearchPageState extends State<SearchPage> {
         children: [
           TextSpan(text: text),
           if (required)
-            const TextSpan(text: " *", style: TextStyle(color: kErrorRed)),
+            const TextSpan(
+                text: " *", style: TextStyle(color: kErrorRed)),
         ],
       ),
     );
   }
 
-  // "Select departure state" / "Select destination state" pickers
   Widget _selectorField({
     required IconData icon,
     required Color iconColor,
@@ -162,7 +154,8 @@ class _SearchPageState extends State<SearchPage> {
             Container(
               width: 26,
               height: 26,
-              decoration: BoxDecoration(color: iconColor, shape: BoxShape.circle),
+              decoration:
+                  BoxDecoration(color: iconColor, shape: BoxShape.circle),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -171,7 +164,9 @@ class _SearchPageState extends State<SearchPage> {
                 style: TextStyle(
                   fontSize: 14,
                   color: value != null ? Colors.black87 : Colors.black38,
-                  fontWeight: value != null ? FontWeight.w500 : FontWeight.normal,
+                  fontWeight: value != null
+                      ? FontWeight.w500
+                      : FontWeight.normal,
                 ),
               ),
             ),
@@ -182,7 +177,6 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  // "Travel Date *" picker
   Widget _dateField() {
     return InkWell(
       onTap: _pickDate,
@@ -197,7 +191,8 @@ class _SearchPageState extends State<SearchPage> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.calendar_today_outlined, size: 18, color: Colors.black54),
+            const Icon(Icons.calendar_today_outlined,
+                size: 18, color: Colors.black54),
             const SizedBox(width: 12),
             Text(
               travelDate == null
@@ -205,8 +200,11 @@ class _SearchPageState extends State<SearchPage> {
                   : "${travelDate!.day}/${travelDate!.month}/${travelDate!.year}",
               style: TextStyle(
                 fontSize: 14,
-                color: travelDate != null ? Colors.black87 : Colors.black38,
-                fontWeight: travelDate != null ? FontWeight.w500 : FontWeight.normal,
+                color:
+                    travelDate != null ? Colors.black87 : Colors.black38,
+                fontWeight: travelDate != null
+                    ? FontWeight.w500
+                    : FontWeight.normal,
               ),
             ),
           ],
@@ -215,7 +213,6 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  // "Round Trip (2-Way)" toggle card
   Widget _roundTripCard() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -232,7 +229,8 @@ class _SearchPageState extends State<SearchPage> {
               color: kPrimaryBlue.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.sync_alt, color: kPrimaryBlue, size: 18),
+            child: const Icon(Icons.sync_alt,
+                color: kPrimaryBlue, size: 18),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -241,12 +239,14 @@ class _SearchPageState extends State<SearchPage> {
               children: [
                 Text(
                   "Round Trip (2-Way)",
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600),
                 ),
                 SizedBox(height: 2),
                 Text(
                   "Book your return journey too.",
-                  style: TextStyle(fontSize: 11, color: Colors.black54),
+                  style:
+                      TextStyle(fontSize: 11, color: Colors.black54),
                 ),
               ],
             ),
@@ -261,7 +261,6 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  // "- 1 +" passenger counter
   Widget _passengerCounter() {
     return Row(
       children: [
@@ -276,16 +275,18 @@ class _SearchPageState extends State<SearchPage> {
         const SizedBox(width: 12),
         Expanded(
           child: Container(
-            height: 48,
+            height: 52,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.black.withOpacity(0.06)),
+              border:
+                  Border.all(color: Colors.black.withOpacity(0.06)),
             ),
             child: Text(
               "$passengerCount",
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
         ),
@@ -298,7 +299,8 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  Widget _counterButton({required IconData icon, required VoidCallback onTap}) {
+  Widget _counterButton(
+      {required IconData icon, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
@@ -316,7 +318,6 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  // "Preferences" card with 4 toggles
   Widget _preferencesCard() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -329,13 +330,15 @@ class _SearchPageState extends State<SearchPage> {
         children: [
           const Text(
             "Preferences",
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            style:
+                TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           _preferenceRow(
             label: "Verified Drivers Only",
             value: verifiedDriversOnly,
-            onChanged: (v) => setState(() => verifiedDriversOnly = v),
+            onChanged: (v) =>
+                setState(() => verifiedDriversOnly = v),
           ),
           _preferenceRow(
             label: "Instant Booking",
@@ -369,7 +372,8 @@ class _SearchPageState extends State<SearchPage> {
       decoration: BoxDecoration(
         border: isLast
             ? null
-            : const Border(bottom: BorderSide(color: Color(0xFFF0F0F0))),
+            : const Border(
+                bottom: BorderSide(color: Color(0xFFF0F0F0))),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -385,7 +389,6 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  // "Find Rides" gradient button
   Widget _findRidesButton() {
     return InkWell(
       onTap: _onFindRides,
@@ -424,7 +427,6 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  // Bottom nav: Home | Bookings (badge) | Wallet | Chats | Profile
   Widget _bottomNavBar() {
     return Container(
       decoration: BoxDecoration(
@@ -440,13 +442,17 @@ class _SearchPageState extends State<SearchPage> {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+          padding:
+              const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _navItem(Icons.home_filled, "Home", active: true),
-              _navItem(Icons.calendar_month_outlined, "Bookings", badge: "2"),
-              _navItem(Icons.account_balance_wallet_outlined, "Wallet"),
+              _navItem(Icons.home_filled, "Home",
+                  onTap: () => Navigator.maybePop(context)),
+              _navItem(Icons.calendar_month_outlined, "Bookings",
+                  badge: "2"),
+              _navItem(
+                  Icons.account_balance_wallet_outlined, "Wallet"),
               _navItem(Icons.chat_bubble_outline, "Chats"),
               _navItem(Icons.person_outline, "Profile"),
             ],
@@ -456,33 +462,40 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  Widget _navItem(IconData icon, String label, {bool active = false, String? badge}) {
+  Widget _navItem(IconData icon, String label,
+      {bool active = false, String? badge, VoidCallback? onTap}) {
     final color = active ? kPrimaryGreen : Colors.black54;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Icon(icon, color: color, size: 22),
-            if (badge != null)
-              Positioned(
-                top: -4,
-                right: -6,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: kErrorRed,
-                    borderRadius: BorderRadius.circular(8),
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(icon, color: color, size: 22),
+              if (badge != null)
+                Positioned(
+                  top: -4,
+                  right: -6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 4, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: kErrorRed,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(badge,
+                        style: const TextStyle(
+                            color: Colors.white, fontSize: 9)),
                   ),
-                  child: Text(badge, style: const TextStyle(color: Colors.white, fontSize: 9)),
                 ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 10, color: color)),
-      ],
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(label, style: TextStyle(fontSize: 10, color: color)),
+        ],
+      ),
     );
   }
 
@@ -490,14 +503,23 @@ class _SearchPageState extends State<SearchPage> {
 
   Future<void> _pickState({required bool isDeparture}) async {
     const states = [
-      "Lagos", "Abuja (FCT)", "Kano", "Rivers", "Oyo", "Kaduna",
-      "Ogun", "Enugu", "Delta", "Anambra",
+      "Lagos",
+      "Abuja (FCT)",
+      "Kano",
+      "Rivers",
+      "Oyo",
+      "Kaduna",
+      "Ogun",
+      "Enugu",
+      "Delta",
+      "Anambra",
     ];
     final selected = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
         return SafeArea(
@@ -537,7 +559,24 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _onFindRides() {
-    // TODO: trigger search with departureState, destinationState, travelDate,
-    // isRoundTrip, passengerCount, and the 4 preference toggles.
+    if (departureState == null ||
+        destinationState == null ||
+        travelDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please fill in all required fields."),
+          backgroundColor: kErrorRed,
+        ),
+      );
+      return;
+    }
+    // TODO: navigate to results page with search params
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+            "Searching $departureState → $destinationState on ${travelDate!.day}/${travelDate!.month}/${travelDate!.year}"),
+        backgroundColor: kPrimaryGreen,
+      ),
+    );
   }
 }
