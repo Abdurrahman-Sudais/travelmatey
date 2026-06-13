@@ -85,99 +85,105 @@ class _BookingsPageState extends State<BookingsPage>
   Widget build(BuildContext context) {
     return SosScaffold(
       child: Scaffold(
-      backgroundColor: kBackground,
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _backButton(),
-                      const SizedBox(height: 12),
-                      const Text(
-                        "My Bookings",
-                        style: TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        "Manage your trips and reservations",
-                        style:
-                            TextStyle(fontSize: 13, color: Colors.black54),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
-                ),
-                // Tab bar
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: TabBar(
-                    controller: _tabController,
-                    indicator: BoxDecoration(
-                      color: kPrimaryGreen,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    labelColor: Colors.white,
-                    unselectedLabelColor: Colors.black54,
-                    labelStyle: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w600),
-                    dividerColor: Colors.transparent,
-                    tabs: [
-                      Tab(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text("Upcoming"),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: kErrorRed,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                "${upcomingBookings.length}",
-                                style: const TextStyle(
-                                    fontSize: 10, color: Colors.white),
-                              ),
-                            ),
-                          ],
+        backgroundColor: kBackground,
+        body: Stack(
+          children: [
+            SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _backButton(),
+                        const SizedBox(height: 12),
+                        const Text(
+                          "My Bookings",
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          "Manage your trips and reservations",
+                          style: TextStyle(fontSize: 13, color: Colors.black54),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                  // Tab bar
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: TabBar(
+                      controller: _tabController,
+                      indicator: BoxDecoration(
+                        color: kPrimaryGreen,
+                        borderRadius: BorderRadius.circular(50),
                       ),
-                      const Tab(text: "Past Trips"),
-                    ],
+                      labelColor: Colors.white,
+                      unselectedLabelColor: Colors.black54,
+                      labelStyle: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      dividerColor: Colors.transparent,
+                      tabs: [
+                        Tab(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text("Upcoming"),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 1,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: kErrorRed,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  "${upcomingBookings.length}",
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Tab(text: "Past Trips"),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _bookingsList(upcomingBookings),
-                      _bookingsList(pastBookings),
-                    ],
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _bookingsList(upcomingBookings),
+                        _bookingsList(pastBookings),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Align(
-              alignment: Alignment.bottomCenter, child: _bottomNavBar()),
-        ],
-      ),
-    ), // Scaffold
+            Align(alignment: Alignment.bottomCenter, child: _bottomNavBar()),
+          ],
+        ),
+      ), // Scaffold
     ); // SosScaffold
   }
 
@@ -188,8 +194,7 @@ class _BookingsPageState extends State<BookingsPage>
         mainAxisSize: MainAxisSize.min,
         children: const [
           Icon(Icons.chevron_left, size: 22, color: Colors.black87),
-          Text("Back",
-              style: TextStyle(fontSize: 14, color: Colors.black87)),
+          Text("Back", style: TextStyle(fontSize: 14, color: Colors.black87)),
         ],
       ),
     );
@@ -198,8 +203,10 @@ class _BookingsPageState extends State<BookingsPage>
   Widget _bookingsList(List<_BookingItem> items) {
     if (items.isEmpty) {
       return const Center(
-        child: Text("No bookings here yet.",
-            style: TextStyle(color: Colors.black38)),
+        child: Text(
+          "No bookings here yet.",
+          style: TextStyle(color: Colors.black38),
+        ),
       );
     }
     return ListView.builder(
@@ -213,14 +220,14 @@ class _BookingsPageState extends State<BookingsPage>
     final statusColor = item.status == _BookingStatus.completed
         ? kPrimaryGreen
         : item.status == _BookingStatus.cancelled
-            ? kErrorRed
-            : kPrimaryBlue;
+        ? kErrorRed
+        : kPrimaryBlue;
 
     final statusLabel = item.status == _BookingStatus.completed
         ? "Completed"
         : item.status == _BookingStatus.cancelled
-            ? "Cancelled"
-            : "Upcoming";
+        ? "Cancelled"
+        : "Upcoming";
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -239,37 +246,48 @@ class _BookingsPageState extends State<BookingsPage>
         children: [
           // Route header
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               gradient: kPrimaryGradient,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
-                    Text(item.from,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold)),
+                    Text(
+                      item.from,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(width: 6),
-                    const Icon(Icons.arrow_forward,
-                        color: Colors.white70, size: 16),
+                    const Icon(
+                      Icons.arrow_forward,
+                      color: Colors.white70,
+                      size: 16,
+                    ),
                     const SizedBox(width: 6),
-                    Text(item.to,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold)),
+                    Text(
+                      item.to,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.25),
                     borderRadius: BorderRadius.circular(20),
@@ -277,9 +295,10 @@ class _BookingsPageState extends State<BookingsPage>
                   child: Text(
                     statusLabel,
                     style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600),
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -290,8 +309,10 @@ class _BookingsPageState extends State<BookingsPage>
             padding: const EdgeInsets.all(14),
             child: Column(
               children: [
-                _detailRow(Icons.calendar_today_outlined,
-                    "${item.date} · ${item.time}"),
+                _detailRow(
+                  Icons.calendar_today_outlined,
+                  "${item.date} · ${item.time}",
+                ),
                 const SizedBox(height: 8),
                 _detailRow(Icons.person_outline, item.driver),
                 const SizedBox(height: 8),
@@ -303,17 +324,21 @@ class _BookingsPageState extends State<BookingsPage>
                     Text(
                       item.price,
                       style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: kPrimaryGreen),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: kPrimaryGreen,
+                      ),
                     ),
                     if (item.status == _BookingStatus.upcoming)
                       Row(
                         children: [
                           _actionChip("Cancel", kErrorRed),
                           const SizedBox(width: 8),
-                          _actionChip("View Details", kPrimaryBlue,
-                              filled: true),
+                          _actionChip(
+                            "View Details",
+                            kPrimaryBlue,
+                            filled: true,
+                          ),
                         ],
                       )
                     else if (item.status == _BookingStatus.completed)
@@ -334,9 +359,10 @@ class _BookingsPageState extends State<BookingsPage>
         Icon(icon, size: 16, color: Colors.black45),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(text,
-              style:
-                  const TextStyle(fontSize: 13, color: Colors.black87)),
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 13, color: Colors.black87),
+          ),
         ),
       ],
     );
@@ -347,8 +373,7 @@ class _BookingsPageState extends State<BookingsPage>
       onTap: () {},
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: filled ? color : Colors.transparent,
           border: Border.all(color: color),
@@ -357,9 +382,10 @@ class _BookingsPageState extends State<BookingsPage>
         child: Text(
           label,
           style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: filled ? Colors.white : color),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: filled ? Colors.white : color,
+          ),
         ),
       ),
     );
@@ -384,10 +410,17 @@ class _BookingsPageState extends State<BookingsPage>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _navItem(Icons.home_filled, "Home",
-                  onTap: () => Navigator.maybePop(context)),
-              _navItem(Icons.calendar_month_outlined, "Bookings",
-                  active: true, badge: "2"),
+              _navItem(
+                Icons.home_filled,
+                "Home",
+                onTap: () => Navigator.maybePop(context),
+              ),
+              _navItem(
+                Icons.calendar_month_outlined,
+                "Bookings",
+                active: true,
+                badge: "2",
+              ),
               _navItem(Icons.account_balance_wallet_outlined, "Wallet"),
               _navItem(Icons.chat_bubble_outline, "Chats"),
               _navItem(Icons.person_outline, "Profile"),
@@ -398,8 +431,13 @@ class _BookingsPageState extends State<BookingsPage>
     );
   }
 
-  Widget _navItem(IconData icon, String label,
-      {bool active = false, String? badge, VoidCallback? onTap}) {
+  Widget _navItem(
+    IconData icon,
+    String label, {
+    bool active = false,
+    String? badge,
+    VoidCallback? onTap,
+  }) {
     final color = active ? kPrimaryGreen : Colors.black54;
     return GestureDetector(
       onTap: onTap,
@@ -416,14 +454,17 @@ class _BookingsPageState extends State<BookingsPage>
                   right: -6,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 4, vertical: 1),
+                      horizontal: 4,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
                       color: kErrorRed,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text(badge,
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 9)),
+                    child: Text(
+                      badge,
+                      style: const TextStyle(color: Colors.white, fontSize: 9),
+                    ),
                   ),
                 ),
             ],
