@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../widgets/emergency_sos.dart';
+import '../widgets/edit_profile_sheet.dart';
+import '../main.dart' show activeRoleNotifier;
 
 enum ActiveRole { driver, rider }
 
@@ -14,43 +16,59 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  ActiveRole activeRole = ActiveRole.rider;
+  // Mirror the global notifier value locally so the UI reacts immediately.
+  late ActiveRole activeRole;
   AppearanceMode appearanceMode = AppearanceMode.light;
+
+  @override
+  void initState() {
+    super.initState();
+    activeRole = activeRoleNotifier.value;
+  }
+
+  void _switchRole(ActiveRole role) {
+    if (role == activeRole) return;
+    setState(() => activeRole = role);
+    activeRoleNotifier.value = role;
+
+    // Pop all the way back to the root RoleAwareHome which will rebuild.
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
 
   @override
   Widget build(BuildContext context) {
     return SosScaffold(
       child: Scaffold(
-      backgroundColor: kBackground,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _backButton(),
-              const SizedBox(height: 12),
-              const Text(
-                "Profile & Settings",
-                style:
-                    TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              _profileCard(),
-              const SizedBox(height: 16),
-              _appearanceCard(),
-              const SizedBox(height: 16),
-              _settingsCard(),
-              const SizedBox(height: 20),
-              _logoutButton(),
-              const SizedBox(height: 12),
-              _deleteAccountButton(),
-            ],
+        backgroundColor: kBackground,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _backButton(),
+                const SizedBox(height: 12),
+                const Text(
+                  "Profile & Settings",
+                  style:
+                      TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                _profileCard(),
+                const SizedBox(height: 16),
+                _appearanceCard(),
+                const SizedBox(height: 16),
+                _settingsCard(),
+                const SizedBox(height: 20),
+                _logoutButton(),
+                const SizedBox(height: 12),
+                _deleteAccountButton(),
+              ],
+            ),
           ),
         ),
       ),
-    ), // Scaffold
-    ); // SosScaffold
+    );
   }
 
   Widget _backButton() {
@@ -216,7 +234,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _roleChip(String label, ActiveRole role) {
     final bool isActive = activeRole == role;
     return InkWell(
-      onTap: () => setState(() => activeRole = role),
+      onTap: () => _switchRole(role),
       borderRadius: BorderRadius.circular(100),
       child: Container(
         padding: const EdgeInsets.symmetric(
@@ -239,9 +257,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _editProfileButton() {
     return InkWell(
-      onTap: () {
-        // TODO: navigate to Edit Profile screen
-      },
+      onTap: () => showEditProfileSheet(context),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: double.infinity,
@@ -400,9 +416,7 @@ class _ProfilePageState extends State<ProfilePage> {
     bool isLast = false,
   }) {
     return InkWell(
-      onTap: () {
-        // TODO: navigate to the relevant settings screen
-      },
+      onTap: () {},
       child: Container(
         padding: const EdgeInsets.symmetric(
             horizontal: 16, vertical: 14),
@@ -437,9 +451,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _logoutButton() {
     return InkWell(
-      onTap: () {
-        // TODO: trigger logout
-      },
+      onTap: () {},
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: double.infinity,
@@ -448,8 +460,7 @@ class _ProfilePageState extends State<ProfilePage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border:
-              Border.all(color: kErrorRed.withOpacity(0.4)),
+          border: Border.all(color: kErrorRed.withOpacity(0.4)),
         ),
         child: const Text(
           "Logout",
@@ -464,9 +475,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _deleteAccountButton() {
     return InkWell(
-      onTap: () {
-        // TODO: confirm + delete account
-      },
+      onTap: () {},
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: double.infinity,
@@ -475,15 +484,13 @@ class _ProfilePageState extends State<ProfilePage> {
         decoration: BoxDecoration(
           color: kErrorRed.withOpacity(0.06),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-              color: kErrorRed.withOpacity(0.25)),
+          border: Border.all(color: kErrorRed.withOpacity(0.25)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: const [
-            Icon(Icons.delete_outline,
-                size: 17, color: kErrorRed),
+            Icon(Icons.delete_outline, size: 17, color: kErrorRed),
             SizedBox(width: 8),
             Text(
               "Delete My Account",
