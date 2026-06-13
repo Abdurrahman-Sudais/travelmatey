@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../widgets/emergency_sos.dart';
-import '../pages/profile_page.dart';
+import '../widgets/app_bottom_nav.dart';
 import 'my_rides_page.dart';
+import 'wallet_page.dart';
 
 class DriverHomePage extends StatefulWidget {
   const DriverHomePage({super.key});
@@ -40,7 +41,10 @@ class _DriverHomePageState extends State<DriverHomePage> {
                 ),
               ),
             ),
-            Align(alignment: Alignment.bottomCenter, child: _bottomNavBar()),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: const AppBottomNavBar(current: AppTab.home),
+            ),
           ],
         ),
       ),
@@ -248,6 +252,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
             iconColor: kPrimaryGreen,
             title: "Wallet",
             subtitle: "₦450,000",
+            onTap: () => _goTo(const WalletPage()),
           ),
         ),
       ],
@@ -305,87 +310,4 @@ class _DriverHomePageState extends State<DriverHomePage> {
     );
   }
 
-  Widget _bottomNavBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding:
-              const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _navItem(Icons.home_filled, "Home", active: true),
-              _navItem(
-                Icons.directions_car_outlined,
-                "My Rides",
-                badge: "3",
-                onTap: () => _goTo(const MyRidesPage()),
-              ),
-              _navItem(
-                  Icons.account_balance_wallet_outlined, "Wallet"),
-              _navItem(Icons.chat_bubble_outline, "Chats"),
-              _navItem(
-                Icons.person_outline,
-                "Profile",
-                onTap: () => _goTo(const ProfilePage()),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _navItem(
-    IconData icon,
-    String label, {
-    bool active = false,
-    String? badge,
-    VoidCallback? onTap,
-  }) {
-    final color = active ? kPrimaryGreen : Colors.black54;
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Icon(icon, color: color, size: 22),
-              if (badge != null)
-                Positioned(
-                  top: -4,
-                  right: -6,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 4, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: kErrorRed,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(badge,
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 9)),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 10, color: color)),
-        ],
-      ),
-    );
-  }
 }

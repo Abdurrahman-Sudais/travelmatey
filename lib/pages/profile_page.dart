@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../widgets/emergency_sos.dart';
 import '../widgets/edit_profile_sheet.dart';
+import '../widgets/app_bottom_nav.dart';
 import '../main.dart' show activeRoleNotifier;
 
 enum ActiveRole { driver, rider }
@@ -40,32 +41,40 @@ class _ProfilePageState extends State<ProfilePage> {
     return SosScaffold(
       child: Scaffold(
         backgroundColor: kBackground,
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _backButton(),
-                const SizedBox(height: 12),
-                const Text(
-                  "Profile & Settings",
-                  style:
-                      TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        body: Stack(
+          children: [
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _backButton(),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "Profile & Settings",
+                      style: TextStyle(
+                          fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 16),
+                    _profileCard(),
+                    const SizedBox(height: 16),
+                    _appearanceCard(),
+                    const SizedBox(height: 16),
+                    _settingsCard(),
+                    const SizedBox(height: 20),
+                    _logoutButton(),
+                    const SizedBox(height: 12),
+                    _deleteAccountButton(),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                _profileCard(),
-                const SizedBox(height: 16),
-                _appearanceCard(),
-                const SizedBox(height: 16),
-                _settingsCard(),
-                const SizedBox(height: 20),
-                _logoutButton(),
-                const SizedBox(height: 12),
-                _deleteAccountButton(),
-              ],
+              ),
             ),
-          ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: const AppBottomNavBar(current: AppTab.profile),
+            ),
+          ],
         ),
       ),
     );
