@@ -5,11 +5,17 @@ import 'widgets/emergency_sos.dart';
 import 'pages/search_page.dart';
 import 'pages/bookings_page.dart';
 import 'pages/profile_page.dart';
+import 'pages/driver_home_page.dart';
 import 'theme/app_colors.dart';
 
+/// Global active-role notifier. Any widget in the tree can listen to this.
+final ValueNotifier<ActiveRole> activeRoleNotifier =
+    ValueNotifier<ActiveRole>(ActiveRole.rider);
+
 void main() => runApp(
-  DevicePreview(enabled: !kReleaseMode, builder: (context) => const MyApp()),
-);
+      DevicePreview(
+          enabled: !kReleaseMode, builder: (context) => const MyApp()),
+    );
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -33,7 +39,25 @@ class _MyAppState extends State<MyApp> {
           brightness: Brightness.light,
         ),
       ),
-      home: const HomePage(),
+      home: const RoleAwareHome(),
+    );
+  }
+}
+
+/// Listens to [activeRoleNotifier] and swaps between rider and driver home.
+class RoleAwareHome extends StatelessWidget {
+  const RoleAwareHome({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<ActiveRole>(
+      valueListenable: activeRoleNotifier,
+      builder: (context, role, _) {
+        if (role == ActiveRole.driver) {
+          return const DriverHomePage();
+        }
+        return const HomePage();
+      },
     );
   }
 }
@@ -107,8 +131,8 @@ class _HomePageState extends State<HomePage> {
             Align(alignment: Alignment.bottomCenter, child: _bottomNavBar()),
           ],
         ),
-      ), // Scaffold
-    ); // SosScaffold
+      ),
+    );
   }
 
   Widget _appbarRow() {
@@ -148,10 +172,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.notifications_none,
-                color: Colors.black87,
-              ),
+              child: const Icon(Icons.notifications_none, color: Colors.black87),
             ),
             Positioned(
               top: -2,
@@ -168,10 +189,9 @@ class _HomePageState extends State<HomePage> {
                 child: const Text(
                   "1",
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -208,16 +228,16 @@ class _HomePageState extends State<HomePage> {
                 color: Colors.white.withOpacity(0.25),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.search, color: Colors.white, size: 22),
+              child:
+                  const Icon(Icons.search, color: Colors.white, size: 22),
             ),
             const SizedBox(height: 10),
             const Text(
               "Search Rides",
               style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -226,10 +246,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _sectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-    );
+    return Text(title,
+        style:
+            const TextStyle(fontSize: 17, fontWeight: FontWeight.bold));
   }
 
   Widget _activityRow() {
@@ -277,7 +296,8 @@ class _HomePageState extends State<HomePage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+        padding:
+            const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -293,15 +313,13 @@ class _HomePageState extends State<HomePage> {
           children: [
             Icon(icon, color: iconColor, size: 22),
             const SizedBox(height: 8),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            Text(value,
+                style: const TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 2),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 11, color: Colors.black54),
-            ),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 11, color: Colors.black54)),
           ],
         ),
       ),
@@ -313,7 +331,8 @@ class _HomePageState extends State<HomePage> {
       onTap: () => _goTo(const SearchPage()),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -336,26 +355,19 @@ class _HomePageState extends State<HomePage> {
                       route.from,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
+                          fontSize: 14, fontWeight: FontWeight.w600),
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(
-                    Icons.chevron_right,
-                    size: 16,
-                    color: Colors.black38,
-                  ),
+                  const Icon(Icons.chevron_right,
+                      size: 16, color: Colors.black38),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
                       route.to,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
+                          fontSize: 14, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -367,15 +379,15 @@ class _HomePageState extends State<HomePage> {
                 Text(
                   route.price,
                   style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: kPrimaryGreen,
-                  ),
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: kPrimaryGreen),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   "${route.available} available",
-                  style: const TextStyle(fontSize: 11, color: Colors.black54),
+                  style: const TextStyle(
+                      fontSize: 11, color: Colors.black54),
                 ),
               ],
             ),
@@ -400,7 +412,8 @@ class _HomePageState extends State<HomePage> {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+          padding:
+              const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -411,7 +424,8 @@ class _HomePageState extends State<HomePage> {
                 badge: "2",
                 onTap: () => _goTo(const BookingsPage()),
               ),
-              _navItem(Icons.account_balance_wallet_outlined, "Wallet"),
+              _navItem(
+                  Icons.account_balance_wallet_outlined, "Wallet"),
               _navItem(Icons.chat_bubble_outline, "Chats"),
               _navItem(
                 Icons.person_outline,
@@ -448,17 +462,14 @@ class _HomePageState extends State<HomePage> {
                   right: -6,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 1,
-                    ),
+                        horizontal: 4, vertical: 1),
                     decoration: BoxDecoration(
                       color: kErrorRed,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text(
-                      badge,
-                      style: const TextStyle(color: Colors.white, fontSize: 9),
-                    ),
+                    child: Text(badge,
+                        style: const TextStyle(
+                            color: Colors.white, fontSize: 9)),
                   ),
                 ),
             ],
