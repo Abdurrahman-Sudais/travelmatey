@@ -56,10 +56,10 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       expand: false,
       builder: (context, scrollCtrl) {
         return Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: kBackground,
             borderRadius:
-                BorderRadius.vertical(top: Radius.circular(24)),
+                const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(

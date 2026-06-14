@@ -204,9 +204,9 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
     return FractionallySizedBox(
       heightFactor: 0.92,
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: kBackground,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(

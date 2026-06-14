@@ -23,21 +23,36 @@ class TravelMateApp extends StatelessWidget {
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
-        return GetMaterialApp(
-          title: 'TravelMate',
-          useInheritedMediaQuery: true,
-          locale: DevicePreview.locale(context),
-          builder: DevicePreview.appBuilder,
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            fontFamily: 'Poppins',
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: kBackground,
-              brightness: Brightness.light,
-            ),
-          ),
-          initialRoute: AppPages.initial,
-          getPages: AppPages.routes,
+        return ValueListenableBuilder<ThemeMode>(
+          valueListenable: themeModeNotifier,
+          builder: (context, mode, _) {
+            return GetMaterialApp(
+              title: 'TravelMate',
+              useInheritedMediaQuery: true,
+              locale: DevicePreview.locale(context),
+              builder: DevicePreview.appBuilder,
+              debugShowCheckedModeBanner: false,
+              theme: ThemeData(
+                fontFamily: 'Poppins',
+                colorScheme: ColorScheme.fromSeed(
+                  seedColor: kBackground,
+                  brightness: Brightness.light,
+                ),
+              ),
+              darkTheme: ThemeData(
+                fontFamily: 'Poppins',
+                brightness: Brightness.dark,
+                scaffoldBackgroundColor: kBackground,
+                colorScheme: ColorScheme.fromSeed(
+                  seedColor: kBackground,
+                  brightness: Brightness.dark,
+                ),
+              ),
+              themeMode: mode,
+              initialRoute: AppPages.initial,
+              getPages: AppPages.routes,
+            );
+          },
         );
       },
     );

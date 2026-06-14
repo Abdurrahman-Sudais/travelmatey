@@ -16,7 +16,8 @@ import 'terms_policies_page.dart';
 import 'about_page.dart';
 import 'package:get/get.dart';
 import 'package:travelmateeee/app/routes.dart';
-import 'package:travelmateeee/features/home/view/home_page.dart' show activeRoleNotifier, HomePage, RoleAwareHome;
+import 'package:travelmateeee/features/home/view/home_page.dart'
+    show activeRoleNotifier, HomePage, RoleAwareHome;
 import 'package:travelmateeee/core/base/active_role.dart';
 
 enum AppearanceMode { light, dark, system }
@@ -553,6 +554,50 @@ class _ProfilePageState extends State<ProfilePage> {
                   MaterialPageRoute(
                     builder: (_) => const PdfExportManagerPage(),
                   ),
+                );
+              } else if (item.label == "KYC Verification") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const KycPage()),
+                );
+              } else if (item.label == "Ride History") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const RideHistoryPage()),
+                );
+              } else if (item.label == "Referral Program") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ReferralPage()),
+                );
+              } else if (item.label == "Promo Codes") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PromoCodePage()),
+                );
+              } else if (item.label == "Privacy & Security") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PrivacySecurityPage(),
+                  ),
+                );
+              } else if (item.label == "Auth Diagnostics") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AuthDiagnosticsPage(),
+                  ),
+                );
+              } else if (item.label == "Terms & Policies") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TermsPoliciesPage()),
+                );
+              } else if (item.label == "About") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AboutPage()),
                 );
               }
             },
