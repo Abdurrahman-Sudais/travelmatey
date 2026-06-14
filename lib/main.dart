@@ -7,6 +7,7 @@ import 'pages/bookings_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/driver_home_page.dart';
 import 'pages/sign_in_page.dart';
+import 'pages/notifications_page.dart';
 import 'theme/app_colors.dart';
 import 'widgets/app_bottom_nav.dart';
 
@@ -160,51 +161,54 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.notifications_none,
-                color: Colors.black87,
-              ),
-            ),
-            Positioned(
-              top: -2,
-              right: -2,
-              child: Container(
-                height: 18,
-                width: 18,
-                alignment: Alignment.center,
+        GestureDetector(
+          onTap: () => _goTo(const NotificationsPage()),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: kErrorRed,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 1.5),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                child: const Text(
-                  "1",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
+                child: const Icon(
+                  Icons.notifications_none,
+                  color: Colors.black87,
+                ),
+              ),
+              Positioned(
+                top: -2,
+                right: -2,
+                child: Container(
+                  height: 18,
+                  width: 18,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: kErrorRed,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: const Text(
+                    "1",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
