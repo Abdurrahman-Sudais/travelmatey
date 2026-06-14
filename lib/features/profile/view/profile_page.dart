@@ -77,7 +77,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     const Text(
                       "Profile & Settings",
                       style: TextStyle(
-                          fontSize: 22, fontWeight: FontWeight.bold),
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     _profileCard(),
@@ -115,8 +117,7 @@ class _ProfilePageState extends State<ProfilePage> {
         mainAxisSize: MainAxisSize.min,
         children: const [
           Icon(Icons.chevron_left, size: 22, color: Colors.black87),
-          Text("Back",
-              style: TextStyle(fontSize: 14, color: Colors.black87)),
+          Text("Back", style: TextStyle(fontSize: 14, color: Colors.black87)),
         ],
       ),
     );
@@ -144,26 +145,28 @@ class _ProfilePageState extends State<ProfilePage> {
                     const Text(
                       "User",
                       style: TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.bold),
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Row(
                       children: const [
-                        Icon(Icons.star,
-                            size: 15, color: Color(0xFFF59E0B)),
+                        Icon(Icons.star, size: 15, color: Color(0xFFF59E0B)),
                         SizedBox(width: 4),
                         Text(
                           "4.8 · 47 trips",
                           style: TextStyle(
-                              fontSize: 12.5, color: Colors.black54),
+                            fontSize: 12.5,
+                            color: Colors.black54,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 2),
                     const Text(
                       "Member since January 2024",
-                      style: TextStyle(
-                          fontSize: 11.5, color: Colors.black38),
+                      style: TextStyle(fontSize: 11.5, color: Colors.black38),
                     ),
                   ],
                 ),
@@ -173,11 +176,9 @@ class _ProfilePageState extends State<ProfilePage> {
           const SizedBox(height: 16),
           const Divider(height: 1, color: Color(0xFFF0F0F0)),
           const SizedBox(height: 12),
-          _contactRow(
-              icon: Icons.email_outlined, text: "user@example.com"),
+          _contactRow(icon: Icons.email_outlined, text: "user@example.com"),
           const SizedBox(height: 10),
-          _contactRow(
-              icon: Icons.call_outlined, text: "+234XXXXXXXXXX"),
+          _contactRow(icon: Icons.call_outlined, text: "+234XXXXXXXXXX"),
           const SizedBox(height: 16),
           _activeRoleRow(),
           const SizedBox(height: 16),
@@ -200,8 +201,7 @@ class _ProfilePageState extends State<ProfilePage> {
               color: kPrimaryGreen,
               shape: BoxShape.circle,
             ),
-            child:
-                const Icon(Icons.person, color: Colors.white, size: 34),
+            child: const Icon(Icons.person, color: Colors.white, size: 34),
           ),
           Positioned(
             bottom: 0,
@@ -214,8 +214,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 1.5),
               ),
-              child: const Icon(Icons.camera_alt,
-                  color: Colors.white, size: 12),
+              child: const Icon(
+                Icons.camera_alt,
+                color: Colors.white,
+                size: 12,
+              ),
             ),
           ),
         ],
@@ -228,9 +231,10 @@ class _ProfilePageState extends State<ProfilePage> {
       children: [
         Icon(icon, size: 17, color: Colors.black54),
         const SizedBox(width: 10),
-        Text(text,
-            style:
-                const TextStyle(fontSize: 13.5, color: Colors.black87)),
+        Text(
+          text,
+          style: const TextStyle(fontSize: 13.5, color: Colors.black87),
+        ),
       ],
     );
   }
@@ -245,8 +249,7 @@ class _ProfilePageState extends State<ProfilePage> {
             SizedBox(width: 8),
             Text(
               "Active Role",
-              style: TextStyle(
-                  fontSize: 13.5, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -273,8 +276,7 @@ class _ProfilePageState extends State<ProfilePage> {
       onTap: () => _switchRole(role),
       borderRadius: BorderRadius.circular(100),
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
         decoration: BoxDecoration(
           color: isActive ? kPrimaryBlue : Colors.transparent,
           borderRadius: BorderRadius.circular(100),
@@ -306,9 +308,10 @@ class _ProfilePageState extends State<ProfilePage> {
         child: const Text(
           "Edit Profile",
           style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87),
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
         ),
       ),
     );
@@ -330,9 +333,10 @@ class _ProfilePageState extends State<ProfilePage> {
           const Text(
             "Vehicle Information",
             style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: kPrimaryBlue),
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: kPrimaryBlue,
+            ),
           ),
           const SizedBox(height: 14),
           _vehicleDetailRow("Make & Model", "Toyota Sienna"),
@@ -355,9 +359,10 @@ class _ProfilePageState extends State<ProfilePage> {
               child: const Text(
                 "Edit Vehicle",
                 style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87),
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
             ),
           ),
@@ -366,17 +371,19 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _vehicleDetailRow(String label, String value,
-      {bool isLast = false}) {
+  Widget _vehicleDetailRow(String label, String value, {bool isLast = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(fontSize: 11.5, color: Colors.black45)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11.5, color: Colors.black45),
+        ),
         const SizedBox(height: 2),
-        Text(value,
-            style: const TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w600)),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
         if (!isLast) ...[
           const SizedBox(height: 12),
           const Divider(height: 1, color: Color(0xFFF5F5F5)),
@@ -411,9 +418,10 @@ class _ProfilePageState extends State<ProfilePage> {
           const Text(
             "Appearance",
             style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: kPrimaryBlue),
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: kPrimaryBlue,
+            ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -469,9 +477,11 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         child: Column(
           children: [
-            Icon(icon,
-                size: 20,
-                color: isSelected ? kPrimaryBlue : Colors.black54),
+            Icon(
+              icon,
+              size: 20,
+              color: isSelected ? kPrimaryBlue : Colors.black54,
+            ),
             const SizedBox(height: 6),
             Text(
               label,
@@ -496,14 +506,14 @@ class _ProfilePageState extends State<ProfilePage> {
       _SettingsItem(Icons.people_outline, "Referral Program"),
       _SettingsItem(Icons.local_offer_outlined, "Promo Codes"),
       _SettingsItem(Icons.lock_outline, "Privacy & Security"),
-      _SettingsItem(
-          Icons.notifications_outlined, "Notification Settings"),
+      _SettingsItem(Icons.notifications_outlined, "Notification Settings"),
       _SettingsItem(Icons.help_outline, "Help & Support"),
+      _SettingsItem(Icons.verified_user_outlined, "Auth Diagnostics"),
       _SettingsItem(
-          Icons.verified_user_outlined, "Auth Diagnostics"),
-      _SettingsItem(
-          Icons.file_download_outlined, "Export PDF Presentation",
-          iconColor: kPrimaryGreen),
+        Icons.file_download_outlined,
+        "Export PDF Presentation",
+        iconColor: kPrimaryGreen,
+      ),
       _SettingsItem(Icons.article_outlined, "Terms & Policies"),
       _SettingsItem(Icons.info_outline, "About"),
     ];
@@ -527,64 +537,20 @@ class _ProfilePageState extends State<ProfilePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => const NotificationSettingsPage()),
+                    builder: (_) => const NotificationSettingsPage(),
+                  ),
                 );
               } else if (item.label == "Help & Support") {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (_) => const HelpSupportPage()),
+                  MaterialPageRoute(builder: (_) => const HelpSupportPage()),
                 );
               } else if (item.label == "Export PDF Presentation") {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => const PdfExportManagerPage()),
-                );
-              } else if (item.label == "KYC Verification") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const KycPage()),
-                );
-              } else if (item.label == "Ride History") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const RideHistoryPage()),
-                );
-              } else if (item.label == "Referral Program") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ReferralPage()),
-                );
-              } else if (item.label == "Promo Codes") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const PromoCodePage()),
-                );
-              } else if (item.label == "Privacy & Security") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const PrivacySecurityPage()),
-                );
-              } else if (item.label == "Auth Diagnostics") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const AuthDiagnosticsPage()),
-                );
-              } else if (item.label == "Terms & Policies") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const TermsPoliciesPage()),
-                );
-              } else if (item.label == "About") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AboutPage()),
+                    builder: (_) => const PdfExportManagerPage(),
+                  ),
                 );
               }
             },
@@ -604,13 +570,11 @@ class _ProfilePageState extends State<ProfilePage> {
     return InkWell(
       onTap: onTap ?? () {},
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           border: isLast
               ? null
-              : const Border(
-                  bottom: BorderSide(color: Color(0xFFF5F5F5))),
+              : const Border(bottom: BorderSide(color: Color(0xFFF5F5F5))),
         ),
         child: Row(
           children: [
@@ -620,20 +584,132 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Text(
                 label,
                 style: const TextStyle(
-                    fontSize: 13.5, fontWeight: FontWeight.w600),
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-            const Icon(Icons.chevron_right,
-                size: 18, color: Colors.black38),
+            const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
           ],
         ),
       ),
     );
   }
 
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            "Log Out",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: const Text(
+            "Are you sure you want to log out of your account?",
+            style: TextStyle(fontSize: 14, color: Colors.black54),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.black54),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                _performLogout(context);
+              },
+              child: const Text(
+                "Log Out",
+                style: TextStyle(color: kErrorRed, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _performLogout(BuildContext context) {
+    // TODO: clear session / auth tokens here
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const SignInPage()),
+      (route) => false,
+    );
+  }
+
+  void _confirmDeleteAccount(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: kErrorRed, size: 22),
+              SizedBox(width: 8),
+              Text(
+                "Delete Account",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          content: const Text(
+            "This action is permanent and cannot be undone. All your "
+            "bookings, ride history, wallet balance, and personal "
+            "data will be permanently deleted.\n\nAre you sure you "
+            "want to delete your account?",
+            style: TextStyle(
+              fontSize: 13.5,
+              color: Colors.black54,
+              height: 1.4,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.black54),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                _performDeleteAccount(context);
+              },
+              child: const Text(
+                "Delete",
+                style: TextStyle(color: kErrorRed, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _performDeleteAccount(BuildContext context) {
+    // TODO: call delete-account API endpoint here
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const SignInPage()),
+      (route) => false,
+    );
+  }
+
   Widget _logoutButton() {
     return InkWell(
-      onTap: () {},
+      onTap: () => _confirmLogout(context),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: double.infinity,
@@ -647,9 +723,10 @@ class _ProfilePageState extends State<ProfilePage> {
         child: const Text(
           "Logout",
           style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: kErrorRed),
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: kErrorRed,
+          ),
         ),
       ),
     );
@@ -657,7 +734,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _deleteAccountButton() {
     return InkWell(
-      onTap: () {},
+      onTap: () => _confirmDeleteAccount(context),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: double.infinity,
@@ -677,9 +754,10 @@ class _ProfilePageState extends State<ProfilePage> {
             Text(
               "Delete My Account",
               style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: kErrorRed),
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: kErrorRed,
+              ),
             ),
           ],
         ),
@@ -728,8 +806,7 @@ class _EditVehicleSheetState extends State<_EditVehicleSheet> {
         return Container(
           decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius:
-                BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(
@@ -738,9 +815,7 @@ class _EditVehicleSheetState extends State<_EditVehicleSheet> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-                decoration: const BoxDecoration(
-                  gradient: kPrimaryGradient,
-                ),
+                decoration: const BoxDecoration(gradient: kPrimaryGradient),
                 child: Column(
                   children: [
                     Container(
@@ -759,16 +834,20 @@ class _EditVehicleSheetState extends State<_EditVehicleSheet> {
                         color: Colors.white.withOpacity(0.25),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.edit_outlined,
-                          color: Colors.white, size: 26),
+                      child: const Icon(
+                        Icons.edit_outlined,
+                        color: Colors.white,
+                        size: 26,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     const Text(
                       "Edit Vehicle",
                       style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ],
                 ),
@@ -777,32 +856,38 @@ class _EditVehicleSheetState extends State<_EditVehicleSheet> {
               Expanded(
                 child: SingleChildScrollView(
                   controller: scrollCtrl,
-                  padding:
-                      EdgeInsets.fromLTRB(16, 20, 16, bottom + 16),
+                  padding: EdgeInsets.fromLTRB(16, 20, 16, bottom + 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
                         "Basic Information",
                         style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.bold,
-                            color: kPrimaryBlue),
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                          color: kPrimaryBlue,
+                        ),
                       ),
                       const SizedBox(height: 14),
                       _field("Make", _makeCtrl),
                       const SizedBox(height: 14),
                       _field("Model", _modelCtrl),
                       const SizedBox(height: 14),
-                      _field("Year", _yearCtrl,
-                          keyboardType: TextInputType.number),
+                      _field(
+                        "Year",
+                        _yearCtrl,
+                        keyboardType: TextInputType.number,
+                      ),
                       const SizedBox(height: 14),
                       _field("Color", _colorCtrl),
                       const SizedBox(height: 14),
                       _field("Plate Number", _plateCtrl),
                       const SizedBox(height: 14),
-                      _field("Seats", _seatsCtrl,
-                          keyboardType: TextInputType.number),
+                      _field(
+                        "Seats",
+                        _seatsCtrl,
+                        keyboardType: TextInputType.number,
+                      ),
                       const SizedBox(height: 28),
                       _saveButton(),
                       const SizedBox(height: 12),
@@ -818,25 +903,30 @@ class _EditVehicleSheetState extends State<_EditVehicleSheet> {
     );
   }
 
-  Widget _field(String label, TextEditingController ctrl,
-      {TextInputType? keyboardType}) {
+  Widget _field(
+    String label,
+    TextEditingController ctrl, {
+    TextInputType? keyboardType,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style:
-                const TextStyle(fontSize: 12, color: Colors.black54)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
         const SizedBox(height: 6),
         TextField(
           controller: ctrl,
           keyboardType: keyboardType,
-          style:
-              const TextStyle(fontSize: 13.5, color: Colors.black87),
+          style: const TextStyle(fontSize: 13.5, color: Colors.black87),
           decoration: InputDecoration(
             filled: true,
             fillColor: const Color(0xFFF5F5F5),
             contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 13),
+              horizontal: 14,
+              vertical: 13,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
@@ -880,9 +970,10 @@ class _EditVehicleSheetState extends State<_EditVehicleSheet> {
         child: const Text(
           "Save Changes",
           style: TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.bold),
+            color: Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
@@ -899,9 +990,10 @@ class _EditVehicleSheetState extends State<_EditVehicleSheet> {
         child: const Text(
           "Cancel",
           style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.black54),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black54,
+          ),
         ),
       ),
     );

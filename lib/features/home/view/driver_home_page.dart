@@ -4,6 +4,7 @@ import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 import 'package:travelmateeee/features/rides/view/my_rides_page.dart';
 import 'package:travelmateeee/features/wallet/view/wallet_page.dart';
+import 'notifications_page.dart';
 
 class DriverHomePage extends StatefulWidget {
   const DriverHomePage({super.key});
@@ -72,48 +73,51 @@ class _DriverHomePageState extends State<DriverHomePage> {
             ],
           ),
         ),
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.notifications_none,
-                  color: Colors.black87),
-            ),
-            Positioned(
-              top: -2,
-              right: -2,
-              child: Container(
-                height: 18,
-                width: 18,
-                alignment: Alignment.center,
+        GestureDetector(
+          onTap: () => _goTo(const NotificationsPage()),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: kErrorRed,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 1.5),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                child: const Text(
-                  "2",
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold),
+                child: const Icon(Icons.notifications_none,
+                    color: Colors.black87),
+              ),
+              Positioned(
+                top: -2,
+                right: -2,
+                child: Container(
+                  height: 18,
+                  width: 18,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: kErrorRed,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: const Text(
+                    "2",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
