@@ -6,6 +6,14 @@ import '../widgets/app_bottom_nav.dart';
 import 'notification_settings_page.dart';
 import 'help_support_page.dart';
 import 'pdf_export_manager_page.dart';
+import 'kyc_page.dart';
+import 'ride_history_page.dart';
+import 'referral_page.dart';
+import 'promo_code_page.dart';
+import 'privacy_security_page.dart';
+import 'auth_diagnostics_page.dart';
+import 'terms_policies_page.dart';
+import 'about_page.dart';
 import '../main.dart' show activeRoleNotifier;
 
 enum ActiveRole { driver, rider }
@@ -519,6 +527,51 @@ class _ProfilePageState extends State<ProfilePage> {
                   context,
                   MaterialPageRoute(
                       builder: (_) => const PdfExportManagerPage()),
+                );
+              } else if (item.label == "KYC Verification") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const KycPage()),
+                );
+              } else if (item.label == "Ride History") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const RideHistoryPage()),
+                );
+              } else if (item.label == "Referral Program") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ReferralPage()),
+                );
+              } else if (item.label == "Promo Codes") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const PromoCodePage()),
+                );
+              } else if (item.label == "Privacy & Security") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const PrivacySecurityPage()),
+                );
+              } else if (item.label == "Auth Diagnostics") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const AuthDiagnosticsPage()),
+                );
+              } else if (item.label == "Terms & Policies") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const TermsPoliciesPage()),
+                );
+              } else if (item.label == "About") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AboutPage()),
                 );
               }
             },

@@ -8,6 +8,7 @@ import 'pages/search_page.dart';
 import 'pages/bookings_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/driver_home_page.dart';
+import 'pages/sign_in_page.dart';
 import 'theme/app_colors.dart';
 import 'widgets/app_bottom_nav.dart';
 import 'routes.dart';
