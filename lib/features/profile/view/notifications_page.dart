@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../widgets/emergency_sos.dart';
-import '../widgets/app_bottom_nav.dart';
+import 'package:travelmateeee/core/theme/app_colors.dart';
+import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
+import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});

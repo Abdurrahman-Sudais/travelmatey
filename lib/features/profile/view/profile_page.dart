@@ -14,6 +14,8 @@ import 'privacy_security_page.dart';
 import 'package:travelmateeee/features/auth/view/auth_diagnostics_page.dart';
 import 'terms_policies_page.dart';
 import 'about_page.dart';
+import 'package:get/get.dart';
+import 'package:travelmateeee/app/routes.dart';
 import 'package:travelmateeee/features/home/view/home_page.dart' show activeRoleNotifier, HomePage, RoleAwareHome;
 import 'package:travelmateeee/core/base/active_role.dart';
 
@@ -639,10 +641,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _performLogout(BuildContext context) {
     // TODO: clear session / auth tokens here
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const SignInPage()),
-      (route) => false,
-    );
+    Get.offAllNamed(RouteConstants.SIGNIN);
   }
 
   void _confirmDeleteAccount(BuildContext context) {
@@ -701,10 +700,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _performDeleteAccount(BuildContext context) {
     // TODO: call delete-account API endpoint here
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const SignInPage()),
-      (route) => false,
-    );
+    Get.offAllNamed(RouteConstants.SIGNIN);
   }
 
   Widget _logoutButton() {

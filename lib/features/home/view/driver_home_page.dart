@@ -4,7 +4,7 @@ import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 import 'package:travelmateeee/features/rides/view/my_rides_page.dart';
 import 'package:travelmateeee/features/wallet/view/wallet_page.dart';
-import 'notifications_page.dart';
+import 'package:travelmateeee/features/profile/view/notifications_page.dart';
 
 class DriverHomePage extends StatefulWidget {
   const DriverHomePage({super.key});
