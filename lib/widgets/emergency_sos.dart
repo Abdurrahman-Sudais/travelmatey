@@ -17,7 +17,10 @@ class EmergencyContact {
 
 const List<EmergencyContact> kEmergencyContacts = [
   EmergencyContact(
-      name: "Nigeria Emergency Services", number: "112", isServiceContact: true),
+    name: "Nigeria Emergency Services",
+    number: "112",
+    isServiceContact: true,
+  ),
   EmergencyContact(name: "Police", number: "199", isServiceContact: true),
   EmergencyContact(name: "Mom", number: "+234 803 123 4567"),
   EmergencyContact(name: "Dad", number: "+234 805 234 5678"),
@@ -100,9 +103,10 @@ class _EmergencySosButtonState extends State<EmergencySosButton>
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
 
-    _opacity = Tween<double>(begin: 0.55, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _opacity = Tween<double>(
+      begin: 0.55,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -143,8 +147,11 @@ class _EmergencySosButtonState extends State<EmergencySosButton>
                   ),
                 ],
               ),
-              child: const Icon(Icons.warning_amber_rounded,
-                  color: Colors.white, size: 26),
+              child: const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.white,
+                size: 26,
+              ),
             ),
           );
         },
@@ -188,9 +195,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
       isDismissible: false,
       enableDrag: false,
       backgroundColor: Colors.transparent,
-      builder: (_) => EmergencyCountdownSheet(
-        selectedCount: _selectedCount,
-      ),
+      builder: (_) => EmergencyCountdownSheet(selectedCount: _selectedCount),
     );
   }
 
@@ -218,7 +223,9 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
                     const Text(
                       "Select contacts to alert",
                       style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     ...kEmergencyContacts.map(_contactRow),
@@ -266,8 +273,11 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
               color: Colors.white.withOpacity(0.25),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.shield_outlined,
-                color: Colors.white, size: 22),
+            child: const Icon(
+              Icons.shield_outlined,
+              color: Colors.white,
+              size: 22,
+            ),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -277,9 +287,10 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
                 Text(
                   "Emergency SOS",
                   style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
                 SizedBox(height: 2),
                 Text(
@@ -323,25 +334,26 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
               SizedBox(width: 6),
               Text(
                 "Current Trip Details",
-                style:
-                    TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          const Text("Driver: Adebayo Johnson",
-              style: TextStyle(fontSize: 12.5)),
+          const Text(
+            "Driver: Adebayo Johnson",
+            style: TextStyle(fontSize: 12.5),
+          ),
           const SizedBox(height: 2),
-          const Text("Route: Abuja → Lagos",
-              style: TextStyle(fontSize: 12.5)),
+          const Text("Route: Abuja → Lagos", style: TextStyle(fontSize: 12.5)),
           const SizedBox(height: 2),
-          const Text("Vehicle: Toyota Camry (Grey) - ABC-123-XY",
-              style: TextStyle(fontSize: 12.5)),
+          const Text(
+            "Vehicle: Toyota Camry (Grey) - ABC-123-XY",
+            style: TextStyle(fontSize: 12.5),
+          ),
           const SizedBox(height: 8),
           Row(
             children: const [
-              Icon(Icons.location_on_outlined,
-                  size: 14, color: Colors.black54),
+              Icon(Icons.location_on_outlined, size: 14, color: Colors.black54),
               SizedBox(width: 4),
               Text(
                 "Approaching Lokoja Junction",
@@ -401,12 +413,16 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
                   Text(
                     contact.name,
                     style: const TextStyle(
-                        fontSize: 13.5, fontWeight: FontWeight.w600),
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   Text(
                     contact.number,
                     style: const TextStyle(
-                        fontSize: 11.5, color: Colors.black54),
+                      fontSize: 11.5,
+                      color: Colors.black54,
+                    ),
                   ),
                 ],
               ),
@@ -420,9 +436,9 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
               height: 22,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isSelected ? kPrimaryGreen : Colors.transparent,
+                color: isSelected ? Colors.redAccent : Colors.transparent,
                 border: Border.all(
-                  color: isSelected ? kPrimaryGreen : Colors.black26,
+                  color: isSelected ? Colors.redAccent : Colors.black26,
                   width: 1.5,
                 ),
               ),
@@ -441,7 +457,9 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
             child: Container(
               padding: const EdgeInsets.all(9),
               decoration: const BoxDecoration(
-                  color: kPrimaryGreen, shape: BoxShape.circle),
+                color: kPrimaryGreen,
+                shape: BoxShape.circle,
+              ),
               child: const Icon(Icons.call, color: Colors.white, size: 14),
             ),
           ),
@@ -470,8 +488,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
               children: [
                 Text(
                   "Live Location Sharing",
-                  style: TextStyle(
-                      fontSize: 13.5, fontWeight: FontWeight.w600),
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
                 ),
                 SizedBox(height: 2),
                 Text(
@@ -527,7 +544,9 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
         height: 48,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-            color: color, borderRadius: BorderRadius.circular(12)),
+          color: color,
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
@@ -537,9 +556,10 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
             Text(
               label,
               style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600),
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -707,14 +727,18 @@ class _EmergencyCountdownSheetState extends State<EmergencyCountdownSheet>
                     const Text(
                       "Emergency Activating...",
                       style: TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold),
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       "Alerting ${widget.selectedCount} contact${widget.selectedCount == 1 ? '' : 's'} with your location and trip details",
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                          fontSize: 13, color: Colors.black54),
+                        fontSize: 13,
+                        color: Colors.black54,
+                      ),
                     ),
                     const SizedBox(height: 24),
                     Container(
@@ -722,26 +746,34 @@ class _EmergencyCountdownSheetState extends State<EmergencyCountdownSheet>
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: kAmber.withOpacity(0.1),
-                        border:
-                            Border.all(color: kAmber.withOpacity(0.3)),
+                        border: Border.all(color: kAmber.withOpacity(0.3)),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Column(
                         children: [
-                          Text("📍 Sharing live location",
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600)),
+                          Text(
+                            "📍 Sharing live location",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           SizedBox(height: 6),
-                          Text("📱 Sending SMS alerts",
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600)),
+                          Text(
+                            "📱 Sending SMS alerts",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           SizedBox(height: 6),
-                          Text("🚨 Notifying Travelmate support",
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600)),
+                          Text(
+                            "🚨 Notifying Travelmate support",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -760,9 +792,10 @@ class _EmergencyCountdownSheetState extends State<EmergencyCountdownSheet>
                         child: const Text(
                           "Cancel Emergency",
                           style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold),
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -795,8 +828,11 @@ class _EmergencyCountdownSheetState extends State<EmergencyCountdownSheet>
               color: Colors.white.withOpacity(0.25),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.shield_outlined,
-                color: Colors.white, size: 22),
+            child: const Icon(
+              Icons.shield_outlined,
+              color: Colors.white,
+              size: 22,
+            ),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -806,9 +842,10 @@ class _EmergencyCountdownSheetState extends State<EmergencyCountdownSheet>
                 Text(
                   "Emergency SOS",
                   style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
                 SizedBox(height: 2),
                 Text(
