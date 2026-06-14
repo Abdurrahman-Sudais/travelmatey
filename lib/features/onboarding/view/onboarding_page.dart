@@ -110,7 +110,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                         title: 'Save Environment',
                         description:
                             'Reduce your carbon footprint and help to reduce traffic congestion',
-                        illustration: _buildMapPinIllustration(),
+                        illustration: _buildLogoIllustration(),
                       ),
                       _buildPage(
                         title: 'Stress Free Commute',
@@ -361,25 +361,14 @@ class _OnboardingPageState extends State<OnboardingPage>
   // ── Illustrations ──────────────────────────────────────────────────────────
 
   Widget _buildLogoIllustration() {
-    return Container(
-      width: 140.w,
-      height: 140.h,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
-        shape: BoxShape.circle,
-      ),
-      child: Center(
-        child: Container(
-          width: 100.w,
-          height: 100.h,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            Iconsax.car_copy,
-            size: 45.sp,
-            color: const Color(0xFF007A22),
+    return SizedBox(
+      width: 120.w,
+      height: 220.h,
+      child: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('lib/assets/logo.png'),
+            fit: BoxFit.fill,
           ),
         ),
       ),
@@ -444,15 +433,13 @@ class _OnboardingPageState extends State<OnboardingPage>
 
   Widget _buildBackground() {
     return Container(
-      color: const Color(0xFF007A22),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          _buildCircle(650),
-          _buildCircle(500),
-          _buildCircle(350),
-          _buildCircle(200),
-        ],
+      width: double.infinity,
+      height: double.infinity,
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('lib/assets/onboarding_bg.jpg'),
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }

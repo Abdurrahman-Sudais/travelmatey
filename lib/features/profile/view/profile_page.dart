@@ -466,7 +466,20 @@ class _ProfilePageState extends State<ProfilePage> {
   }) {
     final bool isSelected = appearanceMode == mode;
     return InkWell(
-      onTap: () => setState(() => appearanceMode = mode),
+      onTap: () => setState(() {
+        appearanceMode = mode;
+        switch (mode) {
+          case AppearanceMode.light:
+            themeModeNotifier.value = ThemeMode.light;
+            break;
+          case AppearanceMode.dark:
+            themeModeNotifier.value = ThemeMode.dark;
+            break;
+          case AppearanceMode.system:
+            themeModeNotifier.value = ThemeMode.system;
+            break;
+        }
+      }),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
