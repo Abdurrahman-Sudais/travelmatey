@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
@@ -52,16 +53,7 @@ class _HideEmergencySosState extends State<HideEmergencySos> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Wrap every page Scaffold with this instead of placing the overlay in
-/// MaterialApp.builder. This ensures the SOS button's context is always
-/// inside a Navigator, so showModalBottomSheet works correctly.
-///
-/// Usage:
-/// ```dart
-/// return SosScaffold(
-///   child: Scaffold(...),
-/// );
-/// ```
+/// Wrap every page Scaffold with this.
 class SosScaffold extends StatelessWidget {
   final Widget child;
   const SosScaffold({super.key, required this.child});
@@ -87,7 +79,7 @@ class SosScaffold extends StatelessWidget {
   }
 }
 
-/// Pulsing red SOS button. Tapping opens the Emergency SOS bottom sheet.
+/// Pulsing red SOS button.
 class EmergencySosButton extends StatefulWidget {
   const EmergencySosButton({super.key});
 
@@ -138,14 +130,21 @@ class _EmergencySosButtonState extends State<EmergencySosButton>
           return Opacity(
             opacity: _opacity.value,
             child: Container(
-              width: 48,
-              height: 48,
+              width: 52,
+              height: 52,
               decoration: const BoxDecoration(
                 color: kErrorRed,
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x55FF4B4B),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ],
               ),
-              child:
-                  const Icon(Icons.warning_amber_rounded, color: Colors.white),
+              child: const Icon(Icons.warning_amber_rounded,
+                  color: Colors.white, size: 26),
             ),
           );
         },
@@ -154,7 +153,7 @@ class _EmergencySosButtonState extends State<EmergencySosButton>
   }
 }
 
-/// Emergency SOS bottom sheet.
+/// Emergency SOS bottom sheet — supports multi-select contacts.
 class EmergencySosSheet extends StatefulWidget {
   const EmergencySosSheet({super.key});
 
@@ -163,9 +162,37 @@ class EmergencySosSheet extends StatefulWidget {
 }
 
 class _EmergencySosSheetState extends State<EmergencySosSheet> {
-  String? selectedContactNumber;
+  /// Multi-select: store all selected contact numbers.
+  final Set<String> _selectedNumbers = {};
 
-  bool get canActivate => selectedContactNumber != null;
+  bool get canActivate => _selectedNumbers.isNotEmpty;
+
+  int get _selectedCount => _selectedNumbers.length;
+
+  void _toggleContact(EmergencyContact contact) {
+    setState(() {
+      if (_selectedNumbers.contains(contact.number)) {
+        _selectedNumbers.remove(contact.number);
+      } else {
+        _selectedNumbers.add(contact.number);
+      }
+    });
+  }
+
+  void _activateEmergency() {
+    // Close this sheet, then show the countdown screen.
+    Navigator.pop(context);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (_) => EmergencyCountdownSheet(
+        selectedCount: _selectedCount,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -190,8 +217,8 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
                     const SizedBox(height: 20),
                     const Text(
                       "Select contacts to alert",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 10),
                     ...kEmergencyContacts.map(_contactRow),
@@ -207,8 +234,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
                         child: Text(
                           "Select at least one contact to activate emergency",
                           textAlign: TextAlign.center,
-                          style:
-                              TextStyle(fontSize: 12, color: kErrorRed),
+                          style: TextStyle(fontSize: 12, color: kErrorRed),
                         ),
                       ),
                   ],
@@ -240,8 +266,8 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
               color: Colors.white.withOpacity(0.25),
               shape: BoxShape.circle,
             ),
-            child:
-                const Icon(Icons.shield_outlined, color: Colors.white, size: 22),
+            child: const Icon(Icons.shield_outlined,
+                color: Colors.white, size: 22),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -271,8 +297,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
                 color: Colors.white.withOpacity(0.25),
                 shape: BoxShape.circle,
               ),
-              child:
-                  const Icon(Icons.close, color: Colors.white, size: 18),
+              child: const Icon(Icons.close, color: Colors.white, size: 18),
             ),
           ),
         ],
@@ -298,7 +323,8 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
               SizedBox(width: 6),
               Text(
                 "Current Trip Details",
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                style:
+                    TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -329,7 +355,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
   }
 
   Widget _contactRow(EmergencyContact contact) {
-    final bool isSelected = selectedContactNumber == contact.number;
+    final bool isSelected = _selectedNumbers.contains(contact.number);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -338,57 +364,60 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isSelected ? kPrimaryGreen : Colors.black.withOpacity(0.06),
+          color: isSelected ? kErrorRed : Colors.black.withOpacity(0.06),
           width: isSelected ? 1.4 : 1,
         ),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: contact.isServiceContact
-                  ? kErrorRed.withOpacity(0.12)
-                  : kPrimaryBlue.withOpacity(0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              contact.isServiceContact
-                  ? Icons.call
-                  : Icons.people_alt_outlined,
-              size: 16,
-              color:
-                  contact.isServiceContact ? kErrorRed : kPrimaryBlue,
+          // Tap entire left area to toggle selection
+          InkWell(
+            onTap: () => _toggleContact(contact),
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: contact.isServiceContact
+                    ? kErrorRed.withOpacity(0.12)
+                    : kPrimaryBlue.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                contact.isServiceContact
+                    ? Icons.call
+                    : Icons.people_alt_outlined,
+                size: 16,
+                color: contact.isServiceContact ? kErrorRed : kPrimaryBlue,
+              ),
             ),
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  contact.name,
-                  style: const TextStyle(
-                      fontSize: 13.5, fontWeight: FontWeight.w600),
-                ),
-                Text(
-                  contact.number,
-                  style:
-                      const TextStyle(fontSize: 11.5, color: Colors.black54),
-                ),
-              ],
+            child: InkWell(
+              onTap: () => _toggleContact(contact),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    contact.name,
+                    style: const TextStyle(
+                        fontSize: 13.5, fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    contact.number,
+                    style: const TextStyle(
+                        fontSize: 11.5, color: Colors.black54),
+                  ),
+                ],
+              ),
             ),
           ),
+          // Checkbox circle — tap to toggle
           InkWell(
-            onTap: () {
-              setState(() {
-                selectedContactNumber =
-                    isSelected ? null : contact.number;
-              });
-            },
+            onTap: () => _toggleContact(contact),
             child: Container(
-              width: 20,
-              height: 20,
+              width: 22,
+              height: 22,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isSelected ? kPrimaryGreen : Colors.transparent,
@@ -398,11 +427,12 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
                 ),
               ),
               child: isSelected
-                  ? const Icon(Icons.check, size: 12, color: Colors.white)
+                  ? const Icon(Icons.check, size: 13, color: Colors.white)
                   : null,
             ),
           ),
           const SizedBox(width: 10),
+          // Direct call button
           InkWell(
             onTap: () {
               // TODO: launch_url tel:${contact.number}
@@ -412,8 +442,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
               padding: const EdgeInsets.all(9),
               decoration: const BoxDecoration(
                   color: kPrimaryGreen, shape: BoxShape.circle),
-              child:
-                  const Icon(Icons.call, color: Colors.white, size: 14),
+              child: const Icon(Icons.call, color: Colors.white, size: 14),
             ),
           ),
         ],
@@ -447,8 +476,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
                 SizedBox(height: 2),
                 Text(
                   "Selected contacts will receive real-time location updates and trip details",
-                  style:
-                      TextStyle(fontSize: 11.5, color: Colors.black54),
+                  style: TextStyle(fontSize: 11.5, color: Colors.black54),
                 ),
               ],
             ),
@@ -521,11 +549,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
 
   Widget _activateButton() {
     return InkWell(
-      onTap: canActivate
-          ? () {
-              // TODO: trigger emergency alert flow
-            }
-          : null,
+      onTap: canActivate ? _activateEmergency : null,
       borderRadius: BorderRadius.circular(100),
       child: Container(
         width: double.infinity,
@@ -555,6 +579,257 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Countdown activation sheet shown after pressing "Activate Emergency".
+class EmergencyCountdownSheet extends StatefulWidget {
+  final int selectedCount;
+  const EmergencyCountdownSheet({super.key, required this.selectedCount});
+
+  @override
+  State<EmergencyCountdownSheet> createState() =>
+      _EmergencyCountdownSheetState();
+}
+
+class _EmergencyCountdownSheetState extends State<EmergencyCountdownSheet>
+    with SingleTickerProviderStateMixin {
+  int _seconds = 5;
+  Timer? _timer;
+
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseOpacity;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Pulse animation for the countdown circle — same fades-in-and-out as SOS button
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+
+    _pulseOpacity = Tween<double>(begin: 0.45, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) return;
+      setState(() => _seconds--);
+      if (_seconds <= 0) {
+        t.cancel();
+        // TODO: trigger actual emergency alert
+        // For now dismiss the sheet
+        if (mounted) Navigator.pop(context);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  void _cancelEmergency() {
+    _timer?.cancel();
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FractionallySizedBox(
+      heightFactor: 0.75,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            _header(),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Pulsing countdown circle
+                    AnimatedBuilder(
+                      animation: _pulseOpacity,
+                      builder: (context, child) {
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Outer pulse ring
+                            Opacity(
+                              opacity: _pulseOpacity.value * 0.3,
+                              child: Container(
+                                width: 160,
+                                height: 160,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: kErrorRed.withOpacity(0.2),
+                                ),
+                              ),
+                            ),
+                            // Inner circle with number
+                            Opacity(
+                              opacity: _pulseOpacity.value,
+                              child: Container(
+                                width: 110,
+                                height: 110,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: kErrorRed,
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  "$_seconds",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 52,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 28),
+                    const Text(
+                      "Emergency Activating...",
+                      style: TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Alerting ${widget.selectedCount} contact${widget.selectedCount == 1 ? '' : 's'} with your location and trip details",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontSize: 13, color: Colors.black54),
+                    ),
+                    const SizedBox(height: 24),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: kAmber.withOpacity(0.1),
+                        border:
+                            Border.all(color: kAmber.withOpacity(0.3)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Column(
+                        children: [
+                          Text("📍 Sharing live location",
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600)),
+                          SizedBox(height: 6),
+                          Text("📱 Sending SMS alerts",
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600)),
+                          SizedBox(height: 6),
+                          Text("🚨 Notifying Travelmate support",
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    InkWell(
+                      onTap: _cancelEmergency,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: double.infinity,
+                        height: 52,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3A3A3A),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          "Cancel Emergency",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _header() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 18, 16, 20),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [kErrorRed, Color(0xFFFF7676)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.25),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.shield_outlined,
+                color: Colors.white, size: 22),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Emergency SOS",
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  "Safety is our priority",
+                  style: TextStyle(fontSize: 12, color: Colors.white70),
+                ),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: _cancelEmergency,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.25),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close, color: Colors.white, size: 18),
+            ),
+          ),
+        ],
       ),
     );
   }

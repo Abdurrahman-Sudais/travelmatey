@@ -3,6 +3,9 @@ import '../theme/app_colors.dart';
 import '../widgets/emergency_sos.dart';
 import '../widgets/edit_profile_sheet.dart';
 import '../widgets/app_bottom_nav.dart';
+import 'notification_settings_page.dart';
+import 'help_support_page.dart';
+import 'pdf_export_manager_page.dart';
 import '../main.dart' show activeRoleNotifier;
 
 enum ActiveRole { driver, rider }
@@ -17,7 +20,6 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // Mirror the global notifier value locally so the UI reacts immediately.
   late ActiveRole activeRole;
   AppearanceMode appearanceMode = AppearanceMode.light;
 
@@ -31,13 +33,13 @@ class _ProfilePageState extends State<ProfilePage> {
     if (role == activeRole) return;
     setState(() => activeRole = role);
     activeRoleNotifier.value = role;
-
-    // Pop all the way back to the root RoleAwareHome which will rebuild.
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isDriver = activeRole == ActiveRole.driver;
+
     return SosScaffold(
       child: Scaffold(
         backgroundColor: kBackground,
@@ -59,6 +61,11 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(height: 16),
                     _profileCard(),
                     const SizedBox(height: 16),
+                    // Vehicle info only shown for drivers
+                    if (isDriver) ...[
+                      _vehicleCard(),
+                      const SizedBox(height: 16),
+                    ],
                     _appearanceCard(),
                     const SizedBox(height: 16),
                     _settingsCard(),
@@ -201,8 +208,8 @@ class _ProfilePageState extends State<ProfilePage> {
         Icon(icon, size: 17, color: Colors.black54),
         const SizedBox(width: 10),
         Text(text,
-            style: const TextStyle(
-                fontSize: 13.5, color: Colors.black87)),
+            style:
+                const TextStyle(fontSize: 13.5, color: Colors.black87)),
       ],
     );
   }
@@ -213,8 +220,7 @@ class _ProfilePageState extends State<ProfilePage> {
       children: [
         Row(
           children: const [
-            Icon(Icons.person_outline,
-                size: 17, color: Colors.black87),
+            Icon(Icons.person_outline, size: 17, color: Colors.black87),
             SizedBox(width: 8),
             Text(
               "Active Role",
@@ -246,10 +252,10 @@ class _ProfilePageState extends State<ProfilePage> {
       onTap: () => _switchRole(role),
       borderRadius: BorderRadius.circular(100),
       child: Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: 16, vertical: 7),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
         decoration: BoxDecoration(
-          color: isActive ? kPrimaryGreen : Colors.transparent,
+          color: isActive ? kPrimaryBlue : Colors.transparent,
           borderRadius: BorderRadius.circular(100),
         ),
         child: Text(
@@ -286,6 +292,89 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
+
+  // ── Vehicle card (driver only) ──────────────────────────────────────────
+
+  Widget _vehicleCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Vehicle Information",
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: kPrimaryBlue),
+          ),
+          const SizedBox(height: 14),
+          _vehicleDetailRow("Make & Model", "Toyota Sienna"),
+          _vehicleDetailRow("Year", "2020"),
+          _vehicleDetailRow("Color", "Grey"),
+          _vehicleDetailRow("Plate Number", "ABC-123-XY"),
+          _vehicleDetailRow("Seats", "6", isLast: true),
+          const SizedBox(height: 16),
+          InkWell(
+            onTap: () => _showEditVehicleSheet(context),
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: double.infinity,
+              height: 46,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0F0F0),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                "Edit Vehicle",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _vehicleDetailRow(String label, String value,
+      {bool isLast = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(fontSize: 11.5, color: Colors.black45)),
+        const SizedBox(height: 2),
+        Text(value,
+            style: const TextStyle(
+                fontSize: 14, fontWeight: FontWeight.w600)),
+        if (!isLast) ...[
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: Color(0xFFF5F5F5)),
+          const SizedBox(height: 12),
+        ],
+      ],
+    );
+  }
+
+  void _showEditVehicleSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _EditVehicleSheet(),
+    );
+  }
+
+  // ── Appearance card ─────────────────────────────────────────────────────
 
   Widget _appearanceCard() {
     return Container(
@@ -353,9 +442,7 @@ class _ProfilePageState extends State<ProfilePage> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected
-                ? kPrimaryBlue
-                : const Color(0xFFE6E6E6),
+            color: isSelected ? kPrimaryBlue : const Color(0xFFE6E6E6),
             width: isSelected ? 1.6 : 1,
           ),
         ),
@@ -378,6 +465,8 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
+
+  // ── Settings list ────────────────────────────────────────────────────────
 
   Widget _settingsCard() {
     final items = <_SettingsItem>[
@@ -412,6 +501,27 @@ class _ProfilePageState extends State<ProfilePage> {
             label: item.label,
             iconColor: item.iconColor,
             isLast: index == items.length - 1,
+            onTap: () {
+              if (item.label == "Notification Settings") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const NotificationSettingsPage()),
+                );
+              } else if (item.label == "Help & Support") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const HelpSupportPage()),
+                );
+              } else if (item.label == "Export PDF Presentation") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const PdfExportManagerPage()),
+                );
+              }
+            },
           );
         }),
       ),
@@ -423,31 +533,28 @@ class _ProfilePageState extends State<ProfilePage> {
     required String label,
     Color? iconColor,
     bool isLast = false,
+    VoidCallback? onTap,
   }) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap ?? () {},
       child: Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: 16, vertical: 14),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           border: isLast
               ? null
               : const Border(
-                  bottom:
-                      BorderSide(color: Color(0xFFF5F5F5))),
+                  bottom: BorderSide(color: Color(0xFFF5F5F5))),
         ),
         child: Row(
           children: [
-            Icon(icon,
-                size: 19,
-                color: iconColor ?? Colors.black87),
+            Icon(icon, size: 19, color: iconColor ?? Colors.black87),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 label,
                 style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600),
+                    fontSize: 13.5, fontWeight: FontWeight.w600),
               ),
             ),
             const Icon(Icons.chevron_right,
@@ -509,6 +616,226 @@ class _ProfilePageState extends State<ProfilePage> {
                   color: kErrorRed),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Edit Vehicle Bottom Sheet ────────────────────────────────────────────────
+
+class _EditVehicleSheet extends StatefulWidget {
+  const _EditVehicleSheet();
+
+  @override
+  State<_EditVehicleSheet> createState() => _EditVehicleSheetState();
+}
+
+class _EditVehicleSheetState extends State<_EditVehicleSheet> {
+  final _makeCtrl = TextEditingController(text: "Toyota");
+  final _modelCtrl = TextEditingController(text: "Sienna");
+  final _yearCtrl = TextEditingController(text: "2020");
+  final _colorCtrl = TextEditingController(text: "Grey");
+  final _plateCtrl = TextEditingController(text: "ABC-123-XY");
+  final _seatsCtrl = TextEditingController(text: "6");
+
+  @override
+  void dispose() {
+    _makeCtrl.dispose();
+    _modelCtrl.dispose();
+    _yearCtrl.dispose();
+    _colorCtrl.dispose();
+    _plateCtrl.dispose();
+    _seatsCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
+    return DraggableScrollableSheet(
+      initialChildSize: 0.88,
+      minChildSize: 0.6,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollCtrl) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius:
+                BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              // Header gradient
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                decoration: const BoxDecoration(
+                  gradient: kPrimaryGradient,
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.25),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.edit_outlined,
+                          color: Colors.white, size: 26),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "Edit Vehicle",
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+              // Scrollable content
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollCtrl,
+                  padding:
+                      EdgeInsets.fromLTRB(16, 20, 16, bottom + 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Basic Information",
+                        style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                            color: kPrimaryBlue),
+                      ),
+                      const SizedBox(height: 14),
+                      _field("Make", _makeCtrl),
+                      const SizedBox(height: 14),
+                      _field("Model", _modelCtrl),
+                      const SizedBox(height: 14),
+                      _field("Year", _yearCtrl,
+                          keyboardType: TextInputType.number),
+                      const SizedBox(height: 14),
+                      _field("Color", _colorCtrl),
+                      const SizedBox(height: 14),
+                      _field("Plate Number", _plateCtrl),
+                      const SizedBox(height: 14),
+                      _field("Seats", _seatsCtrl,
+                          keyboardType: TextInputType.number),
+                      const SizedBox(height: 28),
+                      _saveButton(),
+                      const SizedBox(height: 12),
+                      _cancelButton(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _field(String label, TextEditingController ctrl,
+      {TextInputType? keyboardType}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style:
+                const TextStyle(fontSize: 12, color: Colors.black54)),
+        const SizedBox(height: 6),
+        TextField(
+          controller: ctrl,
+          keyboardType: keyboardType,
+          style:
+              const TextStyle(fontSize: 13.5, color: Colors.black87),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: const Color(0xFFF5F5F5),
+            contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14, vertical: 13),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: kPrimaryBlue),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _saveButton() {
+    return InkWell(
+      onTap: () {
+        // TODO: submit vehicle changes
+        Navigator.pop(context);
+      },
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: double.infinity,
+        height: 52,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          gradient: kPrimaryGradient,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: kPrimaryGreen.withOpacity(0.25),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: const Text(
+          "Save Changes",
+          style: TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  Widget _cancelButton() {
+    return InkWell(
+      onTap: () => Navigator.pop(context),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: double.infinity,
+        height: 48,
+        alignment: Alignment.center,
+        child: const Text(
+          "Cancel",
+          style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black54),
         ),
       ),
     );
