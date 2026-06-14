@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import 'call_page.dart';
 
 enum _MessageSender { me, them }
 
@@ -26,6 +27,7 @@ class ChatPage extends StatefulWidget {
   final String initials;
   final Color avatarColor;
   final bool online;
+  final String phoneNumber; // ← new
 
   const ChatPage({
     super.key,
@@ -33,6 +35,7 @@ class ChatPage extends StatefulWidget {
     required this.initials,
     required this.avatarColor,
     this.online = true,
+    this.phoneNumber = "+234 800 000 0000", // ← new
   });
 
   @override
@@ -175,9 +178,35 @@ class _ChatPageState extends State<ChatPage> {
               ],
             ),
           ),
-          _circleIconButton(Icons.call_outlined, kPrimaryBlue),
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => VoiceCallPage(
+                  name: widget.name,
+                  initials: widget.initials,
+                  avatarColor: widget.avatarColor,
+                  phoneNumber: widget.phoneNumber,
+                ),
+              ),
+            ),
+            child: _circleIconButton(Icons.call_outlined, kPrimaryBlue),
+          ),
           const SizedBox(width: 8),
-          _circleIconButton(Icons.videocam_outlined, kPrimaryGreen),
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => VideoCallPage(
+                  name: widget.name,
+                  initials: widget.initials,
+                  avatarColor: widget.avatarColor,
+                  phoneNumber: widget.phoneNumber,
+                ),
+              ),
+            ),
+            child: _circleIconButton(Icons.videocam_outlined, kPrimaryGreen),
+          ),
         ],
       ),
     );

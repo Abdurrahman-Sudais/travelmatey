@@ -1,6 +1,8 @@
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'widgets/emergency_sos.dart';
 import 'pages/search_page.dart';
 import 'pages/bookings_page.dart';
@@ -8,6 +10,7 @@ import 'pages/profile_page.dart';
 import 'pages/driver_home_page.dart';
 import 'theme/app_colors.dart';
 import 'widgets/app_bottom_nav.dart';
+import 'routes.dart';
 
 /// Global active-role notifier. Any widget in the tree can listen to this.
 final ValueNotifier<ActiveRole> activeRoleNotifier = ValueNotifier<ActiveRole>(
@@ -28,22 +31,32 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      useInheritedMediaQuery: true,
-      locale: DevicePreview.locale(context),
-      builder: DevicePreview.appBuilder,
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'Poppins',
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: kBackground,
-          brightness: Brightness.light,
-        ),
-      ),
-      home: const RoleAwareHome(),
+    return ScreenUtilInit(
+      // Design frame size — matches a standard 390×844 phone (iPhone 14)
+      designSize: const Size(390, 844),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return GetMaterialApp(
+          useInheritedMediaQuery: true,
+          locale: DevicePreview.locale(context),
+          builder: DevicePreview.appBuilder,
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            fontFamily: 'Poppins',
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: kBackground,
+              brightness: Brightness.light,
+            ),
+          ),
+          initialRoute: AppPages.initial,
+          getPages: AppPages.routes,
+        );
+      },
     );
   }
 }
+
 
 /// Listens to [activeRoleNotifier] and swaps between rider and driver home.
 class RoleAwareHome extends StatelessWidget {
