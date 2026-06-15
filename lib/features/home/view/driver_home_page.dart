@@ -5,6 +5,7 @@ import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 import 'package:travelmateeee/features/rides/view/my_rides_page.dart';
 import 'package:travelmateeee/features/wallet/view/wallet_page.dart';
 import 'package:travelmateeee/features/profile/view/notifications_page.dart';
+import 'package:travelmateeee/shared/widgets/kyc_popup.dart';
 
 class DriverHomePage extends StatefulWidget {
   const DriverHomePage({super.key});
@@ -14,8 +15,23 @@ class DriverHomePage extends StatefulWidget {
 }
 
 class _DriverHomePageState extends State<DriverHomePage> {
+  // TODO: replace with real KYC status from your auth/user provider
+  bool _kycCompleted = false;
+
   void _goTo(Widget page) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+  }
+
+  Future<void> _kycGated(VoidCallback action) async {
+    if (_kycCompleted) {
+      action();
+      return;
+    }
+    final verified = await showKycPopup(context);
+    if (verified == true) {
+      setState(() => _kycCompleted = true);
+      action();
+    }
   }
 
   @override
@@ -199,9 +215,9 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
   Widget _postNewRideButton() {
     return InkWell(
-      onTap: () {
+      onTap: () => _kycGated(() {
         // TODO: navigate to Post New Ride screen
-      },
+      }),
       borderRadius: BorderRadius.circular(14),
       child: Container(
         width: double.infinity,
@@ -313,5 +329,4 @@ class _DriverHomePageState extends State<DriverHomePage> {
       ),
     );
   }
-
 }

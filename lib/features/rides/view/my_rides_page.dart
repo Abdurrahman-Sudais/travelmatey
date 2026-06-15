@@ -2,18 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
+import 'ride_details_page.dart';
+import 'post_ride_page.dart';
+import 'trip_in_progress_page.dart';
 
-enum _RideStatus { upcoming, inProgress, completed }
+enum RideStatus { upcoming, inProgress, completed }
 
-class _RideItem {
+class RideItem {
   final String from;
   final String to;
   final String departure;
   final String seats;
   final String earnings;
-  final _RideStatus status;
+  final RideStatus status;
 
-  const _RideItem({
+  const RideItem({
     required this.from,
     required this.to,
     required this.departure,
@@ -34,56 +37,55 @@ class _MyRidesPageState extends State<MyRidesPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
-  final _upcoming = const [
-    _RideItem(
+  List<RideItem> _upcoming = [
+    const RideItem(
       from: 'Abuja',
       to: 'Lagos',
       departure: 'Dec 25, 2024 · 10:30',
       seats: '4/6 seats',
       earnings: '₦100,000',
-      status: _RideStatus.upcoming,
+      status: RideStatus.upcoming,
     ),
-    _RideItem(
+    const RideItem(
       from: 'Lagos',
       to: 'Port Harcourt',
       departure: 'Dec 27, 2024 · 08:00',
       seats: '2/4 seats',
       earnings: '₦70,000',
-      status: _RideStatus.upcoming,
+      status: RideStatus.upcoming,
     ),
   ];
 
   final _inProgress = const [
-    _RideItem(
+    RideItem(
       from: 'Kano',
       to: 'Abuja',
       departure: 'Jun 13, 2026 · 06:00',
       seats: '3/4 seats',
       earnings: '₦45,000',
-      status: _RideStatus.inProgress,
+      status: RideStatus.inProgress,
     ),
   ];
 
   final _completed = const [
-    _RideItem(
+    RideItem(
       from: 'Kaduna',
       to: 'Lagos',
       departure: 'Jun 6, 2026 · 07:00',
       seats: '4/4 seats',
       earnings: '₦95,000',
-      status: _RideStatus.completed,
+      status: RideStatus.completed,
     ),
-    _RideItem(
+    RideItem(
       from: 'Abuja',
       to: 'Enugu',
       departure: 'May 28, 2026 · 09:00',
       seats: '3/4 seats',
       earnings: '₦60,000',
-      status: _RideStatus.completed,
+      status: RideStatus.completed,
     ),
   ];
 
-  // Summary stats
   int get _totalEarningsK => 450;
   int get _upcomingCount => _upcoming.length + _inProgress.length;
   int get _requestsCount => 7;
@@ -98,6 +100,23 @@ class _MyRidesPageState extends State<MyRidesPage>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _cancelRide(RideItem item) {
+    setState(() {
+      _upcoming.remove(item);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Ride from ${item.from} to ${item.to} cancelled'),
+        backgroundColor: Colors.redAccent,
+        action: SnackBarAction(
+          label: 'Undo',
+          textColor: Colors.white,
+          onPressed: () => setState(() => _upcoming.add(item)),
+        ),
+      ),
+    );
   }
 
   @override
@@ -121,7 +140,9 @@ class _MyRidesPageState extends State<MyRidesPage>
                         const Text(
                           "My Rides",
                           style: TextStyle(
-                              fontSize: 22, fontWeight: FontWeight.bold),
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 14),
                         _summaryRow(),
@@ -129,7 +150,6 @@ class _MyRidesPageState extends State<MyRidesPage>
                       ],
                     ),
                   ),
-                  // Tab bar
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: const BoxDecoration(
@@ -144,9 +164,10 @@ class _MyRidesPageState extends State<MyRidesPage>
                       labelColor: kPrimaryGreen,
                       unselectedLabelColor: Colors.black54,
                       labelStyle: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600),
-                      unselectedLabelStyle:
-                          const TextStyle(fontSize: 13),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      unselectedLabelStyle: const TextStyle(fontSize: 13),
                       dividerColor: Colors.transparent,
                       tabs: const [
                         Tab(text: "Upcoming"),
@@ -169,9 +190,7 @@ class _MyRidesPageState extends State<MyRidesPage>
                 ],
               ),
             ),
-            Align(
-                alignment: Alignment.bottomCenter,
-                child: _postRideBar()),
+            Align(alignment: Alignment.bottomCenter, child: _postRideBar()),
           ],
         ),
       ),
@@ -185,8 +204,7 @@ class _MyRidesPageState extends State<MyRidesPage>
         mainAxisSize: MainAxisSize.min,
         children: const [
           Icon(Icons.chevron_left, size: 22, color: Colors.black87),
-          Text("Back",
-              style: TextStyle(fontSize: 14, color: Colors.black87)),
+          Text("Back", style: TextStyle(fontSize: 14, color: Colors.black87)),
         ],
       ),
     );
@@ -204,26 +222,21 @@ class _MyRidesPageState extends State<MyRidesPage>
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _summaryCard(
-            label: "Upcoming",
-            value: "$_upcomingCount",
-          ),
+          child: _summaryCard(label: "Upcoming", value: "$_upcomingCount"),
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _summaryCard(
-            label: "Requests",
-            value: "$_requestsCount",
-          ),
+          child: _summaryCard(label: "Requests", value: "$_requestsCount"),
         ),
       ],
     );
   }
 
-  Widget _summaryCard(
-      {required String label,
-      required String value,
-      Color? valueColor}) {
+  Widget _summaryCard({
+    required String label,
+    required String value,
+    Color? valueColor,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
       decoration: BoxDecoration(
@@ -240,9 +253,10 @@ class _MyRidesPageState extends State<MyRidesPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 10, color: Colors.black54)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 10, color: Colors.black54),
+          ),
           const SizedBox(height: 4),
           Text(
             value,
@@ -257,11 +271,13 @@ class _MyRidesPageState extends State<MyRidesPage>
     );
   }
 
-  Widget _rideList(List<_RideItem> items) {
+  Widget _rideList(List<RideItem> items) {
     if (items.isEmpty) {
       return const Center(
-        child: Text("No rides here yet.",
-            style: TextStyle(color: Colors.black38)),
+        child: Text(
+          "No rides here yet.",
+          style: TextStyle(color: Colors.black38),
+        ),
       );
     }
     return ListView.builder(
@@ -271,7 +287,7 @@ class _MyRidesPageState extends State<MyRidesPage>
     );
   }
 
-  Widget _rideCard(_RideItem item) {
+  Widget _rideCard(RideItem item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
@@ -288,7 +304,6 @@ class _MyRidesPageState extends State<MyRidesPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Route row
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
             child: Row(
@@ -311,14 +326,20 @@ class _MyRidesPageState extends State<MyRidesPage>
             padding: const EdgeInsets.all(14),
             child: Column(
               children: [
-                _detailRow(Icons.schedule_outlined,
-                    "Departure:", item.departure),
+                _detailRow(
+                  Icons.schedule_outlined,
+                  "Departure:",
+                  item.departure,
+                ),
                 const SizedBox(height: 8),
                 _detailRow(Icons.people_outline, "Riders:", item.seats),
                 const SizedBox(height: 8),
-                _detailRow(Icons.payments_outlined,
-                    "Earnings:", item.earnings,
-                    valueColor: kPrimaryGreen),
+                _detailRow(
+                  Icons.payments_outlined,
+                  "Earnings:",
+                  item.earnings,
+                  valueColor: kPrimaryGreen,
+                ),
                 const SizedBox(height: 14),
                 _actionRow(item),
               ],
@@ -338,87 +359,134 @@ class _MyRidesPageState extends State<MyRidesPage>
           decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
         ),
         const SizedBox(width: 8),
-        Text(text,
-            style: const TextStyle(
-                fontSize: 15, fontWeight: FontWeight.bold)),
+        Text(
+          text,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+        ),
       ],
     );
   }
 
-  Widget _statusBadge(_RideStatus status) {
-    final label = status == _RideStatus.upcoming
+  Widget _statusBadge(RideStatus status) {
+    final label = status == RideStatus.upcoming
         ? "Upcoming"
-        : status == _RideStatus.inProgress
-            ? "In Progress"
-            : "Completed";
-    final color = status == _RideStatus.upcoming
+        : status == RideStatus.inProgress
+        ? "In Progress"
+        : "Completed";
+    final color = status == RideStatus.upcoming
         ? kPrimaryBlue
-        : status == _RideStatus.inProgress
-            ? kAmber
-            : kPrimaryGreen;
+        : status == RideStatus.inProgress
+        ? kAmber
+        : kPrimaryGreen;
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withOpacity(0.4)),
       ),
-      child: Text(label,
-          style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: color)),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 
-  Widget _detailRow(IconData icon, String label, String value,
-      {Color? valueColor}) {
+  Widget _detailRow(
+    IconData icon,
+    String label,
+    String value, {
+    Color? valueColor,
+  }) {
     return Row(
       children: [
         Icon(icon, size: 15, color: Colors.black45),
         const SizedBox(width: 6),
-        Text(label,
-            style:
-                const TextStyle(fontSize: 12.5, color: Colors.black54)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12.5, color: Colors.black54),
+        ),
         const Spacer(),
         Text(
           value,
           style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
-              color: valueColor ?? Colors.black87),
-        ),
-      ],
-    );
-  }
-
-  Widget _actionRow(_RideItem item) {
-    if (item.status == _RideStatus.completed) {
-      return const SizedBox.shrink();
-    }
-    return Row(
-      children: [
-        Expanded(
-          child: _chip("View Details", kPrimaryBlue, filled: false),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _chip(
-            item.status == _RideStatus.inProgress
-                ? "Track Ride"
-                : "Requests",
-            kPrimaryGreen,
-            filled: true,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: valueColor ?? Colors.black87,
           ),
         ),
       ],
     );
   }
 
-  Widget _chip(String label, Color color, {required bool filled}) {
+  Widget _actionRow(RideItem item) {
+    if (item.status == RideStatus.completed) {
+      return SizedBox(
+        width: double.infinity,
+        child: _chip(
+          "View Details",
+          kPrimaryBlue,
+          filled: false,
+          onTap: () => _openDetails(item),
+        ),
+      );
+    }
+    return Row(
+      children: [
+        Expanded(
+          child: _chip(
+            "View Details",
+            kPrimaryBlue,
+            filled: false,
+            onTap: () => _openDetails(item),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _chip(
+            item.status == RideStatus.inProgress ? "Track Ride" : "Requests",
+            kPrimaryGreen,
+            filled: true,
+            onTap: () {
+              if (item.status == RideStatus.inProgress) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TripInProgressPage(ride: item),
+                  ),
+                );
+              } else {
+                _openDetails(item);
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openDetails(RideItem item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => RideDetailsPage(ride: item)),
+    ).then((_) {
+      // Refresh in case a ride was cancelled from details page
+      setState(() {});
+    });
+  }
+
+  Widget _chip(
+    String label,
+    Color color, {
+    required bool filled,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
         height: 40,
@@ -451,7 +519,10 @@ class _MyRidesPageState extends State<MyRidesPage>
           children: [
             InkWell(
               onTap: () {
-                // TODO: navigate to Post New Ride
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PostRidePage()),
+                );
               },
               borderRadius: BorderRadius.circular(14),
               child: Container(
@@ -475,11 +546,12 @@ class _MyRidesPageState extends State<MyRidesPage>
                     Icon(Icons.add, color: Colors.white, size: 18),
                     SizedBox(width: 8),
                     Text(
-                      "+ Post New Ride",
+                      "Post New Ride",
                       style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold),
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -492,5 +564,4 @@ class _MyRidesPageState extends State<MyRidesPage>
       ),
     );
   }
-
 }

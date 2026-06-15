@@ -3,7 +3,7 @@ import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 
-class BookingDetailsPage extends StatelessWidget {
+class BookingDetailsPage extends StatefulWidget {
   final String bookingId;
   final String driverName;
   final double driverRating;
@@ -26,6 +26,423 @@ class BookingDetailsPage extends StatelessWidget {
   });
 
   @override
+  State<BookingDetailsPage> createState() => _BookingDetailsPageState();
+}
+
+class _BookingDetailsPageState extends State<BookingDetailsPage> {
+  // ── Edit Ride dialog ────────────────────────────────────────────────────────
+
+  void _showEditRideDialog() {
+    // Local state for the dialog dropdowns
+    String selectedDate = '06/17/2026';
+    String selectedTime = '8:00 AM';
+    String selectedSeats = '2 seats';
+
+    final dates = [
+      '06/17/2026',
+      '06/18/2026',
+      '06/19/2026',
+      '06/20/2026',
+      '06/21/2026',
+    ];
+    final times = [
+      '6:00 AM',
+      '7:00 AM',
+      '8:00 AM',
+      '9:00 AM',
+      '10:00 AM',
+      '11:00 AM',
+      '12:00 PM',
+      '1:00 PM',
+      '2:00 PM',
+      '3:00 PM',
+      '4:00 PM',
+      '5:00 PM',
+    ];
+    final seatOptions = ['1 seat', '2 seats', '3 seats', '4 seats'];
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return Center(
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: kPrimaryBlue.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.edit_outlined,
+                              color: kPrimaryBlue,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Edit Ride",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  "Free to modify",
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    color: kPrimaryGreen,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => Navigator.pop(ctx),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.black54,
+                              size: 22,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 22),
+
+                      // Travel Date
+                      const Text(
+                        "Travel Date",
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _dropdownField(
+                        value: selectedDate,
+                        items: dates,
+                        onChanged: (v) =>
+                            setDialogState(() => selectedDate = v!),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Departure Time
+                      const Text(
+                        "Departure Time",
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _dropdownField(
+                        value: selectedTime,
+                        items: times,
+                        onChanged: (v) =>
+                            setDialogState(() => selectedTime = v!),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Number of Seats
+                      const Text(
+                        "Number of Seats",
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _dropdownField(
+                        value: selectedSeats,
+                        items: seatOptions,
+                        onChanged: (v) =>
+                            setDialogState(() => selectedSeats = v!),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Info note
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: kPrimaryBlue.withOpacity(0.07),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: kPrimaryBlue.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Icon(
+                              Icons.info_outline,
+                              size: 16,
+                              color: kPrimaryBlue,
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "If changes result in a price difference, "
+                                "you'll be prompted to pay the shortfall or "
+                                "receive a refund for any excess.",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black54,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+
+                      // Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => Navigator.pop(ctx),
+                              child: Container(
+                                height: 48,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF0F0F0),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Text(
+                                  "Cancel",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                // TODO: apply edit changes
+                                Navigator.pop(ctx);
+                              },
+                              child: Container(
+                                height: 48,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  gradient: kPrimaryGradient,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Text(
+                                  "Save Changes",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ── Cancel Ride warning dialog ──────────────────────────────────────────────
+
+  void _showCancelWarning() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) => Center(
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: kErrorRed.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.warning_amber_rounded,
+                    color: kErrorRed,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Cancel Ride?",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  "Are you sure you want to cancel this booking? "
+                  "A 5% cancellation fee will be deducted from your refund.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    color: Colors.black54,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: kErrorRed.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: kErrorRed.withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    children: const [
+                      Icon(Icons.info_outline, size: 15, color: kErrorRed),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "Cancellation fee: 5% of total booking amount",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: kErrorRed,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 22),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(ctx),
+                        child: Container(
+                          height: 48,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0F0F0),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            "Keep Ride",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          // TODO: confirm cancellation
+                          Navigator.pop(ctx);
+                          Navigator.maybePop(context);
+                        },
+                        child: Container(
+                          height: 48,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: kErrorRed,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            "Cancel Ride",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+
+  Widget _dropdownField({
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black54),
+          items: items
+              .map((i) => DropdownMenuItem(value: i, child: Text(i)))
+              .toList(),
+          onChanged: onChanged,
+          style: const TextStyle(fontSize: 14, color: Colors.black87),
+        ),
+      ),
+    );
+  }
+
+  // ── Build ───────────────────────────────────────────────────────────────────
+
+  @override
   Widget build(BuildContext context) {
     return SosScaffold(
       child: Scaffold(
@@ -43,13 +460,17 @@ class BookingDetailsPage extends StatelessWidget {
                     const Text(
                       "Booking Details",
                       style: TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.bold),
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "Booking ID: #$bookingId",
+                      "Booking ID: #${widget.bookingId}",
                       style: const TextStyle(
-                          fontSize: 13, color: Colors.black54),
+                        fontSize: 13,
+                        color: Colors.black54,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     _statusBanner(),
@@ -80,12 +501,11 @@ class BookingDetailsPage extends StatelessWidget {
   Widget _backButton(BuildContext context) {
     return InkWell(
       onTap: () => Navigator.maybePop(context),
-      child: Row(
+      child: const Row(
         mainAxisSize: MainAxisSize.min,
-        children: const [
+        children: [
           Icon(Icons.chevron_left, size: 22, color: Colors.black87),
-          Text("Back",
-              style: TextStyle(fontSize: 14, color: Colors.black87)),
+          Text("Back", style: TextStyle(fontSize: 14, color: Colors.black87)),
         ],
       ),
     );
@@ -109,8 +529,7 @@ class BookingDetailsPage extends StatelessWidget {
               color: kAmber,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.access_time,
-                color: Colors.white, size: 20),
+            child: const Icon(Icons.access_time, color: Colors.white, size: 20),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -120,15 +539,15 @@ class BookingDetailsPage extends StatelessWidget {
                 Text(
                   "Awaiting Driver Acceptance",
                   style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: kAmber),
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: kAmber,
+                  ),
                 ),
                 SizedBox(height: 2),
                 Text(
                   "Your payment is held securely in escrow",
-                  style: TextStyle(
-                      fontSize: 12.5, color: Colors.black54),
+                  style: TextStyle(fontSize: 12.5, color: Colors.black54),
                 ),
               ],
             ),
@@ -151,8 +570,7 @@ class BookingDetailsPage extends StatelessWidget {
         children: [
           const Text(
             "Driver Information",
-            style:
-                TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 14),
           Row(
@@ -168,9 +586,10 @@ class BookingDetailsPage extends StatelessWidget {
                   child: Text(
                     "U",
                     style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -179,27 +598,28 @@ class BookingDetailsPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    driverName,
+                    widget.driverName,
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.star,
-                          size: 15, color: kAmber),
+                      const Icon(Icons.star, size: 15, color: kAmber),
                       const SizedBox(width: 4),
                       Text(
-                        "$driverRating",
+                        "${widget.driverRating}",
                         style: const TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.bold),
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(width: 6),
                       const Text(
                         "(Driver Rating)",
-                        style: TextStyle(
-                            fontSize: 12, color: Colors.black45),
+                        style: TextStyle(fontSize: 12, color: Colors.black45),
                       ),
                     ],
                   ),
@@ -225,8 +645,7 @@ class BookingDetailsPage extends StatelessWidget {
         children: [
           const Text(
             "Trip Details",
-            style:
-                TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           IntrinsicHeight(
@@ -244,10 +663,7 @@ class BookingDetailsPage extends StatelessWidget {
                       ),
                     ),
                     Expanded(
-                      child: Container(
-                        width: 2,
-                        color: const Color(0xFFE0E0E0),
-                      ),
+                      child: Container(width: 2, color: Colors.grey.shade200),
                     ),
                     Container(
                       width: 12,
@@ -264,31 +680,47 @@ class BookingDetailsPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("From",
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.black45)),
-                      const SizedBox(height: 2),
-                      Text(from,
-                          style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold)),
-                      const Text("Ojota Park",
-                          style: TextStyle(
-                              fontSize: 12.5,
-                              color: Colors.black54)),
-                      const SizedBox(height: 18),
-                      const Text("To",
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.black45)),
-                      const SizedBox(height: 2),
-                      Text(to,
-                          style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold)),
-                      const Text("Ojota Park",
-                          style: TextStyle(
-                              fontSize: 12.5,
-                              color: Colors.black54)),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "From",
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.black45,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.from,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "To",
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.black45,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.to,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -300,20 +732,26 @@ class BookingDetailsPage extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              const Icon(Icons.calendar_today_outlined,
-                  size: 17, color: Colors.black45),
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 17,
+                color: Colors.black45,
+              ),
               const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Date & Time",
-                      style: TextStyle(
-                          fontSize: 12, color: Colors.black45)),
+                  const Text(
+                    "Date & Time",
+                    style: TextStyle(fontSize: 12, color: Colors.black45),
+                  ),
                   const SizedBox(height: 2),
                   Text(
-                    "Tuesday, June 2, 2026 at 08:00",
+                    widget.dateTime,
                     style: const TextStyle(
-                        fontSize: 13.5, fontWeight: FontWeight.bold),
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -322,20 +760,22 @@ class BookingDetailsPage extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(Icons.people_outline,
-                  size: 17, color: Colors.black45),
+              const Icon(Icons.people_outline, size: 17, color: Colors.black45),
               const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Seats Booked",
-                      style: TextStyle(
-                          fontSize: 12, color: Colors.black45)),
+                  const Text(
+                    "Seats Booked",
+                    style: TextStyle(fontSize: 12, color: Colors.black45),
+                  ),
                   const SizedBox(height: 2),
                   Text(
-                    "$seats seats",
+                    "${widget.seats} seats",
                     style: const TextStyle(
-                        fontSize: 13.5, fontWeight: FontWeight.bold),
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -359,22 +799,23 @@ class BookingDetailsPage extends StatelessWidget {
         children: [
           const Text(
             "Payment Details",
-            style:
-                TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Total Amount",
-                  style: TextStyle(
-                      fontSize: 14, color: Colors.black54)),
+              const Text(
+                "Total Amount",
+                style: TextStyle(fontSize: 14, color: Colors.black54),
+              ),
               Text(
-                price,
+                widget.price,
                 style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: kPrimaryGreen),
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: kPrimaryGreen,
+                ),
               ),
             ],
           ),
@@ -390,8 +831,7 @@ class BookingDetailsPage extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                Icon(Icons.shield_outlined,
-                    size: 18, color: kPrimaryBlue),
+                Icon(Icons.shield_outlined, size: 18, color: kPrimaryBlue),
                 SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -400,18 +840,20 @@ class BookingDetailsPage extends StatelessWidget {
                       Text(
                         "Payment in Escrow",
                         style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.bold,
-                            color: kPrimaryBlue),
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                          color: kPrimaryBlue,
+                        ),
                       ),
                       SizedBox(height: 2),
                       Text(
                         "Your payment is held securely until the "
                         "driver accepts",
                         style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.black54,
-                            height: 1.35),
+                          fontSize: 12,
+                          color: Colors.black54,
+                          height: 1.35,
+                        ),
                       ),
                     ],
                   ),
@@ -433,7 +875,7 @@ class BookingDetailsPage extends StatelessWidget {
             label: "Edit Ride",
             sublabel: "Free",
             color: kPrimaryBlue,
-            onTap: () {},
+            onTap: _showEditRideDialog,
           ),
         ),
         const SizedBox(width: 12),
@@ -443,7 +885,7 @@ class BookingDetailsPage extends StatelessWidget {
             label: "Cancel Ride",
             sublabel: "5% Fee",
             color: kErrorRed,
-            onTap: () {},
+            onTap: _showCancelWarning,
           ),
         ),
       ],
@@ -478,18 +920,17 @@ class BookingDetailsPage extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: color),
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 2),
             Text(
               sublabel,
-              style: TextStyle(
-                  fontSize: 11.5,
-                  color: color.withOpacity(0.8)),
+              style: TextStyle(fontSize: 11.5, color: color.withOpacity(0.8)),
             ),
           ],
         ),
@@ -508,20 +949,20 @@ class BookingDetailsPage extends StatelessWidget {
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.warning_amber_rounded,
-              size: 18, color: kAmber),
-          const SizedBox(width: 10),
+        children: const [
+          Icon(Icons.warning_amber_rounded, size: 18, color: kAmber),
+          SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                   "Awaiting Driver Acceptance",
                   style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.bold,
-                      color: kAmber),
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: kAmber,
+                  ),
                 ),
                 SizedBox(height: 4),
                 Text(
@@ -530,9 +971,10 @@ class BookingDetailsPage extends StatelessWidget {
                   "booking request. Your payment is safely held in "
                   "escrow.",
                   style: TextStyle(
-                      fontSize: 12.5,
-                      color: Colors.black54,
-                      height: 1.4),
+                    fontSize: 12.5,
+                    color: Colors.black54,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),

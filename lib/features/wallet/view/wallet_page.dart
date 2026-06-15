@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
+import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
+import 'withdraw_funds_page.dart';
+import 'bank_accounts_page.dart';
+import 'buy_airtime_page.dart';
+import 'buy_data_page.dart';
+import 'pay_bills_page.dart';
+import 'fund_wallet_page.dart';
+import 'transaction_management_page.dart';
 
 enum _EarningsPeriod { week, month, year }
 
@@ -32,6 +40,17 @@ class WalletPage extends StatefulWidget {
 
 class _WalletPageState extends State<WalletPage> {
   _EarningsPeriod _period = _EarningsPeriod.week;
+  double _balance = 25000;
+
+  String _formatNaira(double value) {
+    final str = value.toStringAsFixed(0);
+    final buffer = StringBuffer();
+    for (int i = 0; i < str.length; i++) {
+      if (i != 0 && (str.length - i) % 3 == 0) buffer.write(',');
+      buffer.write(str[i]);
+    }
+    return "₦$buffer";
+  }
 
   static const Map<_EarningsPeriod, _EarningsData> _earningsByPeriod = {
     _EarningsPeriod.week: _EarningsData(
@@ -74,55 +93,59 @@ class _WalletPageState extends State<WalletPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kBackground,
-      body: Stack(
-        children: [
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _backButton(context),
-                  const SizedBox(height: 12),
-                  const Text(
-                    "Wallet & Earnings",
-                    style:
-                        TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    "Manage your funds",
-                    style: TextStyle(fontSize: 13, color: Colors.black54),
-                  ),
-                  const SizedBox(height: 18),
-                  _balanceCard(),
-                  const SizedBox(height: 14),
-                  _withdrawButton(),
-                  const SizedBox(height: 20),
-                  _sectionTitle("Quick Services"),
-                  const SizedBox(height: 10),
-                  _quickServicesRow(),
-                  const SizedBox(height: 14),
-                  _transactionsAndEscrowRow(),
-                  const SizedBox(height: 20),
-                  _earningsOverviewCard(),
-                  const SizedBox(height: 20),
-                  _sectionTitle("Recent Transactions"),
-                  const SizedBox(height: 10),
-                  ..._transactions.map(_transactionCard),
-                ],
+    return SosScaffold(
+      child: Scaffold(
+        backgroundColor: kBackground,
+        body: Stack(
+          children: [
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _backButton(context),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "Wallet & Earnings",
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      "Manage your funds",
+                      style: TextStyle(fontSize: 13, color: Colors.black54),
+                    ),
+                    const SizedBox(height: 18),
+                    _balanceCard(),
+                    const SizedBox(height: 14),
+                    _withdrawButton(),
+                    const SizedBox(height: 20),
+                    _sectionTitle("Quick Services"),
+                    const SizedBox(height: 10),
+                    _quickServicesRow(),
+                    const SizedBox(height: 14),
+                    _transactionsAndEscrowRow(),
+                    const SizedBox(height: 20),
+                    _earningsOverviewCard(),
+                    const SizedBox(height: 20),
+                    _sectionTitle("Recent Transactions"),
+                    const SizedBox(height: 10),
+                    ..._transactions.map(_transactionCard),
+                  ],
+                ),
               ),
             ),
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: const AppBottomNavBar(current: AppTab.wallet),
-          ),
-        ],
-      ),
-    );
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: const AppBottomNavBar(current: AppTab.wallet),
+            ),
+          ],
+        ),
+      ), // Scaffold
+    ); // SosScaffold
   }
 
   Widget _backButton(BuildContext context) {
@@ -132,17 +155,22 @@ class _WalletPageState extends State<WalletPage> {
         mainAxisSize: MainAxisSize.min,
         children: const [
           Icon(Icons.chevron_left, size: 22, color: Colors.black87),
-          Text("Back",
-              style: TextStyle(fontSize: 14, color: Colors.black87)),
+          Text("Back", style: TextStyle(fontSize: 14, color: Colors.black87)),
         ],
       ),
     );
   }
 
   Widget _sectionTitle(String title) {
-    return Text(title,
-        style:
-            const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black54, letterSpacing: 0.5));
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.bold,
+        color: Colors.black54,
+        letterSpacing: 0.5,
+      ),
+    );
   }
 
   Widget _balanceCard() {
@@ -186,15 +214,18 @@ class _WalletPageState extends State<WalletPage> {
                   color: Colors.white.withOpacity(0.18),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.credit_card,
-                    color: Colors.white, size: 18),
+                child: const Icon(
+                  Icons.credit_card,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          const Text(
-            "₦25,000",
-            style: TextStyle(
+          Text(
+            _formatNaira(_balance),
+            style: const TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -204,24 +235,15 @@ class _WalletPageState extends State<WalletPage> {
           Row(
             children: [
               Expanded(
-                child: _balanceSubStat(
-                  label: "AVAILABLE",
-                  value: "₦25,000",
-                ),
+                child: _balanceSubStat(label: "AVAILABLE", value: _formatNaira(_balance)),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _balanceSubStat(
-                  label: "PENDING",
-                  value: "₦0",
-                ),
+                child: _balanceSubStat(label: "PENDING", value: "₦0"),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _balanceSubStat(
-                  label: "HELD",
-                  value: "₦0",
-                ),
+                child: _balanceSubStat(label: "HELD", value: "₦0"),
               ),
             ],
           ),
@@ -265,8 +287,16 @@ class _WalletPageState extends State<WalletPage> {
 
   Widget _withdrawButton() {
     return InkWell(
-      onTap: () {
-        // TODO: navigate to withdraw funds flow
+      onTap: () async {
+        final result = await Navigator.push<double>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => WithdrawFundsPage(availableBalance: _balance.toInt()),
+          ),
+        );
+        if (result != null) {
+          setState(() => _balance = result);
+        }
       },
       borderRadius: BorderRadius.circular(14),
       child: Container(
@@ -313,6 +343,7 @@ class _WalletPageState extends State<WalletPage> {
             bgColor: kPrimaryBlue.withOpacity(0.1),
             iconColor: kPrimaryBlue,
             label: "Airtime",
+            onTap: () => _showAirtimeSheet(),
           ),
         ),
         const SizedBox(width: 10),
@@ -322,6 +353,7 @@ class _WalletPageState extends State<WalletPage> {
             bgColor: kPrimaryGreen.withOpacity(0.1),
             iconColor: kPrimaryGreen,
             label: "Data",
+            onTap: () => _showDataSheet(),
           ),
         ),
         const SizedBox(width: 10),
@@ -331,6 +363,7 @@ class _WalletPageState extends State<WalletPage> {
             bgColor: kAmber.withOpacity(0.12),
             iconColor: kAmber,
             label: "Bills",
+            onTap: () => _showBillsSheet(),
           ),
         ),
         const SizedBox(width: 10),
@@ -340,9 +373,598 @@ class _WalletPageState extends State<WalletPage> {
             bgColor: const Color(0xFFEC4899).withOpacity(0.1),
             iconColor: const Color(0xFFEC4899),
             label: "Fund",
+            onTap: () => _showFundSheet(),
           ),
         ),
       ],
+    );
+  }
+
+  void _showAirtimeSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      isScrollControlled: true,
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: kAmber.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.phone_android,
+                    color: kAmber,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  "Airtime",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0F0F0),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.close, size: 18),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "AVAILABLE BALANCE",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black54,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _formatNaira(_balance),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: kPrimaryGreen,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Enter Amount",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                prefixText: "₦  ",
+                hintText: "0.00",
+                filled: true,
+                fillColor: const Color(0xFFF5F5F5),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 14,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: () async {
+                Navigator.pop(context);
+                final result = await Navigator.push<double>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        BuyAirtimePage(availableBalance: _balance),
+                  ),
+                );
+                if (result != null) {
+                  setState(() => _balance = result);
+                }
+              },
+              child: Container(
+                width: double.infinity,
+                height: 52,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1565C0), kPrimaryGreen],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Text(
+                  "Continue",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDataSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      isScrollControlled: true,
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: kPrimaryGreen.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.wifi, color: kPrimaryGreen, size: 20),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  "Data",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0F0F0),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.close, size: 18),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "AVAILABLE BALANCE",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black54,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _formatNaira(_balance),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: kPrimaryGreen,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Enter Amount",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                prefixText: "₦  ",
+                hintText: "0.00",
+                filled: true,
+                fillColor: const Color(0xFFF5F5F5),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 14,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: () async {
+                Navigator.pop(context);
+                final result = await Navigator.push<double>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BuyDataPage(availableBalance: _balance),
+                  ),
+                );
+                if (result != null) {
+                  setState(() => _balance = result);
+                }
+              },
+              child: Container(
+                width: double.infinity,
+                height: 52,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1565C0), kPrimaryGreen],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Text(
+                  "Continue",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showBillsSheet() {
+    final TextEditingController amountController = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      isScrollControlled: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: kAmber.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.description_outlined,
+                        color: kAmber,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      "Bills",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(sheetContext),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0F0F0),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.close, size: 18),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "AVAILABLE BALANCE",
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _formatNaira(_balance),
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: kPrimaryGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Enter Amount",
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    prefixText: "₦  ",
+                    hintText: "0.00",
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: () async {
+                    Navigator.pop(sheetContext);
+                    final result = await Navigator.push<double>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PayBillsPage(availableBalance: _balance),
+                      ),
+                    );
+                    if (result != null) {
+                      setState(() => _balance = result);
+                    }
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    height: 52,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1565C0), kPrimaryGreen],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Text(
+                      "Continue",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showFundSheet() {
+    final TextEditingController amountController = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      isScrollControlled: true,
+      builder: (sheetContext) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEC4899).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.add,
+                    color: Color(0xFFEC4899),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  "Fund",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Navigator.pop(sheetContext),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0F0F0),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.close, size: 18),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "AVAILABLE BALANCE",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black54,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _formatNaira(_balance),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: kPrimaryGreen,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Enter Amount",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: amountController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                prefixText: "₦  ",
+                hintText: "0.00",
+                filled: true,
+                fillColor: const Color(0xFFF5F5F5),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 14,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: () async {
+                Navigator.pop(sheetContext);
+                final result = await Navigator.push<double>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => FundWalletPage(currentBalance: _balance),
+                  ),
+                );
+                if (result != null) {
+                  setState(() => _balance = result);
+                }
+              },
+              child: Container(
+                width: double.infinity,
+                height: 52,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1565C0), kPrimaryGreen],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Text(
+                  "Continue",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -351,9 +973,10 @@ class _WalletPageState extends State<WalletPage> {
     required Color bgColor,
     required Color iconColor,
     required String label,
+    required VoidCallback onTap,
   }) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Column(
         children: [
@@ -370,9 +993,10 @@ class _WalletPageState extends State<WalletPage> {
           Text(
             label,
             style: const TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87),
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
           ),
         ],
       ),
@@ -389,6 +1013,11 @@ class _WalletPageState extends State<WalletPage> {
             iconColor: kPrimaryBlue,
             title: "Transactions",
             subtitle: "Manage & Export",
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const TransactionManagementPage()),
+            ),
           ),
         ),
         const SizedBox(width: 12),
@@ -399,6 +1028,7 @@ class _WalletPageState extends State<WalletPage> {
             iconColor: kAmber,
             title: "Escrow",
             subtitle: "Held Funds",
+            onTap: () {},
           ),
         ),
       ],
@@ -411,9 +1041,10 @@ class _WalletPageState extends State<WalletPage> {
     required Color iconColor,
     required String title,
     required String subtitle,
+    VoidCallback? onTap,
   }) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.all(14),
@@ -447,13 +1078,14 @@ class _WalletPageState extends State<WalletPage> {
                   Text(
                     title,
                     style: const TextStyle(
-                        fontSize: 13.5, fontWeight: FontWeight.bold),
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                        fontSize: 11, color: Colors.black54),
+                    style: const TextStyle(fontSize: 11, color: Colors.black54),
                   ),
                 ],
               ),
@@ -488,8 +1120,7 @@ class _WalletPageState extends State<WalletPage> {
             children: [
               const Text(
                 "Earnings Overview",
-                style:
-                    TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
               ),
               _periodToggle(),
             ],
@@ -497,13 +1128,11 @@ class _WalletPageState extends State<WalletPage> {
           const SizedBox(height: 16),
           Text(
             data.amount,
-            style: const TextStyle(
-                fontSize: 28, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: kPrimaryGreen.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
@@ -511,8 +1140,7 @@ class _WalletPageState extends State<WalletPage> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.trending_up,
-                    size: 14, color: kPrimaryGreen),
+                const Icon(Icons.trending_up, size: 14, color: kPrimaryGreen),
                 const SizedBox(width: 4),
                 Text(
                   data.changeLabel,
@@ -603,8 +1231,11 @@ class _WalletPageState extends State<WalletPage> {
               color: const Color(0xFFF0F0F0),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.access_time,
-                size: 18, color: Colors.black54),
+            child: const Icon(
+              Icons.access_time,
+              size: 18,
+              color: Colors.black54,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -615,7 +1246,9 @@ class _WalletPageState extends State<WalletPage> {
                   tx.title,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                      fontSize: 13.5, fontWeight: FontWeight.bold),
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -623,7 +1256,9 @@ class _WalletPageState extends State<WalletPage> {
                     Text(
                       tx.date,
                       style: const TextStyle(
-                          fontSize: 11, color: Colors.black38),
+                        fontSize: 11,
+                        color: Colors.black38,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     _statusBadge(tx.status),
