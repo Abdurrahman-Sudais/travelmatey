@@ -5,6 +5,7 @@ import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 import 'ride_details_page.dart';
 import 'post_ride_page.dart';
 import 'trip_in_progress_page.dart';
+import 'live_route_map.dart';
 
 enum RideStatus { upcoming, inProgress, completed }
 
@@ -342,6 +343,21 @@ class _MyRidesPageState extends State<MyRidesPage>
                 ),
                 const SizedBox(height: 14),
                 _actionRow(item),
+                if (item.status == RideStatus.inProgress) ...[
+                  const SizedBox(height: 14),
+                  LiveRouteMap(
+                    origin: RoutePoint(label: item.from, lat: 6.6018, lng: 3.3515),
+                    destination: RoutePoint(label: item.to, lat: 9.0765, lng: 7.4951),
+                    onExpand: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => TripInProgressPage(ride: item),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ],
             ),
           ),
