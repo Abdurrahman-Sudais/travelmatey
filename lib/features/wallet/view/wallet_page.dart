@@ -3,7 +3,6 @@ import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 import 'withdraw_funds_page.dart';
-import 'bank_accounts_page.dart';
 import 'buy_airtime_page.dart';
 import 'buy_data_page.dart';
 import 'pay_bills_page.dart';

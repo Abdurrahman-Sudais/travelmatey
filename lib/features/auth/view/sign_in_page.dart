@@ -3,7 +3,6 @@ import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
 import 'package:travelmateeee/app/routes.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
-import 'sign_up_page.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});

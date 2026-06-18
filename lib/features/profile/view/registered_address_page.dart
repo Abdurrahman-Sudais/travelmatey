@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:travelmateeee/app/routes.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
-import 'package:travelmateeee/features/home/view/home_page.dart';
 
 class RegisteredAddressPage extends StatefulWidget {
   const RegisteredAddressPage({super.key});
