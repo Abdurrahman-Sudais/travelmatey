@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 
 class PostRidePage extends StatefulWidget {
   const PostRidePage({super.key});
@@ -214,11 +213,9 @@ class _PostRidePageState extends State<PostRidePage> {
                                 style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 15,
-                                    fontWeight: FontWeight.bold)),
+                                    fontWeight: FontWeight.bold)                            ),
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        const AppBottomNavBar(current: AppTab.secondary),
                       ],
                     ),
                   ),

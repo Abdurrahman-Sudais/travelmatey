@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 
 // ─── Brand colours (never change) ────────────────────────────────────────────
 const Color kPrimaryGreen = Color(0xFF008000);
-const Color kPrimaryBlue  = Color(0xFF0b6cb9);
-const Color kErrorRed     = Color(0xFFFF4B4B);
-const Color kAmber        = Color(0xFFF59E0B);
+const Color kPrimaryBlue = Color(0xFF0b6cb9);
+const Color kErrorRed = Color(0xFFFF4B4B);
+const Color kAmber = Color(0xFFF59E0B);
 const Color kCallBackground = Color(0xFF1A1E2E);
-const Color kCallSurface    = Color(0xFF34384E);
+const Color kCallSurface = Color(0xFF34384E);
 
 const Gradient kPrimaryGradient = LinearGradient(
   colors: [kPrimaryBlue, kPrimaryGreen],
@@ -14,43 +14,56 @@ const Gradient kPrimaryGradient = LinearGradient(
   end: Alignment.centerRight,
 );
 
+// ─── Light palette (base) ─────────────────────────────────────────────────────
+const Color kLightBackground = Color(0xFFEBF3FB);
+const Color kLightSurface = Color(0xFFFFFFFF);
+const Color kLightSurface2 = Color(0xFFF7F7F7);
+const Color kLightDivider = Color(0xFFF0F0F0);
+const Color kLightTextPrimary = Color(0xFF1A1A1A);
+const Color kLightTextSecondary = Color(0x8A000000); // black54
+const Color kLightTextHint = Color(0x61000000); // black38
+const Color kLightInputFill = Color(0xFFF5F5F5);
+
+// ─── Dim palette — slightly deeper blues, NOT black ────────────────────────────
+const Color kDimBackground = Color(0xFFC5D9EC);
+const Color kDimSurface = Color(0xFFD9E8F5);
+const Color kDimSurface2 = Color(0xFFB8CFE3);
+const Color kDimDivider = Color(0xFFA8C0D6);
+const Color kDimTextPrimary = Color(0xFF1A2A3A);
+const Color kDimTextSecondary = Color(0xFF4A6278);
+const Color kDimTextHint = Color(0xFF6B8499);
+const Color kDimInputFill = Color(0xFFADC4D9);
+
 // ─── Dark-mode notifier ───────────────────────────────────────────────────────
-/// A single global notifier.  Profile page writes it; everywhere else reads it.
 final ValueNotifier<ThemeMode> themeModeNotifier =
     ValueNotifier<ThemeMode>(ThemeMode.light);
 
-// ─── Convenience helper ───────────────────────────────────────────────────────
 bool get isDark => themeModeNotifier.value == ThemeMode.dark;
 
 // ─── Semantic / adaptive tokens ──────────────────────────────────────────────
 
-/// Main page / scaffold background
-Color get kBackground => isDark ? const Color(0xFF121212) : const Color(0xFFEBF3FB);
+Color get kBackground => isDark ? kDimBackground : kLightBackground;
 
-/// Surface colour used for cards, bottom sheets, nav bar
-Color get kSurface => isDark ? const Color(0xFF1E1E1E) : Colors.white;
+Color get kSurface => isDark ? kDimSurface : kLightSurface;
 
-/// Slightly elevated surface (inside cards)
-Color get kSurface2 => isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF7F7F7);
+Color get kSurface2 => isDark ? kDimSurface2 : kLightSurface2;
 
-/// Divider / subtle border
-Color get kDivider => isDark ? const Color(0xFF2E2E2E) : const Color(0xFFF0F0F0);
+Color get kDivider => isDark ? kDimDivider : kLightDivider;
 
-/// Primary text colour
-Color get kTextPrimary => isDark ? const Color(0xFFF0F0F0) : const Color(0xFF1A1A1A);
+Color get kTextPrimary => isDark ? kDimTextPrimary : kLightTextPrimary;
 
-/// Secondary / muted text
-Color get kTextSecondary => isDark ? const Color(0xFF9E9E9E) : Colors.black54;
+Color get kTextSecondary => isDark ? kDimTextSecondary : kLightTextSecondary;
 
-/// Very subtle text (timestamps, labels)
-Color get kTextHint => isDark ? const Color(0xFF6B6B6B) : Colors.black38;
+Color get kTextHint => isDark ? kDimTextHint : kLightTextHint;
 
-/// Icon colour for non-primary icons
-Color get kIconMuted => isDark ? const Color(0xFF9E9E9E) : Colors.black54;
+Color get kIconMuted => kTextSecondary;
 
-/// Input / field fill
-Color get kInputFill => isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5);
+Color get kInputFill => isDark ? kDimInputFill : kLightInputFill;
 
-/// Bottom-nav shadow overlay
-Color get kNavShadow =>
-    isDark ? Colors.black.withValues(alpha: 0.40) : Colors.black.withValues(alpha: 0.06);
+Color get kNavShadow => isDark
+    ? const Color(0xFF8FAEC5).withValues(alpha: 0.35)
+    : Colors.black.withValues(alpha: 0.06);
+
+/// Tinted upload / info box background (adapts to dim mode)
+Color get kUploadBoxFill =>
+    isDark ? const Color(0xFFB8D4EA) : const Color(0xFFEFF6FF);

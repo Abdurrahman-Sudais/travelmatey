@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:travelmateeee/features/auth/view/sign_in_page.dart';
 import 'package:travelmateeee/features/auth/view/sign_up_page.dart';
-import 'package:travelmateeee/features/home/view/home_page.dart';
+import 'package:travelmateeee/shared/widgets/main_shell.dart';
 import 'package:travelmateeee/features/onboarding/view/onboarding_page.dart';
 import 'package:travelmateeee/features/onboarding/view_model/onboarding_view_model.dart';
 
@@ -62,7 +62,7 @@ class AppPages {
     ),
     GetPage(
       name: RouteConstants.HOME,
-      page: () => const RoleAwareHome(),
+      page: () => const MainShell(),
       transition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 400),
       curve: Curves.easeOut,

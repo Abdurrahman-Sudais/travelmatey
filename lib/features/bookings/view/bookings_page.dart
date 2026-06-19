@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 import 'package:travelmateeee/features/bookings/view/booking_details_page.dart';
+import 'package:travelmateeee/features/bookings/view/search_ride_page.dart';
 
 enum _BookingStatus { pending, accepted, paid, completed }
 
@@ -99,15 +99,43 @@ class _BookingsPageState extends State<BookingsPage> {
     return SosScaffold(
       child: Scaffold(
         backgroundColor: kBackground,
-        body: Stack(
-          children: [
-            SafeArea(
+        body: SafeArea(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _backButton(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _backButton(),
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const SearchRidePage(),
+                              ),
+                            );
+                          },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.add, size: 16, color: kPrimaryBlue),
+                              SizedBox(width: 4),
+                              Text(
+                                "New Search",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: kPrimaryBlue,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 12),
                     const Text(
                       "My Booking Requests",
@@ -132,14 +160,7 @@ class _BookingsPageState extends State<BookingsPage> {
                       ..._filtered.map(_bookingCard),
                   ],
                 ),
-              ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: const AppBottomNavBar(current: AppTab.secondary),
-            ),
-          ],
-        ),
+              )),
       ),
     );
   }

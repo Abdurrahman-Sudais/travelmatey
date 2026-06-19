@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 import 'withdraw_funds_page.dart';
 import 'buy_airtime_page.dart';
@@ -95,9 +94,7 @@ class _WalletPageState extends State<WalletPage> {
     return SosScaffold(
       child: Scaffold(
         backgroundColor: kBackground,
-        body: Stack(
-          children: [
-            SafeArea(
+        body: SafeArea(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
                 child: Column(
@@ -135,14 +132,7 @@ class _WalletPageState extends State<WalletPage> {
                     ..._transactions.map(_transactionCard),
                   ],
                 ),
-              ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: const AppBottomNavBar(current: AppTab.wallet),
-            ),
-          ],
-        ),
+              )),
       ), // Scaffold
     ); // SosScaffold
   }

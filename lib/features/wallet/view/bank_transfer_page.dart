@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
-import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
+import 'package:travelmateeee/shared/widgets/keyboard_aware_scaffold.dart';
 
 /// Bank Transfer page.
 class BankTransferPage extends StatefulWidget {
@@ -82,51 +81,36 @@ class _BankTransferPageState extends State<BankTransferPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SosScaffold(
-      child: Scaffold(
-        backgroundColor: kBackground,
-        body: Stack(
-          children: [
-            SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _backButton(),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "Bank Transfer",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      "Transfer funds from your bank app",
-                      style: TextStyle(fontSize: 13, color: Colors.black54),
-                    ),
-                    const SizedBox(height: 18),
-                    _balanceCard(),
-                    const SizedBox(height: 16),
-                    _step1Card(),
-                    const SizedBox(height: 16),
-                    _step2Card(),
-                    const SizedBox(height: 16),
-                    _step3Card(),
-                    const SizedBox(height: 16),
-                    _importantInfoCard(),
-                  ],
-                ),
-              ),
+    return KeyboardAwareFormScaffold(
+      body: KeyboardAwareScrollBody(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+        children: [
+          _backButton(),
+          const SizedBox(height: 8),
+          Text(
+            "Bank Transfer",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: kTextPrimary,
             ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: const AppBottomNavBar(current: AppTab.wallet),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Transfer funds from your bank app",
+            style: TextStyle(fontSize: 13, color: kTextSecondary),
+          ),
+          const SizedBox(height: 18),
+          _balanceCard(),
+          const SizedBox(height: 16),
+          _step1Card(),
+          const SizedBox(height: 16),
+          _step2Card(),
+          const SizedBox(height: 16),
+          _step3Card(),
+          const SizedBox(height: 16),
+          _importantInfoCard(),
+        ],
       ),
     );
   }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 import 'my_rides_page.dart';
 import 'edit_ride_page.dart';
 import 'trip_in_progress_page.dart';
@@ -36,12 +35,12 @@ class RideDetailsPage extends StatelessWidget {
         dropoff: 'Ojota',
       ),
       _RiderInfo(
-        initials: 'GO',
-        color: const Color(0xFFFF8A65),
-        name: 'Grace Okonkwo',
+        initials: 'IM',
+        color: const Color(0xFF7986CB),
+        name: 'Ibrahim Musa',
         rating: 4.9,
-        seats: '1 seat',
-        pickup: 'Market, Abuja',
+        seats: '3 seats',
+        pickup: 'Jabi, Abuja',
         dropoff: 'Ikeja',
       ),
     ];
@@ -180,7 +179,7 @@ class RideDetailsPage extends StatelessWidget {
                               const SizedBox(width: 10),
                               Expanded(
                                   child:
-                                      _summaryStatBox('Available Seats', '2')),
+                                      _summaryStatBox('Available Seats', '0')),
                             ],
                           ),
                         ],
@@ -330,14 +329,11 @@ class RideDetailsPage extends StatelessWidget {
                               ),
                             ),
                           ),
-                        const SizedBox(height: 8),
-                        const AppBottomNavBar(
-                            current: AppTab.secondary),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
         ),

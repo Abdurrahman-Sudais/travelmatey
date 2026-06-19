@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 
 enum _TxStatus { completed, held, pending }
@@ -191,9 +190,7 @@ class _TransactionManagementPageState
     return SosScaffold(
       child: Scaffold(
         backgroundColor: kBackground,
-        body: Stack(
-          children: [
-            SafeArea(
+        body: SafeArea(
               child: Column(
                 children: [
                   // ── Top bar ───────────────────────────────────────────
@@ -403,14 +400,7 @@ class _TransactionManagementPageState
                     ),
                   ),
                 ],
-              ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: const AppBottomNavBar(current: AppTab.wallet),
-            ),
-          ],
-        ),
+              )),
       ),
     );
   }

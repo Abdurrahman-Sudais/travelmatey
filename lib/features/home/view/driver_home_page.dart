@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 import 'package:travelmateeee/features/rides/view/my_rides_page.dart';
 import 'package:travelmateeee/features/wallet/view/wallet_page.dart';
 import 'package:travelmateeee/features/profile/view/notifications_page.dart';
@@ -39,30 +38,22 @@ class _DriverHomePageState extends State<DriverHomePage> {
     return SosScaffold(
       child: Scaffold(
         backgroundColor: kBackground,
-        body: Stack(
-          children: [
-            SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _appbarRow(),
-                    const SizedBox(height: 20),
-                    _statsRow(),
-                    const SizedBox(height: 20),
-                    _postNewRideButton(),
-                    const SizedBox(height: 20),
-                    _quickActionsRow(),
-                  ],
-                ),
-              ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _appbarRow(),
+                const SizedBox(height: 20),
+                _statsRow(),
+                const SizedBox(height: 20),
+                _postNewRideButton(),
+                const SizedBox(height: 20),
+                _quickActionsRow(),
+              ],
             ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: const AppBottomNavBar(current: AppTab.home),
-            ),
-          ],
+          ),
         ),
       ),
     );

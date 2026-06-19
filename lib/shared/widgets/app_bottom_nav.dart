@@ -1,37 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
-import 'package:travelmateeee/features/home/view/home_page.dart' show activeRoleNotifier;
-import 'package:travelmateeee/features/bookings/view/bookings_page.dart';
-import 'package:travelmateeee/features/profile/view/profile_page.dart';
-import 'package:travelmateeee/features/rides/view/my_rides_page.dart';
-import 'package:travelmateeee/features/messages/view/messages_page.dart';
-import 'package:travelmateeee/features/wallet/view/wallet_page.dart';
+import 'package:travelmateeee/features/home/view/home_page.dart'
+    show activeRoleNotifier;
 import 'package:travelmateeee/core/base/active_role.dart';
 
 /// Which tab is currently active, shared across rider & driver layouts.
 enum AppTab { home, secondary, wallet, chats, profile }
 
-/// A single, shared bottom navigation bar used across every page so that
-/// tapping any item behaves consistently regardless of which screen the
-/// user is currently on.
-///
-/// - [current] marks the active tab (pass null if the current page isn't
-///   one of the five primary tabs, e.g. a detail/chat screen).
-/// - The "secondary" tab is "Bookings" for riders and "My Rides" for
-///   drivers, decided automatically from [activeRoleNotifier].
+/// Global tab index used by [MainShell]. Call [switchToTab] from anywhere to
+/// jump to a primary tab without stacking new routes.
+final ValueNotifier<AppTab> currentTabNotifier = ValueNotifier<AppTab>(
+  AppTab.home,
+);
+
+void switchToTab(AppTab tab) {
+  if (currentTabNotifier.value != tab) {
+    currentTabNotifier.value = tab;
+  }
+}
+
+/// Single bottom navigation bar — only rendered once inside [MainShell].
 class AppBottomNavBar extends StatelessWidget {
   final AppTab? current;
 
   const AppBottomNavBar({super.key, this.current});
 
-  void _goToRoot(BuildContext context, Widget page) {
-    // Pop back to the root (Home) first, then push the requested page,
-    // so the bottom nav always behaves the same no matter how deep the
-    // user has navigated.
-    Navigator.of(context).popUntil((route) => route.isFirst);
-    if (page is! _HomeMarker) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => page));
-    }
+  void _selectTab(AppTab tab) {
+    if (current == tab) return;
+    switchToTab(tab);
   }
 
   @override
@@ -40,10 +36,10 @@ class AppBottomNavBar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: kSurface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: kNavShadow,
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -57,53 +53,44 @@ class AppBottomNavBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _navItem(
-                context,
                 icon: Icons.home_filled,
                 label: "Home",
                 tab: AppTab.home,
-                onTap: () => _goToRoot(context, const _HomeMarker()),
+                onTap: () => _selectTab(AppTab.home),
               ),
               isDriver
                   ? _navItem(
-                      context,
                       icon: Icons.directions_car_outlined,
                       label: "My Rides",
                       tab: AppTab.secondary,
                       badge: "3",
-                      onTap: () =>
-                          _goToRoot(context, const MyRidesPage()),
+                      onTap: () => _selectTab(AppTab.secondary),
                     )
                   : _navItem(
-                      context,
                       icon: Icons.calendar_month_outlined,
                       label: "Bookings",
                       tab: AppTab.secondary,
                       badge: "2",
-                      onTap: () =>
-                          _goToRoot(context, const BookingsPage()),
+                      onTap: () => _selectTab(AppTab.secondary),
                     ),
               _navItem(
-                context,
                 icon: Icons.account_balance_wallet_outlined,
                 label: "Wallet",
                 tab: AppTab.wallet,
-                onTap: () => _goToRoot(context, const WalletPage()),
+                onTap: () => _selectTab(AppTab.wallet),
               ),
               _navItem(
-                context,
                 icon: Icons.chat_bubble_outline,
                 label: "Chats",
                 tab: AppTab.chats,
                 badge: "2",
-                onTap: () =>
-                    _goToRoot(context, const MessagesPage()),
+                onTap: () => _selectTab(AppTab.chats),
               ),
               _navItem(
-                context,
                 icon: Icons.person_outline,
                 label: "Profile",
                 tab: AppTab.profile,
-                onTap: () => _goToRoot(context, const ProfilePage()),
+                onTap: () => _selectTab(AppTab.profile),
               ),
             ],
           ),
@@ -112,8 +99,7 @@ class AppBottomNavBar extends StatelessWidget {
     );
   }
 
-  Widget _navItem(
-    BuildContext context, {
+  Widget _navItem({
     required IconData icon,
     required String label,
     required AppTab tab,
@@ -121,7 +107,7 @@ class AppBottomNavBar extends StatelessWidget {
     VoidCallback? onTap,
   }) {
     final bool active = current == tab;
-    final color = active ? kPrimaryGreen : Colors.black54;
+    final color = active ? kPrimaryGreen : kTextSecondary;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -151,14 +137,20 @@ class AppBottomNavBar extends StatelessWidget {
                       right: -6,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 1),
+                          horizontal: 4,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           color: kErrorRed,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(badge,
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 9)),
+                        child: Text(
+                          badge,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                          ),
+                        ),
                       ),
                     ),
                 ],
@@ -169,8 +161,7 @@ class AppBottomNavBar extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               style: TextStyle(
                 fontSize: active ? 10.5 : 10,
-                fontWeight:
-                    active ? FontWeight.w700 : FontWeight.w400,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w400,
                 color: color,
               ),
               child: Text(label),
@@ -180,13 +171,4 @@ class AppBottomNavBar extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Internal marker widget used only to signal "go to the Home tab" without
-/// constructing a real page (Home is the root route already).
-class _HomeMarker extends StatelessWidget {
-  const _HomeMarker();
-
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
 }

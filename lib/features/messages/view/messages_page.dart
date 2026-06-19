@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 import 'package:travelmateeee/features/messages/view/chat_page.dart';
 
@@ -107,9 +106,7 @@ class MessagesPage extends StatelessWidget {
     return SosScaffold(
       child: Scaffold(
         backgroundColor: kBackground,
-        body: Stack(
-          children: [
-            SafeArea(
+        body: SafeArea(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
                 child: Column(
@@ -133,14 +130,7 @@ class MessagesPage extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: const AppBottomNavBar(current: AppTab.chats),
-            ),
-          ],
-        ),
+              )),
       ),
     );
   }

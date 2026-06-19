@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 import 'my_rides_page.dart';
 
 class EditRidePage extends StatefulWidget {
@@ -266,8 +265,6 @@ class _EditRidePageState extends State<EditRidePage> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        const AppBottomNavBar(current: AppTab.secondary),
                       ],
                     ),
                   ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 import 'card_funding_page.dart';
 import 'bank_transfer_page.dart';
@@ -63,9 +62,7 @@ class _FundWalletPageState extends State<FundWalletPage> {
     return SosScaffold(
       child: Scaffold(
         backgroundColor: kBackground,
-        body: Stack(
-          children: [
-            SafeArea(
+        body: SafeArea(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
                 child: Column(
@@ -119,12 +116,6 @@ class _FundWalletPageState extends State<FundWalletPage> {
                   ],
                 ),
               ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: const AppBottomNavBar(current: AppTab.wallet),
-            ),
-          ],
         ),
       ),
     );

@@ -1,5 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:travelmateeee/core/services/media_picker_service.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
+import 'package:travelmateeee/data/models/kyc_model.dart';
+import 'package:travelmateeee/data/repositories/kyc_repository.dart';
+import 'package:travelmateeee/shared/widgets/document_upload_box.dart';
+import 'package:travelmateeee/shared/widgets/keyboard_aware_scaffold.dart';
 
 class KycPage extends StatefulWidget {
   const KycPage({super.key});
@@ -14,12 +22,14 @@ class _KycPageState extends State<KycPage> {
   // Step 1 - Identity
   final _idTypeCtrl = TextEditingController();
   final _idNumberCtrl = TextEditingController();
-  bool _idUploaded = false;
+  PickedMedia? _idDocument;
+  String? _identityDocumentId;
 
   // Step 2 - Address
   final _docTypeCtrl = TextEditingController();
   String _utilityType = 'Electricity';
-  bool _addressUploaded = false;
+  PickedMedia? _addressDocument;
+  String? _addressDocumentId;
 
   // Step 3 - Banking
   final _bankNameCtrl = TextEditingController();
@@ -27,7 +37,12 @@ class _KycPageState extends State<KycPage> {
   bool _accountVerified = false;
 
   // Step 4 - Face
-  bool _faceUploaded = false;
+  PickedMedia? _faceDocument;
+  String? _faceDocumentId;
+
+  bool _submitting = false;
+
+  KycRepository get _kycRepo => Get.find<KycRepository>();
 
   @override
   void dispose() {
@@ -37,6 +52,74 @@ class _KycPageState extends State<KycPage> {
     _bankNameCtrl.dispose();
     _accountNumberCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickDocument(KycDocumentType type) async {
+    final useCamera = type == KycDocumentType.face;
+    final media = await pickDocumentSafely(context, useCameraForFace: useCamera);
+    if (media == null || !mounted) return;
+
+    setState(() => _submitting = true);
+    try {
+      // BACKEND: POST /kyc/documents multipart — returns document id
+      final result = await _kycRepo.uploadDocument(
+        type: type,
+        media: media,
+        metadata: type == KycDocumentType.identity
+            ? {'id_type': _idTypeCtrl.text, 'id_number': _idNumberCtrl.text}
+            : null,
+      );
+      setState(() {
+        switch (type) {
+          case KycDocumentType.identity:
+            _idDocument = media;
+            _identityDocumentId = result.documentId;
+          case KycDocumentType.address:
+            _addressDocument = media;
+            _addressDocumentId = result.documentId;
+          case KycDocumentType.face:
+            _faceDocument = media;
+            _faceDocumentId = result.documentId;
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  Future<void> _submitKyc() async {
+    setState(() => _submitting = true);
+    try {
+      await _kycRepo.submitKyc(
+        KycSubmission(
+          idType: _idTypeCtrl.text,
+          idNumber: _idNumberCtrl.text,
+          identityDocumentId: _identityDocumentId,
+          documentType: _docTypeCtrl.text,
+          utilityType: _utilityType,
+          addressDocumentId: _addressDocumentId,
+          bankName: _bankNameCtrl.text.isEmpty ? null : _bankNameCtrl.text,
+          accountNumber:
+              _accountNumberCtrl.text.isEmpty ? null : _accountNumberCtrl.text,
+          faceDocumentId: _faceDocumentId,
+        ),
+      );
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('KYC submission failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   void _next() {
@@ -66,43 +149,42 @@ class _KycPageState extends State<KycPage> {
       'Upload a face image for verification',
     ];
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+    return KeyboardAwareFormScaffold(
+      showSos: false,
+      backgroundColor: kBackground,
+      bottomBar: _bottomButton(),
+      body: KeyboardAwareScrollBody(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        children: [
                     // Back
                     GestureDetector(
                       onTap: _back,
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.arrow_back, size: 20),
-                          SizedBox(width: 4),
-                          Text('Back', style: TextStyle(fontSize: 15)),
+                          Icon(Icons.arrow_back, size: 20, color: kTextPrimary),
+                          const SizedBox(width: 4),
+                          Text('Back',
+                              style: TextStyle(
+                                  fontSize: 15, color: kTextPrimary)),
                         ],
                       ),
                     ),
                     const SizedBox(height: 20),
                     Text(
                       titles[_step],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
+                        color: kTextPrimary,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       subtitles[_step],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: Colors.black54,
+                        color: kTextSecondary,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -116,7 +198,7 @@ class _KycPageState extends State<KycPage> {
                             decoration: BoxDecoration(
                               color: i <= _step
                                   ? kPrimaryBlue
-                                  : Colors.grey.shade200,
+                                  : kDivider,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -129,9 +211,9 @@ class _KycPageState extends State<KycPage> {
                       children: [
                         Text(
                           'Step ${_step + 1} of 4',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Colors.black54,
+                            color: kTextSecondary,
                           ),
                         ),
                         const Text(
@@ -168,13 +250,7 @@ class _KycPageState extends State<KycPage> {
                                     : _buildStep4(),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            _bottomButton(),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -212,9 +288,9 @@ class _KycPageState extends State<KycPage> {
               ),
               const SizedBox(height: 16),
               _label('Upload ID Document *'),
-              _uploadBox(
-                uploaded: _idUploaded,
-                onTap: () => setState(() => _idUploaded = !_idUploaded),
+              DocumentUploadBox(
+                media: _idDocument,
+                onTap: () => _pickDocument(KycDocumentType.identity),
               ),
             ],
           ),
@@ -287,10 +363,9 @@ class _KycPageState extends State<KycPage> {
               ),
               const SizedBox(height: 16),
               _label('Upload Document *'),
-              _uploadBox(
-                uploaded: _addressUploaded,
-                onTap: () =>
-                    setState(() => _addressUploaded = !_addressUploaded),
+              DocumentUploadBox(
+                media: _addressDocument,
+                onTap: () => _pickDocument(KycDocumentType.address),
                 borderColor: kPrimaryGreen,
                 iconColor: kPrimaryGreen,
               ),
@@ -529,6 +604,7 @@ class _KycPageState extends State<KycPage> {
 
   // ── Step 4: Face ──────────────────────────────────────────────────────────
   Widget _buildStep4() {
+    final captured = _faceDocument != null;
     return Column(
       children: [
         Center(
@@ -543,23 +619,27 @@ class _KycPageState extends State<KycPage> {
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'Face Verification',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: kTextPrimary,
+          ),
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'Take a clear photo of your face for identity verification',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 13, color: Colors.black54),
+          style: TextStyle(fontSize: 13, color: kTextSecondary),
         ),
         const SizedBox(height: 20),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: const Color(0xFFEFF6FF),
+            color: kUploadBoxFill,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -568,31 +648,43 @@ class _KycPageState extends State<KycPage> {
                 width: 90,
                 height: 90,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: kSurface,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: _faceUploaded ? kPrimaryGreen : kPrimaryBlue,
+                    color: captured ? kPrimaryGreen : kPrimaryBlue,
                     width: 2.5,
                   ),
+                  image: captured && _faceDocument!.isImage
+                      ? DecorationImage(
+                          image: FileImage(File(_faceDocument!.path)),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: Icon(
-                  _faceUploaded ? Icons.face : Icons.camera_alt_outlined,
-                  color: _faceUploaded ? kPrimaryGreen : kPrimaryBlue,
-                  size: 40,
-                ),
+                child: !captured || !_faceDocument!.isImage
+                    ? Icon(
+                        captured ? Icons.face : Icons.camera_alt_outlined,
+                        color: captured ? kPrimaryGreen : kPrimaryBlue,
+                        size: 40,
+                      )
+                    : null,
               ),
               const SizedBox(height: 16),
               Text(
-                _faceUploaded ? 'Face Captured' : 'Ready to Capture',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                captured ? 'Face Captured' : 'Ready to Capture',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: kTextPrimary,
+                ),
               ),
               const SizedBox(height: 6),
               Text(
-                _faceUploaded
+                captured
                     ? 'Your face image has been captured successfully'
                     : 'Position your face in the center and ensure good lighting',
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13, color: Colors.black54),
+                style: TextStyle(fontSize: 13, color: kTextSecondary),
               ),
             ],
           ),
@@ -601,19 +693,23 @@ class _KycPageState extends State<KycPage> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: kSurface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: kDivider),
           ),
-          child: const Column(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Verification Guidelines:',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: kTextPrimary,
+                ),
               ),
-              SizedBox(height: 10),
-              Row(
+              const SizedBox(height: 10),
+              const Row(
                 children: [
                   Expanded(
                     child: _GuidelineItem(label: 'Face clearly visible'),
@@ -633,7 +729,7 @@ class _KycPageState extends State<KycPage> {
         ),
         const SizedBox(height: 20),
         GestureDetector(
-          onTap: () => setState(() => _faceUploaded = true),
+          onTap: _submitting ? null : () => _pickDocument(KycDocumentType.face),
           child: Container(
             width: double.infinity,
             height: 52,
@@ -801,51 +897,6 @@ class _KycPageState extends State<KycPage> {
     );
   }
 
-  Widget _uploadBox({
-    required bool uploaded,
-    required VoidCallback onTap,
-    Color borderColor = kPrimaryBlue,
-    Color iconColor = kPrimaryBlue,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 28),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEFF6FF),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor, style: BorderStyle.solid),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              uploaded ? Icons.check_circle : Icons.upload_outlined,
-              color: uploaded ? kPrimaryGreen : iconColor,
-              size: 32,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              uploaded ? 'File uploaded' : 'Click to upload or drag and drop',
-              style: TextStyle(
-                color: uploaded ? kPrimaryGreen : iconColor,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            if (!uploaded)
-              const Padding(
-                padding: EdgeInsets.only(top: 4),
-                child: Text(
-                  'JPG, PNG or PDF (max 5MB)',
-                  style: TextStyle(fontSize: 12, color: Colors.black45),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _infoBox({
     required Color color,
     required Color borderColor,
@@ -897,23 +948,35 @@ class _KycPageState extends State<KycPage> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
       child: GestureDetector(
-        onTap: isLastStep ? () => Navigator.pop(context, true) : _next,        
+        onTap: _submitting
+            ? null
+            : (isLastStep ? _submitKyc : _next),
         child: Container(
           width: double.infinity,
           height: 52,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            gradient: kPrimaryGradient,
+            gradient: _submitting ? null : kPrimaryGradient,
+            color: _submitting ? kDivider : null,
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Text(
-            isLastStep ? 'Submit KYC' : 'Save and Continue',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          child: _submitting
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(
+                  isLastStep ? 'Submit KYC' : 'Save and Continue',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
         ),
       ),
     );

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 
 enum PurchaseType { airtime, data }
 
@@ -203,10 +202,6 @@ class PurchaseSuccessPage extends StatelessWidget {
                     ),
                   ),
                 ],
-              ),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: const AppBottomNavBar(current: AppTab.wallet),
               ),
             ],
           ),

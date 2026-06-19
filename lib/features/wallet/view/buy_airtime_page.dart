@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
-import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
+import 'package:travelmateeee/shared/widgets/keyboard_aware_scaffold.dart';
 import 'purchase_success_page.dart';
 
 class BuyAirtimePage extends StatefulWidget {
@@ -81,42 +81,27 @@ class _BuyAirtimePageState extends State<BuyAirtimePage> {
 
   @override
   Widget build(BuildContext context) {
-    return SosScaffold(
-      child: Scaffold(
-        backgroundColor: kBackground,
-        body: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _backButton(context),
-                      const SizedBox(height: 16),
-                      _header(),
-                      const SizedBox(height: 20),
-                      _networkSection(),
-                      const SizedBox(height: 14),
-                      _phoneSection(),
-                      const SizedBox(height: 14),
-                      _amountSection(),
-                      const SizedBox(height: 14),
-                      _beneficiarySection(),
-                      if (_canProceed) ...[
-                        const SizedBox(height: 14),
-                        _transactionSummary(),
-                      ],
-                      const SizedBox(height: 20),
-                    ],
-                  ),
-                ),
-              ),
-              _buyButton(),
-            ],
-          ),
-        ),
+    return KeyboardAwareFormScaffold(
+      bottomBar: _buyButton(),
+      body: KeyboardAwareScrollBody(
+        children: [
+          _backButton(context),
+          const SizedBox(height: 16),
+          _header(),
+          const SizedBox(height: 20),
+          _networkSection(),
+          const SizedBox(height: 14),
+          _phoneSection(),
+          const SizedBox(height: 14),
+          _amountSection(),
+          const SizedBox(height: 14),
+          _beneficiarySection(),
+          if (_canProceed) ...[
+            const SizedBox(height: 14),
+            _transactionSummary(),
+          ],
+          const SizedBox(height: 20),
+        ],
       ),
     );
   }

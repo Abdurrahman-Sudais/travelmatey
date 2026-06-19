@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 import 'ride_details_page.dart';
 import 'post_ride_page.dart';
 import 'trip_in_progress_page.dart';
@@ -573,8 +572,6 @@ class _MyRidesPageState extends State<MyRidesPage>
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-            const AppBottomNavBar(current: AppTab.secondary),
           ],
         ),
       ),

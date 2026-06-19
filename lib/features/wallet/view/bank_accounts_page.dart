@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 
 import 'bank_account_model.dart';
@@ -130,9 +129,7 @@ class _BankAccountsPageState extends State<BankAccountsPage> {
     return SosScaffold(
       child: Scaffold(
         backgroundColor: kBackground,
-        body: Stack(
-          children: [
-            SafeArea(
+        body: SafeArea(
               child: ValueListenableBuilder<List<BankAccount>>(
                 valueListenable: BankAccountStore.instance.accounts,
                 builder: (context, accounts, _) {
@@ -169,14 +166,7 @@ class _BankAccountsPageState extends State<BankAccountsPage> {
                     ),
                   );
                 },
-              ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: const AppBottomNavBar(current: AppTab.wallet),
-            ),
-          ],
-        ),
+              )),
       ),
     );
   }

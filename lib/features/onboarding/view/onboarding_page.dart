@@ -331,7 +331,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                     style: TextStyle(
                       fontWeight: FontWeightUtils.Bold,
                       fontSize: 28.sp,
-                      color: Colors.white,
+                      color: Colors.yellowAccent,
                     ),
                   ),
                 ),
@@ -362,7 +362,7 @@ class _OnboardingPageState extends State<OnboardingPage>
 
   Widget _buildLogoIllustration() {
     return SizedBox(
-      width: 120.w,
+      width: 100.w,
       height: 220.h,
       child: Container(
         decoration: const BoxDecoration(

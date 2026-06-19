@@ -1,8 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:travelmateeee/core/services/media_picker_service.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
+import 'package:travelmateeee/data/repositories/user_repository.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 import 'package:travelmateeee/shared/widgets/edit_profile_sheet.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
+import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart' show switchToTab, AppTab;
 import 'package:travelmateeee/features/profile/view/notification_settings_page.dart';
 import 'package:travelmateeee/features/support/view/help_support_page.dart';
 import 'package:travelmateeee/features/profile/view/pdf_export_manager_page.dart';
@@ -16,8 +21,7 @@ import 'terms_policies_page.dart';
 import 'about_page.dart';
 import 'package:get/get.dart';
 import 'package:travelmateeee/app/routes.dart';
-import 'package:travelmateeee/features/home/view/home_page.dart'
-    show activeRoleNotifier, HomePage, RoleAwareHome;
+import 'package:travelmateeee/features/home/view/home_page.dart' show activeRoleNotifier;
 import 'package:travelmateeee/core/base/active_role.dart';
 
 enum AppearanceMode { light, dark, system }
@@ -32,6 +36,10 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   late ActiveRole activeRole;
   AppearanceMode appearanceMode = AppearanceMode.light;
+  String? _avatarPath;
+  bool _uploadingAvatar = false;
+
+  UserRepository get _userRepo => Get.find<UserRepository>();
 
   @override
   void initState() {
@@ -54,10 +62,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (role == activeRole) return;
     setState(() => activeRole = role);
     activeRoleNotifier.value = role;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const RoleAwareHome()),
-      (route) => false,
-    );
+    switchToTab(AppTab.home);
   }
 
   @override
@@ -67,47 +72,39 @@ class _ProfilePageState extends State<ProfilePage> {
     return SosScaffold(
       child: Scaffold(
         backgroundColor: kBackground,
-        body: Stack(
-          children: [
-            SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _backButton(),
-                    const SizedBox(height: 12),
-                    const Text(
-                      "Profile & Settings",
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _profileCard(),
-                    const SizedBox(height: 16),
-                    // Vehicle info only shown for drivers
-                    if (isDriver) ...[
-                      _vehicleCard(),
-                      const SizedBox(height: 16),
-                    ],
-                    _appearanceCard(),
-                    const SizedBox(height: 16),
-                    _settingsCard(),
-                    const SizedBox(height: 20),
-                    _logoutButton(),
-                    const SizedBox(height: 12),
-                    _deleteAccountButton(),
-                  ],
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 12),
+                Text(
+                  "Profile & Settings",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: kTextPrimary,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 16),
+                _profileCard(),
+                const SizedBox(height: 16),
+                // Vehicle info only shown for drivers
+                if (isDriver) ...[
+                  _vehicleCard(),
+                  const SizedBox(height: 16),
+                ],
+                _appearanceCard(),
+                const SizedBox(height: 16),
+                _settingsCard(),
+                const SizedBox(height: 20),
+                _logoutButton(),
+                const SizedBox(height: 12),
+                _deleteAccountButton(),
+              ],
             ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: const AppBottomNavBar(current: AppTab.profile),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -131,7 +128,7 @@ class _ProfilePageState extends State<ProfilePage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: kSurface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -145,31 +142,32 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "User",
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
+                        color: kTextPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Row(
-                      children: const [
-                        Icon(Icons.star, size: 15, color: Color(0xFFF59E0B)),
-                        SizedBox(width: 4),
+                      children: [
+                        const Icon(Icons.star, size: 15, color: Color(0xFFF59E0B)),
+                        const SizedBox(width: 4),
                         Text(
                           "4.8 · 47 trips",
                           style: TextStyle(
                             fontSize: 12.5,
-                            color: Colors.black54,
+                            color: kTextSecondary,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 2),
-                    const Text(
+                    Text(
                       "Member since January 2024",
-                      style: TextStyle(fontSize: 11.5, color: Colors.black38),
+                      style: TextStyle(fontSize: 11.5, color: kTextHint),
                     ),
                   ],
                 ),
@@ -177,7 +175,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
           ),
           const SizedBox(height: 16),
-          const Divider(height: 1, color: Color(0xFFF0F0F0)),
+          Divider(height: 1, color: kDivider),
           const SizedBox(height: 12),
           _contactRow(icon: Icons.email_outlined, text: "user@example.com"),
           const SizedBox(height: 10),
@@ -191,40 +189,96 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Future<void> _pickAvatar() async {
+    if (_uploadingAvatar) return;
+    final media = await MediaPickerService.instance.pickImageWithChooser(context);
+    if (media == null || !mounted) return;
+
+    setState(() => _uploadingAvatar = true);
+    try {
+      // BACKEND: uploads via POST /users/me/avatar — see UserRepository.uploadAvatar
+      final url = await _userRepo.uploadAvatar(media);
+      if (mounted) {
+        setState(() => _avatarPath = url);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile photo updated')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _uploadingAvatar = false);
+    }
+  }
+
   Widget _avatar() {
-    return SizedBox(
-      width: 64,
-      height: 64,
-      child: Stack(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: const BoxDecoration(
-              color: kPrimaryGreen,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.person, color: Colors.white, size: 34),
-          ),
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: Container(
-              width: 22,
-              height: 22,
+    return GestureDetector(
+      onTap: _pickAvatar,
+      child: SizedBox(
+        width: 64,
+        height: 64,
+        child: Stack(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
-                color: kPrimaryBlue,
+                color: kPrimaryGreen,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1.5),
+                image: _avatarPath != null
+                    ? DecorationImage(
+                        image: FileImage(File(_avatarPath!)),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
               ),
-              child: const Icon(
-                Icons.camera_alt,
-                color: Colors.white,
-                size: 12,
+              child: _avatarPath == null
+                  ? const Icon(Icons.person, color: Colors.white, size: 34)
+                  : null,
+            ),
+            if (_uploadingAvatar)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black38,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: kPrimaryBlue,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: kSurface, width: 1.5),
+                ),
+                child: const Icon(
+                  Icons.camera_alt,
+                  color: Colors.white,
+                  size: 12,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -484,10 +538,10 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: kSurface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? kPrimaryBlue : const Color(0xFFE6E6E6),
+            color: isSelected ? kPrimaryBlue : kDivider,
             width: isSelected ? 1.6 : 1,
           ),
         ),
@@ -496,7 +550,7 @@ class _ProfilePageState extends State<ProfilePage> {
             Icon(
               icon,
               size: 20,
-              color: isSelected ? kPrimaryBlue : Colors.black54,
+              color: isSelected ? kPrimaryBlue : kTextSecondary,
             ),
             const SizedBox(height: 6),
             Text(
@@ -504,7 +558,7 @@ class _ProfilePageState extends State<ProfilePage> {
               style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
-                color: isSelected ? kPrimaryBlue : Colors.black54,
+                color: isSelected ? kPrimaryBlue : kTextSecondary,
               ),
             ),
           ],

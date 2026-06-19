@@ -39,6 +39,9 @@ dependencies:
   get: ^4.6.6
   smooth_page_indicator: ^1.2.0
   iconsax_flutter: ^1.0.1
+  http: ^1.2.2
+  image_picker: ^1.1.2
+  file_picker: ^8.1.4
 
 dev_dependencies:
   flutter_test:

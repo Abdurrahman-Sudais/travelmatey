@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
-import 'package:travelmateeee/features/bookings/view/bookings_page.dart';
 import 'package:travelmateeee/features/home/view/driver_home_page.dart';
 import 'package:travelmateeee/features/profile/view/notifications_page.dart';
 import 'package:travelmateeee/features/rides/view/search_page.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
+import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart' show switchToTab, AppTab;
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 import 'package:travelmateeee/core/base/active_role.dart';
 import 'package:travelmateeee/shared/widgets/kyc_popup.dart';
@@ -96,34 +95,26 @@ class _HomePageState extends State<HomePage> {
     return SosScaffold(
       child: Scaffold(
         backgroundColor: kBackground,
-        body: Stack(
-          children: [
-            SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _appbarRow(),
-                    const SizedBox(height: 16),
-                    _searchBar(),
-                    const SizedBox(height: 20),
-                    _sectionTitle('Your Activity'),
-                    const SizedBox(height: 10),
-                    _activityRow(),
-                    const SizedBox(height: 20),
-                    _sectionTitle('Popular Routes'),
-                    const SizedBox(height: 10),
-                    ...popularRoutes.map(_popularRouteCard),
-                  ],
-                ),
-              ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _appbarRow(),
+                const SizedBox(height: 16),
+                _searchBar(),
+                const SizedBox(height: 20),
+                _sectionTitle('Your Activity'),
+                const SizedBox(height: 10),
+                _activityRow(),
+                const SizedBox(height: 20),
+                _sectionTitle('Popular Routes'),
+                const SizedBox(height: 10),
+                ...popularRoutes.map(_popularRouteCard),
+              ],
             ),
-            const Align(
-              alignment: Alignment.bottomCenter,
-              child: AppBottomNavBar(current: AppTab.home),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -133,18 +124,22 @@ class _HomePageState extends State<HomePage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Find Your Ride',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: kTextPrimary,
+                ),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
                 'Where are you going today?',
-                style: TextStyle(fontSize: 13, color: Colors.black54),
+                style: TextStyle(fontSize: 13, color: kTextSecondary),
               ),
             ],
           ),
@@ -158,19 +153,19 @@ class _HomePageState extends State<HomePage> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: kSurface,
                   borderRadius: BorderRadius.circular(22),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: kNavShadow,
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.notifications_none,
-                  color: Colors.black87,
+                  color: kTextPrimary,
                 ),
               ),
             ),
@@ -249,7 +244,11 @@ class _HomePageState extends State<HomePage> {
   Widget _sectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+      style: TextStyle(
+        fontSize: 17,
+        fontWeight: FontWeight.bold,
+        color: kTextPrimary,
+      ),
     );
   }
 
@@ -262,7 +261,7 @@ class _HomePageState extends State<HomePage> {
             iconColor: kPrimaryBlue,
             value: '12',
             label: 'Bookings',
-            onTap: () => _goTo(const BookingsPage()),
+            onTap: () => switchToTab(AppTab.secondary),
           ),
         ),
         const SizedBox(width: 10),
@@ -272,7 +271,7 @@ class _HomePageState extends State<HomePage> {
             iconColor: kPrimaryGreen,
             value: '10',
             label: 'Completed',
-            onTap: () => _goTo(const BookingsPage()),
+            onTap: () => switchToTab(AppTab.secondary),
           ),
         ),
         const SizedBox(width: 10),
@@ -300,11 +299,11 @@ class _HomePageState extends State<HomePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: kSurface,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: kNavShadow,
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -316,12 +315,16 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 8),
             Text(
               value,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: kTextPrimary,
+              ),
             ),
             const SizedBox(height: 2),
             Text(
               label,
-              style: const TextStyle(fontSize: 11, color: Colors.black54),
+              style: TextStyle(fontSize: 11, color: kTextSecondary),
             ),
           ],
         ),
@@ -336,11 +339,11 @@ class _HomePageState extends State<HomePage> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: kSurface,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: kNavShadow,
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -356,26 +359,28 @@ class _HomePageState extends State<HomePage> {
                     child: Text(
                       route.from,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
+                        color: kTextPrimary,
                       ),
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right,
                     size: 16,
-                    color: Colors.black38,
+                    color: kTextHint,
                   ),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
                       route.to,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
+                        color: kTextPrimary,
                       ),
                     ),
                   ),
@@ -396,7 +401,7 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 2),
                 Text(
                   '${route.available} available',
-                  style: const TextStyle(fontSize: 11, color: Colors.black54),
+                  style: TextStyle(fontSize: 11, color: kTextSecondary),
                 ),
               ],
             ),

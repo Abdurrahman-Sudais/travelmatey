@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
-import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
+import 'package:travelmateeee/shared/widgets/keyboard_aware_scaffold.dart';
 
 import 'bank_account_model.dart';
 import 'bank_accounts_page.dart';
@@ -117,46 +116,32 @@ class _WithdrawFundsPageState extends State<WithdrawFundsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SosScaffold(
-      child: Scaffold(
-        backgroundColor: kBackground,
-        body: Stack(
-          children: [
-            SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _backButton(),
-                    const SizedBox(height: 4),
-                    const Text(
-                      "Withdraw Funds",
-                      style: TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      "Transfer money to your bank account",
-                      style:
-                          TextStyle(fontSize: 13, color: Colors.black54),
-                    ),
-                    const SizedBox(height: 16),
-                    _availableBalanceCard(),
-                    const SizedBox(height: 16),
-                    _withdrawFormCard(),
-                    const SizedBox(height: 16),
-                    _withdrawalInfoCard(),
-                  ],
-                ),
-              ),
+    return KeyboardAwareFormScaffold(
+      body: KeyboardAwareScrollBody(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+        children: [
+          _backButton(),
+          const SizedBox(height: 4),
+          Text(
+            "Withdraw Funds",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: kTextPrimary,
             ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: const AppBottomNavBar(current: AppTab.wallet),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Transfer money to your bank account",
+            style: TextStyle(fontSize: 13, color: kTextSecondary),
+          ),
+          const SizedBox(height: 16),
+          _availableBalanceCard(),
+          const SizedBox(height: 16),
+          _withdrawFormCard(),
+          const SizedBox(height: 16),
+          _withdrawalInfoCard(),
+        ],
       ),
     );
   }

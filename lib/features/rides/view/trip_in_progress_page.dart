@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
 import 'my_rides_page.dart';
+import 'trip_summary_page.dart';
 
 class TripInProgressPage extends StatefulWidget {
   final RideItem ride;
@@ -259,7 +259,7 @@ class _TripInProgressPageState extends State<TripInProgressPage> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: const [
-                                  Text('Approaching Market, Abuja',
+                                  Text('Approaching Utako, Abuja',
                                       style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.bold)),
@@ -376,7 +376,7 @@ class _TripInProgressPageState extends State<TripInProgressPage> {
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 14),
                                 ),
-                                child: Text('Complete Trip',
+                                child: Text('Complete',
                                     style: TextStyle(
                                         color: _canComplete
                                             ? Colors.white
@@ -386,8 +386,6 @@ class _TripInProgressPageState extends State<TripInProgressPage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        const AppBottomNavBar(current: AppTab.secondary),
                       ],
                     ),
                   ),
@@ -667,31 +665,22 @@ class _TripInProgressPageState extends State<TripInProgressPage> {
   }
 
   void _completeTrip(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Complete Trip'),
-        content: const Text('All riders have been dropped off. Complete the trip?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Not Yet')),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: const Text('Trip completed! Great job!'),
-                    backgroundColor: kPrimaryGreen),
-              );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: kPrimaryGreen),
-            child: const Text('Complete',
-                style: TextStyle(color: Colors.white)),
-          ),
-        ],
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TripSummaryPage(
+          from: widget.ride.from,
+          to: widget.ride.to,
+          date: 'Dec 26, 2025',
+          startTime: '10:30 AM',
+          endTime: '5:45 PM',
+          duration: '5h 15m',
+          distance: '750 KM',
+          totalFare: '₦150,000',
+          platformFee: '₦7,500',
+          netEarning: '₦ 142,500',
+          riders: defaultTripRiders(),
+        ),
       ),
     );
   }

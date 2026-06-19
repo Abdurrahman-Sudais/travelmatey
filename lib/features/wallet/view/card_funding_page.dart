@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart';
-import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
+import 'package:travelmateeee/shared/widgets/keyboard_aware_scaffold.dart';
 
 /// Card Funding page.
 class CardFundingPage extends StatefulWidget {
@@ -75,23 +74,13 @@ class _CardFundingPageState extends State<CardFundingPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SosScaffold(
-      child: Scaffold(
-        backgroundColor: kBackground,
-        body: Stack(
-          children: [
-            SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
-                child: _showSuccess ? _successView() : _formView(),
-              ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: const AppBottomNavBar(current: AppTab.wallet),
-            ),
-          ],
-        ),
+    return KeyboardAwareFormScaffold(
+      showSos: true,
+      body: KeyboardAwareScrollBody(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+        children: [
+          if (_showSuccess) _successView() else _formView(),
+        ],
       ),
     );
   }
