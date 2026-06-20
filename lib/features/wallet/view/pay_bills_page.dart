@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
-import 'package:travelmateeee/shared/widgets/keyboard_aware_scaffold.dart';
 
 class _BillCategory {
   final String label;
@@ -145,11 +144,13 @@ class _PayBillsPageState extends State<PayBillsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return KeyboardAwareFormScaffold(
-      body: KeyboardAwareScrollBody(
-        children: [
-          if (_showSuccess) _successView() else _formView(),
-        ],
+    return Scaffold(
+      backgroundColor: kBackground,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: _showSuccess ? _successView() : _formView(),
+        ),
       ),
     );
   }

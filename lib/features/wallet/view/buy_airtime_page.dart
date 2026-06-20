@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
-import 'package:travelmateeee/shared/widgets/keyboard_aware_scaffold.dart';
 import 'purchase_success_page.dart';
 
 class BuyAirtimePage extends StatefulWidget {
@@ -81,27 +80,40 @@ class _BuyAirtimePageState extends State<BuyAirtimePage> {
 
   @override
   Widget build(BuildContext context) {
-    return KeyboardAwareFormScaffold(
-      bottomBar: _buyButton(),
-      body: KeyboardAwareScrollBody(
-        children: [
-          _backButton(context),
-          const SizedBox(height: 16),
-          _header(),
-          const SizedBox(height: 20),
-          _networkSection(),
-          const SizedBox(height: 14),
-          _phoneSection(),
-          const SizedBox(height: 14),
-          _amountSection(),
-          const SizedBox(height: 14),
-          _beneficiarySection(),
-          if (_canProceed) ...[
-            const SizedBox(height: 14),
-            _transactionSummary(),
+    return Scaffold(
+      backgroundColor: kBackground,
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _backButton(context),
+                    const SizedBox(height: 16),
+                    _header(),
+                    const SizedBox(height: 20),
+                    _networkSection(),
+                    const SizedBox(height: 14),
+                    _phoneSection(),
+                    const SizedBox(height: 14),
+                    _amountSection(),
+                    const SizedBox(height: 14),
+                    _beneficiarySection(),
+                    if (_canProceed) ...[
+                      const SizedBox(height: 14),
+                      _transactionSummary(),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            _buyButton(),
           ],
-          const SizedBox(height: 20),
-        ],
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:travelmateeee/app/routes.dart';
@@ -163,7 +164,7 @@ class _OnboardingPageState extends State<OnboardingPage>
             // Logo / brand
             Text(
               'TravelMate',
-              style: TextStyle(
+              style: GoogleFonts.poppins(
                 color: Colors.white.withValues(alpha: 0.9),
                 fontSize: 16.sp,
                 fontWeight: FontWeightUtils.SemiBold,
@@ -187,7 +188,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                   ),
                   child: Text(
                     'Skip',
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontSize: 13.sp,
                       fontWeight: FontWeightUtils.Medium,
@@ -227,7 +228,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                     onPressed: () => Get.toNamed(RouteConstants.SIGNUP),
                     child: Text(
                       'SIGN UP',
-                      style: TextStyle(
+                      style: GoogleFonts.poppins(
                         fontSize: 16.sp,
                         color: Colors.white,
                         fontWeight: FontWeightUtils.LightBold,
@@ -254,7 +255,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                     onPressed: () => Get.toNamed(RouteConstants.SIGNIN),
                     child: Text(
                       'SIGN IN',
-                      style: TextStyle(
+                      style: GoogleFonts.poppins(
                         fontSize: 16.sp,
                         color: ColorUtils.ButtonBlueColor,
                         fontWeight: FontWeightUtils.LightBold,
@@ -282,7 +283,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                   children: [
                     Text(
                       'Next',
-                      style: TextStyle(
+                      style: GoogleFonts.poppins(
                         fontSize: 16.sp,
                         fontWeight: FontWeightUtils.LightBold,
                       ),
@@ -320,7 +321,41 @@ class _OnboardingPageState extends State<OnboardingPage>
                 ),
               ),
               50.sbH,
-              // Title: fade + slide up
+              // Main brand title
+              FadeTransition(
+                opacity: _titleFade,
+                child: SlideTransition(
+                  position: _titleSlide,
+                  child: Text(
+                    'TravelMate',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeightUtils.Bold,
+                      fontSize: 24.sp,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              6.sbH,
+              // Tagline
+              FadeTransition(
+                opacity: _titleFade,
+                child: SlideTransition(
+                  position: _titleSlide,
+                  child: Text(
+                    'Your journey, our priority',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeightUtils.SemiBold,
+                      fontSize: 15.sp,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              6.sbH,
+              // Page-specific title: fade + slide up
               FadeTransition(
                 opacity: _titleFade,
                 child: SlideTransition(
@@ -328,10 +363,11 @@ class _OnboardingPageState extends State<OnboardingPage>
                   child: Text(
                     title,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       fontWeight: FontWeightUtils.Bold,
-                      fontSize: 28.sp,
-                      color: Colors.yellowAccent,
+                      fontStyle: FontStyle.italic,
+                      fontSize: 22.sp,
+                      color: const Color(0xFFFFA726),
                     ),
                   ),
                 ),
@@ -343,10 +379,10 @@ class _OnboardingPageState extends State<OnboardingPage>
                 child: Text(
                   description,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: GoogleFonts.poppins(
                     fontWeight: FontWeightUtils.Regular,
                     color: Colors.white.withValues(alpha: 0.85),
-                    fontSize: 16.sp,
+                    fontSize: 14.sp,
                     height: 1.4,
                   ),
                 ),
@@ -364,14 +400,7 @@ class _OnboardingPageState extends State<OnboardingPage>
     return SizedBox(
       width: 100.w,
       height: 220.h,
-      child: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('lib/assets/logo.png'),
-            fit: BoxFit.fill,
-          ),
-        ),
-      ),
+      child: _AnimatedLogo(assetPath: 'lib/assets/logo.png'),
     );
   }
 
@@ -483,4 +512,119 @@ class _TrianglePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ─── Animated logo: rotate 360° -> bounce up & back -> pause -> repeat ───────
+
+class _AnimatedLogo extends StatefulWidget {
+  final String assetPath;
+  const _AnimatedLogo({required this.assetPath});
+
+  @override
+  State<_AnimatedLogo> createState() => _AnimatedLogoState();
+}
+
+class _AnimatedLogoState extends State<_AnimatedLogo>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  // Segment timings (in ms) inside one full cycle
+  static const int _rotateMs = 900;
+  static const int _bounceUpMs = 180;
+  static const int _bounceDownMs = 220;
+  static const int _pauseMs = 1200;
+  static const int _totalMs =
+      _rotateMs + _bounceUpMs + _bounceDownMs + _pauseMs;
+
+  late final Animation<double> _rotation;
+  late final Animation<double> _bounce;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: _totalMs),
+      vsync: this,
+    )..repeat();
+
+    final rotateEnd = _rotateMs / _totalMs;
+    final bounceUpEnd = (_rotateMs + _bounceUpMs) / _totalMs;
+    final bounceDownEnd = (_rotateMs + _bounceUpMs + _bounceDownMs) / _totalMs;
+
+    // 0 -> rotateEnd: full 360° spin. Stays at 1.0 (360°) afterwards.
+    _rotation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 0.0,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeInOutCubic)),
+        weight: rotateEnd * 100,
+      ),
+      TweenSequenceItem(
+        tween: ConstantTween(1.0),
+        weight: (1 - rotateEnd) * 100,
+      ),
+    ]).animate(_controller);
+
+    // 0 through rotateEnd: no bounce. Then up, then back down, then hold at 0.
+    _bounce = TweenSequence<double>([
+      TweenSequenceItem(tween: ConstantTween(0.0), weight: rotateEnd * 100),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 0.0,
+          end: -16.0,
+        ).chain(CurveTween(curve: Curves.easeOut)),
+        weight: (bounceUpEnd - rotateEnd) * 100,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: -16.0,
+          end: 0.0,
+        ).chain(CurveTween(curve: Curves.bounceOut)),
+        weight: (bounceDownEnd - bounceUpEnd) * 100,
+      ),
+      TweenSequenceItem(
+        tween: ConstantTween(0.0),
+        weight: (1 - bounceDownEnd) * 100,
+      ),
+    ]).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        // Perspective matrix so the Y-axis rotation actually looks 3D
+        // instead of just squashing flat.
+        final matrix = Matrix4.identity()
+          ..setEntry(3, 2, 0.0015) // perspective
+          ..rotateY(_rotation.value * 6.28318530718); // 2 * pi around Y-axis
+
+        return Transform.translate(
+          offset: Offset(0, _bounce.value),
+          child: Transform(
+            alignment: Alignment.center,
+            transform: matrix,
+            child: child,
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(widget.assetPath),
+            fit: BoxFit.fill,
+          ),
+        ),
+      ),
+    );
+  }
 }

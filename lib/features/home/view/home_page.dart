@@ -3,7 +3,8 @@ import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/features/home/view/driver_home_page.dart';
 import 'package:travelmateeee/features/profile/view/notifications_page.dart';
 import 'package:travelmateeee/features/rides/view/search_page.dart';
-import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart' show switchToTab, AppTab;
+import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart'
+    show switchToTab, AppTab;
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 import 'package:travelmateeee/core/base/active_role.dart';
 import 'package:travelmateeee/shared/widgets/kyc_popup.dart';
@@ -133,6 +134,7 @@ class _HomePageState extends State<HomePage> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
+                  fontFamily: "Poppins",
                   color: kTextPrimary,
                 ),
               ),
@@ -163,10 +165,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                child: Icon(
-                  Icons.notifications_none,
-                  color: kTextPrimary,
-                ),
+                child: Icon(Icons.notifications_none, color: kTextPrimary),
               ),
             ),
             Positioned(
@@ -322,10 +321,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(fontSize: 11, color: kTextSecondary),
-            ),
+            Text(label, style: TextStyle(fontSize: 11, color: kTextSecondary)),
           ],
         ),
       ),
@@ -367,11 +363,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Icon(
-                    Icons.chevron_right,
-                    size: 16,
-                    color: kTextHint,
-                  ),
+                  Icon(Icons.chevron_right, size: 16, color: kTextHint),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
