@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:travelmateeee/app/routes.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
+import 'package:travelmateeee/data/repositories/user_repository.dart';
 
 class RegisteredAddressPage extends StatefulWidget {
   const RegisteredAddressPage({super.key});
@@ -44,12 +45,41 @@ class _RegisteredAddressPageState extends State<RegisteredAddressPage> {
     "Anambra": ["Awka South", "Onitsha North", "Nnewi North"],
   };
 
+  bool _isSubmitting = false;
+
   bool get _canContinue =>
+      !_isSubmitting &&
       _state != null &&
       _lga != null &&
       _wardCtrl.text.trim().isNotEmpty &&
       _streetCtrl.text.trim().isNotEmpty &&
       _houseNumberCtrl.text.trim().isNotEmpty;
+
+  Future<void> _updateAddress() async {
+    if (!_canContinue) return;
+    setState(() => _isSubmitting = true);
+    try {
+      final repo = Get.find<UserRepository>();
+      await repo.updateAddress(
+        street: '${_houseNumberCtrl.text.trim()} ${_streetCtrl.text.trim()}, ${_wardCtrl.text.trim()}',
+        city: _lga!,
+        state: _state!,
+        lga: _lga!,
+      );
+      Get.offAllNamed(RouteConstants.HOME);
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to update address: $e',
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -261,13 +291,7 @@ class _RegisteredAddressPageState extends State<RegisteredAddressPage> {
   Widget _continueButton() {
     final bool enabled = _canContinue;
     return InkWell(
-      onTap: enabled
-          ? () {
-              // Registration complete — go to the app's home screen,
-              // clearing the auth stack.
-              Get.offAllNamed(RouteConstants.HOME);
-            }
-          : null,
+      onTap: enabled ? _updateAddress : null,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: double.infinity,
@@ -277,13 +301,19 @@ class _RegisteredAddressPageState extends State<RegisteredAddressPage> {
           color: enabled ? kPrimaryBlue : const Color(0xFF9CA3AF),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Text(
-          "Continue",
-          style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold),
-        ),
+        child: _isSubmitting
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+              )
+            : const Text(
+                "Continue",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold),
+              ),
       ),
     );
   }

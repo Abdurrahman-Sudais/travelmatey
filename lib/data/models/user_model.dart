@@ -45,23 +45,56 @@ class UserModel {
         kycVerified: false,
       );
 
-  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
-        id: json['id']?.toString() ?? '',
-        name: json['name']?.toString() ?? '',
-        email: json['email']?.toString() ?? '',
-        phone: json['phone']?.toString() ?? '',
-        avatarUrl: json['avatar_url']?.toString(),
-        rating: (json['rating'] as num?)?.toDouble() ?? 0,
-        tripCount: json['trip_count'] as int? ?? 0,
-        memberSince: json['member_since']?.toString() ?? '',
-        street: json['street']?.toString() ?? '',
-        city: json['city']?.toString() ?? '',
-        state: json['state']?.toString() ?? '',
-        lga: json['lga']?.toString() ?? '',
-        kycVerified: json['kyc_verified'] as bool? ?? false,
-      );
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    final firstName = json['firstName']?.toString() ??
+        json['first_name']?.toString() ??
+        '';
+    final lastName = json['lastName']?.toString() ??
+        json['last_name']?.toString() ??
+        '';
+    final composedName = '$firstName $lastName'.trim();
+
+    return UserModel(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString().isNotEmpty == true
+          ? json['name'].toString()
+          : composedName,
+      email: json['email']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
+      avatarUrl: json['avatar_url']?.toString() ??
+          json['avatarUrl']?.toString() ??
+          json['avatar']?.toString(),
+      rating: (json['rating'] as num?)?.toDouble() ??
+          (json['averageRating'] as num?)?.toDouble() ??
+          (json['average_rating'] as num?)?.toDouble() ??
+          0,
+      tripCount: json['trip_count'] as int? ??
+          json['tripCount'] as int? ??
+          json['totalTrips'] as int? ??
+          json['total_trips'] as int? ??
+          0,
+      memberSince: json['member_since']?.toString() ??
+          json['memberSince']?.toString() ??
+          json['createdAt']?.toString() ??
+          json['created_at']?.toString() ??
+          '',
+      street: json['street']?.toString() ?? '',
+      city: json['city']?.toString() ?? '',
+      state: json['state']?.toString() ?? '',
+      lga: json['lga']?.toString() ?? '',
+      kycVerified: json['kyc_verified'] as bool? ??
+          json['kycVerified'] as bool? ??
+          false,
+    );
+  }
 
   UserModel copyWith({
+    String? name,
+    String? email,
+    String? phone,
+    double? rating,
+    int? tripCount,
+    String? memberSince,
     String? avatarUrl,
     String? street,
     String? city,
@@ -71,13 +104,13 @@ class UserModel {
   }) =>
       UserModel(
         id: id,
-        name: name,
-        email: email,
-        phone: phone,
+        name: name ?? this.name,
+        email: email ?? this.email,
+        phone: phone ?? this.phone,
         avatarUrl: avatarUrl ?? this.avatarUrl,
-        rating: rating,
-        tripCount: tripCount,
-        memberSince: memberSince,
+        rating: rating ?? this.rating,
+        tripCount: tripCount ?? this.tripCount,
+        memberSince: memberSince ?? this.memberSince,
         street: street ?? this.street,
         city: city ?? this.city,
         state: state ?? this.state,

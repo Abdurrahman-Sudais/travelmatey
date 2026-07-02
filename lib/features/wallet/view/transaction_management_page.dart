@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
+import 'package:travelmateeee/data/repositories/wallet_repository.dart';
 
 enum _TxStatus { completed, held, pending }
 
@@ -36,36 +38,59 @@ class _TransactionManagementPageState
     extends State<TransactionManagementPage> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
+  bool _isLoading = true;
 
-  static const _allTransactions = [
-    _Transaction(
-      id: 'tx_1',
-      title: 'Wallet funding via card',
-      date: 'Jun 12, 2026',
-      status: _TxStatus.completed,
-      amount: '+₦10,000',
-      isCredit: true,
-      type: 'CREDIT',
-    ),
-    _Transaction(
-      id: 'tx_2',
-      title: 'Ride payment - Lagos to Ibadan',
-      date: 'Jun 11, 2026',
-      status: _TxStatus.held,
-      amount: '-₦5,000',
-      isCredit: false,
-      type: 'DEBIT',
-    ),
-    _Transaction(
-      id: 'tx_3',
-      title: 'Ride earnings',
-      date: 'Jun 10, 2026',
-      status: _TxStatus.completed,
-      amount: '+₦4,500',
-      isCredit: true,
-      type: 'CREDIT',
-    ),
-  ];
+  List<_Transaction> _allTransactions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTransactions();
+  }
+
+  Future<void> _loadTransactions() async {
+    setState(() => _isLoading = true);
+    try {
+      final repo = Get.find<WalletRepository>();
+      final raw = await repo.getTransactions();
+      setState(() {
+        _allTransactions = raw.map((m) {
+          final statusStr = (m['status'] ?? 'completed').toString().toLowerCase();
+          _TxStatus status;
+          switch (statusStr) {
+            case 'held':
+              status = _TxStatus.held;
+              break;
+            case 'pending':
+              status = _TxStatus.pending;
+              break;
+            default:
+              status = _TxStatus.completed;
+          }
+          final typeStr = (m['type'] ?? 'credit').toString().toUpperCase();
+          final isCredit = typeStr == 'CREDIT';
+          return _Transaction(
+            id: m['id']?.toString() ?? '',
+            title: m['title']?.toString() ?? m['description']?.toString() ?? 'Transaction',
+            date: m['date']?.toString() ?? m['created_at']?.toString() ?? '',
+            status: status,
+            amount: m['amount']?.toString() ?? '₦0',
+            isCredit: isCredit,
+            type: typeStr,
+          );
+        }).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      Get.snackbar(
+        'Error',
+        'Failed to load transactions: $e',
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+      );
+    }
+  }
 
   List<_Transaction> get _filtered {
     if (_query.isEmpty) return _allTransactions;
@@ -175,7 +200,7 @@ class _TransactionManagementPageState
                     label: Text(o),
                     selected: o == 'All',
                     onSelected: (_) {},
-                    selectedColor: kPrimaryBlue.withOpacity(0.15),
+                    selectedColor: kPrimaryBlue.withValues(alpha: 0.15),
                   ))
               .toList(),
         ),
@@ -218,7 +243,13 @@ class _TransactionManagementPageState
                   const SizedBox(height: 16),
 
                   Expanded(
-                    child: SingleChildScrollView(
+                    child: _isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(color: kPrimaryBlue),
+                          )
+                        : RefreshIndicator(
+                            onRefresh: _loadTransactions,
+                            child: SingleChildScrollView(
                       padding:
                           const EdgeInsets.fromLTRB(16, 0, 16, 110),
                       child: Column(
@@ -399,6 +430,7 @@ class _TransactionManagementPageState
                       ),
                     ),
                   ),
+                  ),
                 ],
               )),
       ),
@@ -477,17 +509,17 @@ class _TransactionManagementPageState
     switch (status) {
       case _TxStatus.completed:
         label = 'COMPLETED';
-        bg = kPrimaryGreen.withOpacity(0.12);
+        bg = kPrimaryGreen.withValues(alpha: 0.12);
         text = kPrimaryGreen;
         break;
       case _TxStatus.held:
         label = 'HELD';
-        bg = kPrimaryBlue.withOpacity(0.12);
+        bg = kPrimaryBlue.withValues(alpha: 0.12);
         text = kPrimaryBlue;
         break;
       case _TxStatus.pending:
         label = 'PENDING';
-        bg = kAmber.withOpacity(0.15);
+        bg = kAmber.withValues(alpha: 0.15);
         text = kAmber;
         break;
     }

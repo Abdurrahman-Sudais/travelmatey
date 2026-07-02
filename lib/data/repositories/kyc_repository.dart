@@ -1,4 +1,7 @@
-import 'package:travelmateeee/core/api/api_client.dart';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'package:travelmateeee/core/services/api_service.dart';
 import 'package:travelmateeee/core/api/api_endpoints.dart';
 import 'package:travelmateeee/core/config/app_config.dart';
 import 'package:travelmateeee/core/services/media_picker_service.dart';
@@ -46,8 +49,8 @@ class MockKycRepository implements KycRepository {
 }
 
 class RemoteKycRepository implements KycRepository {
-  RemoteKycRepository(this._api);
-  final ApiClient _api;
+  RemoteKycRepository();
+  final ApiService _api = ApiService.instance;
 
   @override
   Future<KycStatusModel> getStatus() async {
@@ -65,18 +68,39 @@ class RemoteKycRepository implements KycRepository {
       'type': type.name,
       ...?metadata,
     };
-    final json = await _api.postMultipart(
-      ApiEndpoints.kycDocument,
-      file: media.file,
-      fileField: 'file',
-      fields: fields,
-    );
-    final data = json['data'] as Map<String, dynamic>;
-    return KycDocumentUploadResult(
-      documentId: data['id']?.toString() ?? '',
-      localPath: media.path,
-      remoteUrl: data['url']?.toString(),
-    );
+    
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse('${ApiService.baseUrl}${ApiEndpoints.kycDocument}'));
+      final token = _api.getToken();
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      fields.forEach((key, value) {
+        request.fields[key] = value;
+      });
+      if (kIsWeb && media.bytes != null) {
+        request.files.add(http.MultipartFile.fromBytes(
+          'file',
+          media.bytes!,
+          filename: media.name,
+        ));
+      } else {
+        request.files.add(await http.MultipartFile.fromPath('file', media.path));
+      }
+      
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      final json = jsonDecode(response.body);
+      final data = json['data'] as Map<String, dynamic>;
+      
+      return KycDocumentUploadResult(
+        documentId: data['id']?.toString() ?? '',
+        localPath: media.path,
+        remoteUrl: data['url']?.toString(),
+      );
+    } catch (e) {
+      throw Exception('Failed to upload KYC document: $e');
+    }
   }
 
   @override
@@ -89,7 +113,7 @@ class RemoteKycRepository implements KycRepository {
   }
 }
 
-KycRepository createKycRepository(ApiClient api) {
+KycRepository createKycRepository() {
   if (AppConfig.useMockRepositories) return MockKycRepository();
-  return RemoteKycRepository(api);
+  return RemoteKycRepository();
 }

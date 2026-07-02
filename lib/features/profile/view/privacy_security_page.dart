@@ -133,7 +133,7 @@ class PrivacySecurityPage extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFFE8F0FE),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: kPrimaryBlue.withOpacity(0.3)),
+          border: Border.all(color: kPrimaryBlue.withValues(alpha: 0.3)),
         ),
         child: Text(text,
             style: const TextStyle(
@@ -164,7 +164,7 @@ class PrivacySecurityPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 6,
                 offset: const Offset(0, 2))
           ],
@@ -203,7 +203,7 @@ class PrivacySecurityPage extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFFE8F5E9),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: kPrimaryGreen.withOpacity(0.3)),
+          border: Border.all(color: kPrimaryGreen.withValues(alpha: 0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -3,12 +3,48 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'
+    show MapboxOptions;
 import 'package:travelmateeee/app/routes.dart';
+import 'package:travelmateeee/core/config/app_config.dart';
 import 'package:travelmateeee/core/di/service_locator.dart';
+import 'package:travelmateeee/core/services/api_service.dart';
+import 'package:travelmateeee/core/services/firebase_bootstrap.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 
-void main() {
-  ServiceLocator.init();
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // ── WEB-ONLY: CORS ───────────────────────────────────────────────────────
+  // Browsers block cross-origin API calls. Prefer Android/iOS for API testing:
+  //   flutter run -d android
+  //
+  // If you must use Chrome locally, pick ONE of these:
+  //   A) Disable CORS in Chrome (dev only — see .vscode/launch.json):
+  //      flutter run -d chrome --web-browser-flag "--disable-web-security" \
+  //        --web-browser-flag "--user-data-dir=.chrome-dev-profile"
+  //   B) Route requests through a public CORS proxy (unreliable, dev only):
+  //      flutter run -d chrome --dart-define=USE_WEB_CORS_PROXY=true
+  //      or set ApiService.useWebCorsProxy = true below.
+  if (kIsWeb && kDebugMode) {
+    const useProxy = bool.fromEnvironment('USE_WEB_CORS_PROXY');
+    ApiService.useWebCorsProxy = useProxy;
+    if (!useProxy) {
+      debugPrint(
+        'TravelMate web: API calls may fail with CORS. '
+        'Run on Android or use the "Chrome — CORS disabled" launch config.',
+      );
+    }
+  }
+
+  await ServiceLocator.init();
+  // Firebase is only required for phone OTP — Google Sign-In uses google_sign_in + your API.
+  if (!AppConfig.useMockRepositories) {
+    await FirebaseBootstrap.init();
+  }
+
+  MapboxOptions.setAccessToken(AppConfig.mapboxPublicToken);
+
   runApp(
     DevicePreview(
       enabled: !kReleaseMode,

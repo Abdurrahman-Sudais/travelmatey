@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
+import 'package:travelmateeee/core/utils/launch_utils.dart';
+import 'package:travelmateeee/features/support/view/help_support_page.dart';
 
 /// Simple data holder for an emergency contact row.
 class EmergencyContact {
@@ -22,9 +24,6 @@ const List<EmergencyContact> kEmergencyContacts = [
     isServiceContact: true,
   ),
   EmergencyContact(name: "Police", number: "199", isServiceContact: true),
-  EmergencyContact(name: "Mom", number: "+234 803 123 4567"),
-  EmergencyContact(name: "Dad", number: "+234 805 234 5678"),
-  EmergencyContact(name: "Best Friend", number: "+234 807 345 6789"),
 ];
 
 /// Global toggle. Flip to true on pages that should NOT show the SOS button.
@@ -270,7 +269,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.25),
+              color: Colors.white.withValues(alpha: 0.25),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -305,7 +304,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
             child: Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.25),
+                color: Colors.white.withValues(alpha: 0.25),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.close, color: Colors.white, size: 18),
@@ -321,8 +320,8 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: kAmber.withOpacity(0.12),
-        border: Border.all(color: kAmber.withOpacity(0.4)),
+        color: kAmber.withValues(alpha: 0.12),
+        border: Border.all(color: kAmber.withValues(alpha: 0.4)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -376,7 +375,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isSelected ? kErrorRed : Colors.black.withOpacity(0.06),
+          color: isSelected ? kErrorRed : Colors.black.withValues(alpha: 0.06),
           width: isSelected ? 1.4 : 1,
         ),
       ),
@@ -390,8 +389,8 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: contact.isServiceContact
-                    ? kErrorRed.withOpacity(0.12)
-                    : kPrimaryBlue.withOpacity(0.12),
+                    ? kErrorRed.withValues(alpha: 0.12)
+                    : kPrimaryBlue.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -450,9 +449,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
           const SizedBox(width: 10),
           // Direct call button
           InkWell(
-            onTap: () {
-              // TODO: launch_url tel:${contact.number}
-            },
+            onTap: () => launchPhoneCall(contact.number, context: context),
             borderRadius: BorderRadius.circular(100),
             child: Container(
               padding: const EdgeInsets.all(9),
@@ -473,8 +470,8 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: kPrimaryBlue.withOpacity(0.05),
-        border: Border.all(color: kPrimaryBlue.withOpacity(0.35)),
+        color: kPrimaryBlue.withValues(alpha: 0.05),
+        border: Border.all(color: kPrimaryBlue.withValues(alpha: 0.35)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -511,9 +508,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
             label: "Call Police",
             icon: Icons.call,
             color: kPrimaryBlue,
-            onTap: () {
-              // TODO: launch_url tel:199
-            },
+            onTap: () => launchPhoneCall('199', context: context),
           ),
         ),
         const SizedBox(width: 12),
@@ -523,7 +518,11 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
             icon: Icons.chat_bubble_outline,
             color: kPrimaryGreen,
             onTap: () {
-              // TODO: navigate to support chat
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const HelpSupportPage()),
+              );
             },
           ),
         ),
@@ -641,8 +640,7 @@ class _EmergencyCountdownSheetState extends State<EmergencyCountdownSheet>
       setState(() => _seconds--);
       if (_seconds <= 0) {
         t.cancel();
-        // TODO: trigger actual emergency alert
-        // For now dismiss the sheet
+        launchPhoneCall('112');
         if (mounted) Navigator.pop(context);
       }
     });
@@ -694,7 +692,7 @@ class _EmergencyCountdownSheetState extends State<EmergencyCountdownSheet>
                                 height: 160,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: kErrorRed.withOpacity(0.2),
+                                  color: kErrorRed.withValues(alpha: 0.2),
                                 ),
                               ),
                             ),
@@ -745,8 +743,8 @@ class _EmergencyCountdownSheetState extends State<EmergencyCountdownSheet>
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: kAmber.withOpacity(0.1),
-                        border: Border.all(color: kAmber.withOpacity(0.3)),
+                        color: kAmber.withValues(alpha: 0.1),
+                        border: Border.all(color: kAmber.withValues(alpha: 0.3)),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Column(
@@ -825,7 +823,7 @@ class _EmergencyCountdownSheetState extends State<EmergencyCountdownSheet>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.25),
+              color: Colors.white.withValues(alpha: 0.25),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -860,7 +858,7 @@ class _EmergencyCountdownSheetState extends State<EmergencyCountdownSheet>
             child: Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.25),
+                color: Colors.white.withValues(alpha: 0.25),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.close, color: Colors.white, size: 18),

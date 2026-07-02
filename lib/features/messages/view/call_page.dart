@@ -82,7 +82,7 @@ class _VoiceCallPageState extends State<VoiceCallPage> {
               const SizedBox(height: 8),
               Text(
                 widget.phoneNumber,
-                style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 15),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 15),
               ),
               const SizedBox(height: 20),
               callStatusChip(_statusText),
@@ -267,7 +267,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
       decoration: BoxDecoration(
         color: kCallSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       alignment: Alignment.center,
       child: _cameraOff
@@ -310,7 +310,7 @@ Widget callAvatar({required String initials, required Color color, double size =
       Container(
         width: size + 60,
         height: size + 60,
-        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(0.05))),
+        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
       ),
       Container(
         width: size,
@@ -318,7 +318,7 @@ Widget callAvatar({required String initials, required Color color, double size =
         decoration: BoxDecoration(
           color: color,
           shape: BoxShape.circle,
-          boxShadow: [BoxShadow(color: color.withOpacity(0.35), blurRadius: 40, spreadRadius: 10)],
+          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.35), blurRadius: 40, spreadRadius: 10)],
         ),
         alignment: Alignment.center,
         child: Text(initials, style: TextStyle(color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.bold)),

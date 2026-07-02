@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:travelmateeee/app/routes.dart';
 import 'package:travelmateeee/core/utils/color_utils.dart';
@@ -167,7 +166,7 @@ class _OnboardingPageState extends State<OnboardingPage>
               style: GoogleFonts.poppins(
                 color: Colors.white.withValues(alpha: 0.9),
                 fontSize: 16.sp,
-                fontWeight: FontWeightUtils.SemiBold,
+                fontWeight: FontWeightUtils.semiBold,
                 letterSpacing: 0.5,
               ),
             ),
@@ -191,7 +190,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                     style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontSize: 13.sp,
-                      fontWeight: FontWeightUtils.Medium,
+                      fontWeight: FontWeightUtils.medium,
                     ),
                   ),
                 ),
@@ -219,7 +218,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                   height: 56.h,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorUtils.ButtonBlueColor,
+                      backgroundColor: ColorUtils.buttonBlueColor,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.r),
                       ),
@@ -231,7 +230,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                       style: GoogleFonts.poppins(
                         fontSize: 16.sp,
                         color: Colors.white,
-                        fontWeight: FontWeightUtils.LightBold,
+                        fontWeight: FontWeightUtils.lightBold,
                       ),
                     ),
                   ),
@@ -245,7 +244,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                     style: OutlinedButton.styleFrom(
                       backgroundColor: Colors.white,
                       side: const BorderSide(
-                        color: ColorUtils.ButtonBlueColor,
+                        color: ColorUtils.buttonBlueColor,
                         width: 1.5,
                       ),
                       shape: RoundedRectangleBorder(
@@ -257,8 +256,8 @@ class _OnboardingPageState extends State<OnboardingPage>
                       'SIGN IN',
                       style: GoogleFonts.poppins(
                         fontSize: 16.sp,
-                        color: ColorUtils.ButtonBlueColor,
-                        fontWeight: FontWeightUtils.LightBold,
+                        color: ColorUtils.buttonBlueColor,
+                        fontWeight: FontWeightUtils.lightBold,
                       ),
                     ),
                   ),
@@ -285,7 +284,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                       'Next',
                       style: GoogleFonts.poppins(
                         fontSize: 16.sp,
-                        fontWeight: FontWeightUtils.LightBold,
+                        fontWeight: FontWeightUtils.lightBold,
                       ),
                     ),
                     SizedBox(width: 8.w),
@@ -330,7 +329,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                     'TravelMate',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
-                      fontWeight: FontWeightUtils.Bold,
+                      fontWeight: FontWeightUtils.bold,
                       fontSize: 24.sp,
                       color: Colors.white,
                     ),
@@ -347,7 +346,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                     'Your journey, our priority',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
-                      fontWeight: FontWeightUtils.SemiBold,
+                      fontWeight: FontWeightUtils.semiBold,
                       fontSize: 15.sp,
                       color: Colors.white,
                     ),
@@ -364,7 +363,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                     title,
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
-                      fontWeight: FontWeightUtils.Bold,
+                      fontWeight: FontWeightUtils.bold,
                       fontStyle: FontStyle.italic,
                       fontSize: 22.sp,
                       color: const Color(0xFFFFA726),
@@ -380,7 +379,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                   description,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
-                    fontWeight: FontWeightUtils.Regular,
+                    fontWeight: FontWeightUtils.regular,
                     color: Colors.white.withValues(alpha: 0.85),
                     fontSize: 14.sp,
                     height: 1.4,
@@ -403,61 +402,6 @@ class _OnboardingPageState extends State<OnboardingPage>
       child: _AnimatedLogo(assetPath: 'lib/assets/logo.png'),
     );
   }
-
-  Widget _buildMapPinIllustration() {
-    return SizedBox(
-      width: 140.w,
-      height: 140.h,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            width: 130.w,
-            height: 130.h,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-          ),
-          Positioned(
-            bottom: 25.h,
-            child: Column(
-              children: [
-                Container(
-                  width: 70.w,
-                  height: 70.h,
-                  decoration: const BoxDecoration(
-                    color: Colors.black,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Container(
-                      width: 50.w,
-                      height: 50.h,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Iconsax.car_copy,
-                        size: 24.sp,
-                        color: Colors.red,
-                      ),
-                    ),
-                  ),
-                ),
-                CustomPaint(
-                  size: Size(16.w, 10.h),
-                  painter: _TrianglePainter(Colors.black),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // ── Background ─────────────────────────────────────────────────────────────
 
   Widget _buildBackground() {
@@ -472,47 +416,8 @@ class _OnboardingPageState extends State<OnboardingPage>
       ),
     );
   }
-
-  Widget _buildCircle(double size) {
-    return Container(
-      width: size.w,
-      height: size.h,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.05),
-          width: 1.5.w,
-        ),
-      ),
-    );
-  }
 }
 
-// ─── Triangle painter for map-pin ─────────────────────────────────────────────
-
-class _TrianglePainter extends CustomPainter {
-  final Color color;
-  const _TrianglePainter(this.color);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    canvas.drawPath(
-      Path()
-        ..moveTo(0, 0)
-        ..lineTo(size.width, 0)
-        ..lineTo(size.width / 2, size.height)
-        ..close(),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
 
 // ─── Animated logo: rotate 360° -> bounce up & back -> pause -> repeat ───────
 

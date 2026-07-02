@@ -26,7 +26,7 @@ class ApiClient {
   void setAuthToken(String? token) => _authToken = token;
 
   Uri _uri(String path, [Map<String, String>? query]) =>
-      Uri.parse('${AppConfig.apiBaseUrl}$path').replace(queryParameters: query);
+      Uri.parse('${AppConfig.baseUrl}$path').replace(queryParameters: query);
 
   Future<Map<String, dynamic>> get(
     String path, {

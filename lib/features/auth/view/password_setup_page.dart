@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:travelmateeee/core/services/api_service.dart';
+import 'package:travelmateeee/core/services/auth_service.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
+import 'package:travelmateeee/features/auth/signup_draft.dart';
+import 'package:travelmateeee/features/auth/view/phone_verification_page.dart';
 import 'package:travelmateeee/features/profile/view/personal_information_page.dart';
 
 class PasswordSetupPage extends StatefulWidget {
@@ -14,6 +19,7 @@ class _PasswordSetupPageState extends State<PasswordSetupPage> {
   final _repeatCtrl = TextEditingController();
   bool _obscure1 = true;
   bool _obscure2 = true;
+  bool _isSaving = false;
 
   @override
   void dispose() {
@@ -26,8 +32,7 @@ class _PasswordSetupPageState extends State<PasswordSetupPage> {
   bool get _hasUpper => _passwordCtrl.text.contains(RegExp(r'[A-Z]'));
   bool get _hasLower => _passwordCtrl.text.contains(RegExp(r'[a-z]'));
   bool get _passwordsMatch =>
-      _passwordCtrl.text.isNotEmpty &&
-      _passwordCtrl.text == _repeatCtrl.text;
+      _passwordCtrl.text.isNotEmpty && _passwordCtrl.text == _repeatCtrl.text;
 
   int get _strengthScore {
     int score = 0;
@@ -84,7 +89,9 @@ class _PasswordSetupPageState extends State<PasswordSetupPage> {
                     child: Text(
                       "Password setup",
                       style: TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.bold),
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -94,9 +101,10 @@ class _PasswordSetupPageState extends State<PasswordSetupPage> {
                       "hard for others to guess",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.black54,
-                          height: 1.4),
+                        fontSize: 14,
+                        color: Colors.black54,
+                        height: 1.4,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 30),
@@ -104,13 +112,13 @@ class _PasswordSetupPageState extends State<PasswordSetupPage> {
                     controller: _passwordCtrl,
                     hint: "New password",
                     obscure: _obscure1,
-                    onToggle: () =>
-                        setState(() => _obscure1 = !_obscure1),
+                    onToggle: () => setState(() => _obscure1 = !_obscure1),
                   ),
                   const SizedBox(height: 10),
-                  const Text("Strength",
-                      style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.bold)),
+                  const Text(
+                    "Strength",
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 6),
                   _strengthBar(_strengthScore),
                   const SizedBox(height: 6),
@@ -123,8 +131,7 @@ class _PasswordSetupPageState extends State<PasswordSetupPage> {
                     controller: _repeatCtrl,
                     hint: "Repeat new password",
                     obscure: _obscure2,
-                    onToggle: () =>
-                        setState(() => _obscure2 = !_obscure2),
+                    onToggle: () => setState(() => _obscure2 = !_obscure2),
                   ),
                   const SizedBox(height: 6),
                   _matchBar(),
@@ -185,17 +192,17 @@ class _PasswordSetupPageState extends State<PasswordSetupPage> {
         suffixIcon: IconButton(
           onPressed: onToggle,
           icon: Icon(
-            obscure
-                ? Icons.visibility_off_outlined
-                : Icons.visibility_outlined,
+            obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
             color: Colors.black45,
             size: 20,
           ),
         ),
         filled: true,
         fillColor: const Color(0xFFEDEDED),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -208,10 +215,10 @@ class _PasswordSetupPageState extends State<PasswordSetupPage> {
     final color = score == 0
         ? const Color(0xFFE8DADA)
         : score == 1
-            ? kErrorRed
-            : score == 2
-                ? kAmber
-                : kPrimaryGreen;
+        ? kErrorRed
+        : score == 2
+        ? kAmber
+        : kPrimaryGreen;
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: LinearProgressIndicator(
@@ -228,8 +235,8 @@ class _PasswordSetupPageState extends State<PasswordSetupPage> {
     final color = empty
         ? const Color(0xFFEDE3E3)
         : _passwordsMatch
-            ? kPrimaryGreen
-            : kErrorRed;
+        ? kPrimaryGreen
+        : kErrorRed;
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: LinearProgressIndicator(
@@ -253,25 +260,63 @@ class _PasswordSetupPageState extends State<PasswordSetupPage> {
         Text(
           label,
           style: TextStyle(
-              fontSize: 14,
-              color: met ? Colors.black87 : Colors.black54),
+            fontSize: 14,
+            color: met ? Colors.black87 : Colors.black54,
+          ),
         ),
       ],
     );
   }
 
+  Future<void> _savePassword() async {
+    if (!_canSave || _isSaving) return;
+
+    if (!SignUpDraft.phoneVerified) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PhoneVerificationPage(
+            phoneNumber: AuthService.normalizePhone(SignUpDraft.phone),
+            email: SignUpDraft.email,
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      final newPassword = _passwordCtrl.text;
+      if (SignUpDraft.usedTempPassword && SignUpDraft.tempPassword.isNotEmpty) {
+        await AuthService.instance.changePassword(
+          oldPassword: SignUpDraft.tempPassword,
+          newPassword: newPassword,
+        );
+        SignUpDraft.usedTempPassword = false;
+      }
+      SignUpDraft.password = newPassword;
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const PersonalInformationPage()),
+      );
+    } on ApiException catch (e) {
+      Get.snackbar(
+        e.message,
+        '',
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
   Widget _saveButton() {
-    final bool enabled = _canSave;
+    final bool enabled = _canSave && !_isSaving;
     return InkWell(
-      onTap: enabled
-          ? () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const PersonalInformationPage()),
-              );
-            }
-          : null,
+      onTap: enabled ? _savePassword : null,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: double.infinity,
@@ -281,13 +326,23 @@ class _PasswordSetupPageState extends State<PasswordSetupPage> {
           color: enabled ? kPrimaryBlue : const Color(0xFF9CA3AF),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Text(
-          "Save Password",
-          style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold),
-        ),
+        child: _isSaving
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Colors.white,
+                ),
+              )
+            : const Text(
+                "Save Password",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
       ),
     );
   }

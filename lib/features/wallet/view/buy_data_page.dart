@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
+import 'package:travelmateeee/data/repositories/wallet_repository.dart';
 import 'purchase_success_page.dart';
 
 class _DataPlan {
@@ -22,6 +24,7 @@ class _BuyDataPageState extends State<BuyDataPage> {
   String? _selectedNetwork;
   final _phoneController = TextEditingController();
   _DataPlan? _selectedPlan;
+  bool _isSubmitting = false;
 
   static const _networks = [
     {'name': 'MTN', 'icon': Icons.phone_iphone, 'color': Color(0xFFFFC107)},
@@ -40,26 +43,54 @@ class _BuyDataPageState extends State<BuyDataPage> {
   ];
 
   bool get _canProceed =>
+      !_isSubmitting &&
       _selectedNetwork != null &&
       _phoneController.text.trim().length >= 10 &&
-      _selectedPlan != null;
+      _selectedPlan != null &&
+      _selectedPlan!.price <= widget.availableBalance;
 
-  void _buyData() {
+  Future<void> _buyData() async {
     if (!_canProceed) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PurchaseSuccessPage(
-          type: PurchaseType.data,
-          network: _selectedNetwork!,
-          phoneNumber: _phoneController.text.trim(),
-          amount: _selectedPlan!.price,
-          previousBalance: widget.availableBalance,
-          dataBundle: _selectedPlan!.size,
-          validity: _selectedPlan!.validity,
-        ),
-      ),
-    );
+    setState(() => _isSubmitting = true);
+    try {
+      final repo = Get.find<WalletRepository>();
+      await repo.buyData(
+        network: _selectedNetwork!,
+        phone: _phoneController.text.trim(),
+        planId: _selectedPlan!.size,
+        amount: _selectedPlan!.price,
+      );
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PurchaseSuccessPage(
+              type: PurchaseType.data,
+              network: _selectedNetwork!,
+              phoneNumber: _phoneController.text.trim(),
+              amount: _selectedPlan!.price,
+              previousBalance: widget.availableBalance,
+              dataBundle: _selectedPlan!.size,
+              validity: _selectedPlan!.validity,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Get.snackbar(
+          'Error',
+          'Failed to buy data: $e',
+          backgroundColor: kErrorRed,
+          colorText: Colors.white,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -129,7 +160,7 @@ class _BuyDataPageState extends State<BuyDataPage> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: kPrimaryGreen.withOpacity(0.12),
+            color: kPrimaryGreen.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(14),
           ),
           child: const Icon(Icons.terminal, color: kPrimaryGreen, size: 24),
@@ -248,7 +279,7 @@ class _BuyDataPageState extends State<BuyDataPage> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: kPrimaryGreen.withOpacity(0.5)),
+                borderSide: BorderSide(color: kPrimaryGreen.withValues(alpha: 0.5)),
               ),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -283,7 +314,7 @@ class _BuyDataPageState extends State<BuyDataPage> {
                     horizontal: 14, vertical: 14),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? kPrimaryBlue.withOpacity(0.06)
+                      ? kPrimaryBlue.withValues(alpha: 0.06)
                       : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
@@ -345,7 +376,7 @@ class _BuyDataPageState extends State<BuyDataPage> {
         ),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2)),
         ],
@@ -408,7 +439,7 @@ class _BuyDataPageState extends State<BuyDataPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2)),
         ],

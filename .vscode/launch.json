@@ -1,0 +1,61 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "TravelMate (Android — recommended)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "android",
+      "toolArgs": [
+        "--dart-define=GOOGLE_SIGN_IN_SERVER_CLIENT_ID=1859524642-71eomvpjh8mc37rk127d5qd7u8iloohe.apps.googleusercontent.com"
+      ]
+    },
+    {
+      "name": "TravelMate (Android emulator)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "-d",
+        "emulator-5554",
+        "--dart-define=GOOGLE_SIGN_IN_SERVER_CLIENT_ID=1859524642-71eomvpjh8mc37rk127d5qd7u8iloohe.apps.googleusercontent.com"
+      ]
+    },
+    {
+      "name": "TravelMate (Chrome — CORS disabled, dev only)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--web-browser-flag=--disable-web-security",
+        "--web-browser-flag=--user-data-dir=${workspaceFolder}/.chrome-dev-profile",
+        "--dart-define=FIREBASE_API_KEY=AIzaSyDsu4ocK4GE6SBwTQi9XSWoqSyMs1QcwkQ",
+        "--dart-define=FIREBASE_APP_ID=1:1859524642:web:1b8a0a5ec9522a2bae127b",
+        "--dart-define=FIREBASE_MESSAGING_SENDER_ID=1859524642",
+        "--dart-define=FIREBASE_PROJECT_ID=travelmate-fcb6c",
+        "--dart-define=FIREBASE_AUTH_DOMAIN=travelmate-fcb6c.firebaseapp.com",
+        "--dart-define=FIREBASE_STORAGE_BUCKET=travelmate-fcb6c.firebasestorage.app",
+        "--dart-define=GOOGLE_SIGN_IN_CLIENT_ID=1859524642-71eomvpjh8mc37rk127d5qd7u8iloohe.apps.googleusercontent.com"
+      ]
+    },
+    {
+      "name": "TravelMate (Chrome — CORS proxy)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--dart-define=USE_WEB_CORS_PROXY=true",
+        "--dart-define=FIREBASE_API_KEY=AIzaSyDsu4ocK4GE6SBwTQi9XSWoqSyMs1QcwkQ",
+        "--dart-define=FIREBASE_APP_ID=1:1859524642:web:1b8a0a5ec9522a2bae127b",
+        "--dart-define=FIREBASE_MESSAGING_SENDER_ID=1859524642",
+        "--dart-define=FIREBASE_PROJECT_ID=travelmate-fcb6c",
+        "--dart-define=FIREBASE_AUTH_DOMAIN=travelmate-fcb6c.firebaseapp.com",
+        "--dart-define=FIREBASE_STORAGE_BUCKET=travelmate-fcb6c.firebasestorage.app",
+        "--dart-define=GOOGLE_SIGN_IN_CLIENT_ID=1859524642-71eomvpjh8mc37rk127d5qd7u8iloohe.apps.googleusercontent.com"
+      ]
+    }
+  ]
+}

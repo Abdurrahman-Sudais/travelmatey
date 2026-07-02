@@ -1,25 +1,62 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 import 'package:travelmateeee/features/bookings/view/request_sent_page.dart';
+import 'package:travelmateeee/data/repositories/booking_repository.dart';
 
-class RideListingDetailsPage extends StatelessWidget {
+class RideListingDetailsPage extends StatefulWidget {
+  final String rideId;
   final String driverName;
   final String currentLocation;
   final String destination;
   final String price;
   final String date;
   final String time;
+  final double driverRating;
+  final int availableSeats;
 
   const RideListingDetailsPage({
     super.key,
+    required this.rideId,
     required this.driverName,
     required this.currentLocation,
     required this.destination,
     required this.price,
     required this.date,
     required this.time,
+    this.driverRating = 0.0,
+    this.availableSeats = 1,
   });
+
+  @override
+  State<RideListingDetailsPage> createState() => _RideListingDetailsPageState();
+}
+
+class _RideListingDetailsPageState extends State<RideListingDetailsPage> {
+  bool _booking = false;
+
+  Future<void> _confirmBooking() async {
+    setState(() => _booking = true);
+    try {
+      await Get.find<BookingRepository>().createBooking(widget.rideId);
+      if (!mounted) return;
+      await Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const RequestSentPage()),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Get.snackbar(
+        'Booking Failed',
+        e.toString(),
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+      );
+    } finally {
+      if (mounted) setState(() => _booking = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,120 +64,106 @@ class RideListingDetailsPage extends StatelessWidget {
       child: Scaffold(
         backgroundColor: kBackground,
         body: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _topBar(context),
+                const SizedBox(height: 16),
+                _driverHeader(),
+                const SizedBox(height: 18),
+                const Text(
+                  'Bio',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${widget.driverName} is a TravelMate verified driver on this route.',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: Colors.black54,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _vehicleChips(),
+                const SizedBox(height: 18),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _topBar(context),
-                    const SizedBox(height: 16),
-                    _driverHeader(),
-                    const SizedBox(height: 18),
                     const Text(
-                      "Bio",
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 6),
-                    RichText(
-                      text: TextSpan(
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          color: Colors.black54,
-                          height: 1.4,
-                        ),
-                        children: [
-                          const TextSpan(
-                            text: "Driving back and forth Lagos and Abuja "
-                                "for over three years. ",
-                          ),
-                          TextSpan(
-                            text: "Read More",
-                            style: const TextStyle(
-                              color: kPrimaryBlue,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _vehicleChips(),
-                    const SizedBox(height: 18),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "Ride Details",
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          "($date)",
-                          style: const TextStyle(fontSize: 12.5, color: Colors.black45),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    _rideDetailsBox(),
-                    const SizedBox(height: 14),
-                    _pickupTimeSmokingRow(),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        const Icon(Icons.attach_money, size: 16, color: Colors.black54),
-                        const SizedBox(width: 4),
-                        const Text("Price: ",
-                            style: TextStyle(fontSize: 14, color: Colors.black54)),
-                        Text(
-                          price,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: kPrimaryBlue,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 22),
-                    const Text(
-                      "Driver reviews",
+                      'Ride Details',
                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 10),
-                    _reviewRow("Devon Lane", 5),
-                    const SizedBox(height: 10),
-                    _reviewRow("Courtney Henry", 4),
-                    const SizedBox(height: 22),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const RequestSentPage(),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black87,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          "Book a ride",
-                          style: TextStyle(
-                            fontSize: 15.5,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+                    Text(
+                      '(${widget.date})',
+                      style: const TextStyle(fontSize: 12.5, color: Colors.black45),
                     ),
                   ],
                 ),
-              )),
+                const SizedBox(height: 10),
+                _rideDetailsBox(),
+                const SizedBox(height: 14),
+                _pickupTimeRow(),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    const Icon(Icons.attach_money, size: 16, color: Colors.black54),
+                    const SizedBox(width: 4),
+                    const Text('Price: ',
+                        style: TextStyle(fontSize: 14, color: Colors.black54)),
+                    Text(
+                      widget.price,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: kPrimaryBlue,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${widget.availableSeats} seat${widget.availableSeats == 1 ? '' : 's'} left',
+                      style: const TextStyle(fontSize: 12, color: Colors.black45),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _booking ? null : _confirmBooking,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black87,
+                      disabledBackgroundColor: Colors.black38,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: _booking
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Book a ride',
+                            style: TextStyle(
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -151,11 +174,11 @@ class RideListingDetailsPage extends StatelessWidget {
       children: [
         InkWell(
           onTap: () => Navigator.maybePop(context),
-          child: Row(
+          child: const Row(
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children: [
               Icon(Icons.chevron_left, size: 22, color: Colors.black87),
-              Text("Back", style: TextStyle(fontSize: 14, color: Colors.black87)),
+              Text('Back', style: TextStyle(fontSize: 14, color: Colors.black87)),
             ],
           ),
         ),
@@ -182,6 +205,8 @@ class RideListingDetailsPage extends StatelessWidget {
   }
 
   Widget _driverHeader() {
+    final rating = widget.driverRating;
+    final fullStars = rating.floor().clamp(0, 5);
     return Row(
       children: [
         const CircleAvatar(
@@ -195,25 +220,28 @@ class RideListingDetailsPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                driverName,
+                widget.driverName,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const Text(
-                "Joined since December 2023",
+                'TravelMate Verified Driver',
                 style: TextStyle(fontSize: 12, color: kPrimaryBlue),
               ),
               const SizedBox(height: 4),
               Row(
                 children: [
                   ...List.generate(
-                    4,
-                    (i) => const Icon(Icons.star, size: 14, color: kAmber),
+                    5,
+                    (i) => Icon(
+                      i < fullStars ? Icons.star : Icons.star_border,
+                      size: 14,
+                      color: kAmber,
+                    ),
                   ),
-                  const Icon(Icons.star_border, size: 14, color: kAmber),
                   const SizedBox(width: 4),
-                  const Text(
-                    "4.9 (531 reviews)",
-                    style: TextStyle(fontSize: 11.5, color: Colors.black54),
+                  Text(
+                    rating > 0 ? rating.toStringAsFixed(1) : 'No ratings yet',
+                    style: const TextStyle(fontSize: 11.5, color: Colors.black54),
                   ),
                 ],
               ),
@@ -225,13 +253,11 @@ class RideListingDetailsPage extends StatelessWidget {
   }
 
   Widget _vehicleChips() {
+    // Vehicle info from driver profile — show generic tags until API provides them
     final labels = [
-      "Toyota",
-      "Airconditioned",
-      "Camry",
-      "Non Smoking",
-      "Green",
-      "3 Seats",
+      'Air-conditioned',
+      'Non Smoking',
+      '${widget.availableSeats} Seats',
     ];
     return Wrap(
       spacing: 8,
@@ -255,7 +281,7 @@ class RideListingDetailsPage extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: kPrimaryBlue.withOpacity(0.06),
+        color: kPrimaryBlue.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -270,11 +296,11 @@ class RideListingDetailsPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Current location",
+                    'Departure',
                     style: TextStyle(fontSize: 12, color: Colors.black54),
                   ),
                   Text(
-                    "$currentLocation, Nigeria",
+                    widget.currentLocation,
                     style: const TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.bold,
@@ -295,11 +321,11 @@ class RideListingDetailsPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Destination",
+                    'Destination',
                     style: TextStyle(fontSize: 12, color: Colors.black54),
                   ),
                   Text(
-                    "$destination, Nigeria",
+                    widget.destination,
                     style: const TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.bold,
@@ -315,86 +341,31 @@ class RideListingDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _pickupTimeSmokingRow() {
+  Widget _pickupTimeRow() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: const [
-            Icon(Icons.location_pin, size: 14, color: Colors.black45),
-            SizedBox(width: 4),
-            Text("Pickup", style: TextStyle(fontSize: 11.5, color: Colors.black54)),
+        const Row(
+          children: [
+            Icon(Icons.access_time, size: 14, color: Colors.black45),
+            SizedBox(width: 6),
+            Text('Departure Time:', style: TextStyle(fontSize: 12.5, color: Colors.black54)),
           ],
         ),
         const SizedBox(height: 4),
         Text(
-          "$currentLocation, AYM Shafa Filling Station",
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          widget.time,
+          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
         ),
-        const SizedBox(height: 12),
-        Row(
+        const SizedBox(height: 8),
+        const Row(
           children: [
-            const Icon(Icons.access_time, size: 14, color: Colors.black45),
-            const SizedBox(width: 6),
-            const Text("Time: ", style: TextStyle(fontSize: 12.5, color: Colors.black54)),
-            Text(time, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
-            const SizedBox(width: 18),
-            const Icon(Icons.smoke_free, size: 14, color: Colors.black45),
-            const SizedBox(width: 6),
-            const Text("No Smoking", style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+            Icon(Icons.smoke_free, size: 14, color: Colors.black45),
+            SizedBox(width: 6),
+            Text('No Smoking', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
           ],
         ),
       ],
-    );
-  }
-
-  Widget _reviewRow(String name, int stars) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          const CircleAvatar(
-            radius: 16,
-            backgroundColor: Color(0xFFE5E5E5),
-            child: Icon(Icons.person, size: 16, color: Colors.black38),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                Row(
-                  children: List.generate(
-                    5,
-                    (i) => Icon(
-                      Icons.star,
-                      size: 12,
-                      color: i < stars ? kAmber : Colors.black12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Text(
-            "View",
-            style: TextStyle(fontSize: 12.5, color: kPrimaryBlue, fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
     );
   }
 }

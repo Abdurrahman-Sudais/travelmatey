@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/keyboard_aware_scaffold.dart';
+import 'package:travelmateeee/data/repositories/wallet_repository.dart';
 
 import 'bank_account_model.dart';
 import 'bank_accounts_page.dart';
@@ -21,6 +23,7 @@ class _WithdrawFundsPageState extends State<WithdrawFundsPage> {
   static const int _maxAmount = 500000;
 
   BankAccount? _selectedAccount;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -52,6 +55,7 @@ class _WithdrawFundsPageState extends State<WithdrawFundsPage> {
   int get _total => _amount > 0 ? _amount + _fee : 0;
 
   bool get _canWithdraw =>
+      !_isSubmitting &&
       _amount >= _minAmount &&
       _amount <= _maxAmount &&
       _amount <= widget.availableBalance &&
@@ -101,17 +105,40 @@ class _WithdrawFundsPageState extends State<WithdrawFundsPage> {
     );
   }
 
-  void _performWithdrawal() {
-    // TODO: call withdrawal API endpoint here
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-            "Withdrawal of ₦${_formatNumber(_amount)} initiated successfully!"),
-        backgroundColor: kPrimaryGreen,
-      ),
-    );
-    setState(() => _amountCtrl.clear());
-    Navigator.pop(context);
+  Future<void> _performWithdrawal() async {
+    setState(() => _isSubmitting = true);
+    try {
+      final repo = Get.find<WalletRepository>();
+      final wallet = await repo.withdrawFunds(
+        amount: _amount.toDouble(),
+        bankAccount: "${_selectedAccount!.bankName} - ${_selectedAccount!.accountNumber}",
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                "Withdrawal of ₦${_formatNumber(_amount)} initiated successfully!"),
+            backgroundColor: kPrimaryGreen,
+          ),
+        );
+        setState(() => _amountCtrl.clear());
+        Navigator.pop(context, wallet.balance);
+      }
+    } catch (e) {
+      if (mounted) {
+        Get.snackbar(
+          'Error',
+          'Failed to perform withdrawal: $e',
+          backgroundColor: kErrorRed,
+          colorText: Colors.white,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -169,7 +196,7 @@ class _WithdrawFundsPageState extends State<WithdrawFundsPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: kPrimaryGreen.withOpacity(0.25),
+            color: kPrimaryGreen.withValues(alpha: 0.25),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -183,7 +210,7 @@ class _WithdrawFundsPageState extends State<WithdrawFundsPage> {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: Colors.white.withOpacity(0.85),
+              color: Colors.white.withValues(alpha: 0.85),
               letterSpacing: 1,
             ),
           ),
@@ -294,7 +321,7 @@ class _WithdrawFundsPageState extends State<WithdrawFundsPage> {
                       color: kBackground,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                          color: Colors.black.withOpacity(0.06)),
+                          color: Colors.black.withValues(alpha: 0.06)),
                     ),
                     child: Row(
                       children: const [
@@ -336,7 +363,7 @@ class _WithdrawFundsPageState extends State<WithdrawFundsPage> {
         border: Border.all(
           color: _amountCtrl.text.isNotEmpty
               ? kPrimaryGreen
-              : Colors.black.withOpacity(0.08),
+              : Colors.black.withValues(alpha: 0.08),
           width: _amountCtrl.text.isNotEmpty ? 1.4 : 1,
         ),
       ),
@@ -419,7 +446,7 @@ class _WithdrawFundsPageState extends State<WithdrawFundsPage> {
           border: Border.all(
             color: isSelected
                 ? kPrimaryBlue
-                : Colors.black.withOpacity(0.08),
+                : Colors.black.withValues(alpha: 0.08),
             width: isSelected ? 1.6 : 1,
           ),
         ),
@@ -477,7 +504,7 @@ class _WithdrawFundsPageState extends State<WithdrawFundsPage> {
                 border: Border.all(
                   color: isSelected
                       ? kPrimaryBlue
-                      : Colors.black.withOpacity(0.2),
+                      : Colors.black.withValues(alpha: 0.2),
                   width: 1.5,
                 ),
               ),
@@ -557,7 +584,7 @@ class _WithdrawFundsPageState extends State<WithdrawFundsPage> {
           boxShadow: _canWithdraw
               ? [
                   BoxShadow(
-                    color: kPrimaryGreen.withOpacity(0.3),
+                    color: kPrimaryGreen.withValues(alpha: 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -580,8 +607,8 @@ class _WithdrawFundsPageState extends State<WithdrawFundsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: kPrimaryBlue.withOpacity(0.06),
-        border: Border.all(color: kPrimaryBlue.withOpacity(0.3)),
+        color: kPrimaryBlue.withValues(alpha: 0.06),
+        border: Border.all(color: kPrimaryBlue.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -661,7 +688,7 @@ class _ConfirmWithdrawalDialog extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: kAmber.withOpacity(0.15),
+                color: kAmber.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.warning_amber_rounded,
@@ -734,7 +761,7 @@ class _ConfirmWithdrawalDialog extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: kPrimaryBlue.withOpacity(0.06),
+                color: kPrimaryBlue.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -746,7 +773,7 @@ class _ConfirmWithdrawalDialog extends StatelessWidget {
                         fontSize: 10.5,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1,
-                        color: kPrimaryBlue.withOpacity(0.8)),
+                        color: kPrimaryBlue.withValues(alpha: 0.8)),
                   ),
                   const SizedBox(height: 6),
                   Text(account.accountName,
@@ -778,7 +805,7 @@ class _ConfirmWithdrawalDialog extends StatelessWidget {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: Colors.black.withOpacity(0.15)),
+                            color: Colors.black.withValues(alpha: 0.15)),
                       ),
                       child: const Text(
                         "Cancel",

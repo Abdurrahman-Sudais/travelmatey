@@ -1,8 +1,8 @@
-import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:io' show File;
 
 /// Local file picked by the user before upload to the backend.
 class PickedMedia {
@@ -10,22 +10,20 @@ class PickedMedia {
   final String name;
   final int sizeBytes;
   final bool isImage;
+  final Uint8List? bytes;
 
   const PickedMedia({
     required this.path,
     required this.name,
     required this.sizeBytes,
     required this.isImage,
+    this.bytes,
   });
 
   File get file => File(path);
 }
 
 /// Handles gallery / camera / file selection on-device.
-///
-/// BACKEND: After picking, call [KycRepository.uploadDocument] or
-/// [UserRepository.updateAvatar] with [PickedMedia.file] — the repo sends
-/// multipart/form-data to your API.
 class MediaPickerService {
   MediaPickerService._();
   static final MediaPickerService instance = MediaPickerService._();
@@ -80,32 +78,43 @@ class MediaPickerService {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['jpg', 'jpeg', 'png', 'pdf'],
-      withData: false,
+      withData: true, // Crucial for Web
     );
     if (result == null || result.files.isEmpty) return null;
 
     final f = result.files.single;
-    if (f.path == null) return null;
+    
+    int size = f.size;
+    if (size == 0 && !kIsWeb && f.path != null) {
+      size = await File(f.path!).length();
+    }
 
-    final file = File(f.path!);
-    final size = await file.length();
     if (size > maxBytes) {
       throw MediaTooLargeException(size);
     }
 
     final ext = f.extension?.toLowerCase() ?? '';
     return PickedMedia(
-      path: f.path!,
+      path: f.path ?? f.name,
       name: f.name,
       sizeBytes: size,
       isImage: ext == 'jpg' || ext == 'jpeg' || ext == 'png',
+      bytes: f.bytes,
     );
   }
 
   Future<PickedMedia?> _fromXFile(XFile? x, {required bool isImage}) async {
     if (x == null) return null;
-    final file = File(x.path);
-    final size = await file.length();
+    
+    int size = 0;
+    Uint8List? bytes;
+    if (kIsWeb) {
+      bytes = await x.readAsBytes();
+      size = bytes.length;
+    } else {
+      size = await File(x.path).length();
+    }
+    
     if (size > maxBytes) throw MediaTooLargeException(size);
 
     return PickedMedia(
@@ -113,6 +122,7 @@ class MediaPickerService {
       name: x.name,
       sizeBytes: size,
       isImage: isImage,
+      bytes: bytes,
     );
   }
 }

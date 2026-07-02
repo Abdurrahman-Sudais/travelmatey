@@ -20,9 +20,15 @@ class WalletModel {
 
   factory WalletModel.fromJson(Map<String, dynamic> json) => WalletModel(
         balance: (json['balance'] as num?)?.toDouble() ?? 0,
-        earningsWeek: (json['earnings_week'] as num?)?.toDouble() ?? 0,
-        earningsMonth: (json['earnings_month'] as num?)?.toDouble() ?? 0,
-        earningsYear: (json['earnings_year'] as num?)?.toDouble() ?? 0,
+        earningsWeek: (json['earnings_week'] as num?)?.toDouble() ??
+            (json['earningsWeek'] as num?)?.toDouble() ??
+            0,
+        earningsMonth: (json['earnings_month'] as num?)?.toDouble() ??
+            (json['earningsMonth'] as num?)?.toDouble() ??
+            0,
+        earningsYear: (json['earnings_year'] as num?)?.toDouble() ??
+            (json['earningsYear'] as num?)?.toDouble() ??
+            0,
       );
 
   WalletModel copyWith({double? balance}) => WalletModel(

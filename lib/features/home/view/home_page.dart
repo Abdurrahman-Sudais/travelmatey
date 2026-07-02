@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:travelmateeee/core/services/api_service.dart';
+import 'package:travelmateeee/data/repositories/user_repository.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/features/home/view/driver_home_page.dart';
 import 'package:travelmateeee/features/profile/view/notifications_page.dart';
@@ -35,17 +38,36 @@ class RoleAwareHome extends StatelessWidget {
 // ─── Data model ───────────────────────────────────────────────────────────────
 
 class PopularRoute {
+  final String id;
   final String from;
   final String to;
   final String price;
   final int available;
 
   const PopularRoute({
+    this.id = '',
     required this.from,
     required this.to,
     required this.price,
     required this.available,
   });
+
+  factory PopularRoute.fromJson(Map<String, dynamic> json) {
+    final rawPrice = json['price'];
+    final priceStr = rawPrice is num
+        ? '₦${rawPrice.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}'
+        : rawPrice?.toString() ?? '₦0';
+
+    return PopularRoute(
+      id: json['id']?.toString() ?? '',
+      from: json['from']?.toString() ?? '',
+      to: json['to']?.toString() ?? '',
+      price: priceStr,
+      available: json['availableSeats'] as int? ??
+          json['available_seats'] as int? ??
+          0,
+    );
+  }
 }
 
 // ─── Rider Home ───────────────────────────────────────────────────────────────
@@ -61,17 +83,120 @@ class _HomePageState extends State<HomePage> {
   // TODO: replace with real KYC status from your auth/user provider
   bool _kycCompleted = false;
 
-  final List<PopularRoute> popularRoutes = const [
-    PopularRoute(from: 'Lagos', to: 'Abuja', price: '₦25,000', available: 12),
-    PopularRoute(
-      from: 'Abuja',
-      to: 'Port Harcourt',
-      price: '₦30,000',
-      available: 8,
-    ),
-    PopularRoute(from: 'Lagos', to: 'Ibadan', price: '₦8,000', available: 15),
-    PopularRoute(from: 'Abuja', to: 'Kaduna', price: '₦12,000', available: 6),
-  ];
+  int _unreadNotifications = 0;
+
+  List<PopularRoute> _popularRoutes = [];
+  bool _loadingRoutes = true;
+  bool _loadingActivity = true;
+  String _bookingsCount = '—';
+  String _completedCount = '—';
+  String _ratingValue = '—';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPopularRoutes();
+    _loadActivity();
+    _loadKycStatus();
+    _loadNotificationCount();
+  }
+
+  Future<void> _loadKycStatus() async {
+    try {
+      final user = await Get.find<UserRepository>().getCurrentUser();
+      if (!mounted) return;
+      setState(() => _kycCompleted = user.kycVerified);
+    } catch (_) {}
+  }
+
+  Future<void> _loadNotificationCount() async {
+    try {
+      final data = await ApiService.instance.get('/notifications');
+      final list = data['notifications'] as List? ?? data['data'] as List? ?? [];
+      final unread = list.whereType<Map>().where((n) => n['isRead'] == false || n['read'] == false).length;
+      if (!mounted) return;
+      setState(() => _unreadNotifications = unread);
+    } catch (_) {
+      // silently fail — badge simply stays at 0
+    }
+  }
+
+  Future<void> _loadPopularRoutes() async {
+    try {
+      final data = await ApiService.instance.get('/rides/popular');
+      final rides = data['rides'] as List<dynamic>? ??
+          data['data'] as List<dynamic>? ??
+          [];
+      if (!mounted) return;
+      setState(() {
+        _popularRoutes = rides
+            .map((r) => PopularRoute.fromJson(r as Map<String, dynamic>))
+            .toList();
+        _loadingRoutes = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      // Silently fail — show empty state instead of error snackbar
+      setState(() => _loadingRoutes = false);
+    }
+  }
+
+  Future<void> _loadActivity() async {
+    try {
+      // Try the activity endpoint; fall back to booking count from /bookings/user/:id
+      final userId = ApiService.instance.getUserId();
+      Map<String, dynamic> data = {};
+      try {
+        data = await ApiService.instance.get('/user/activity');
+      } catch (_) {
+        // Endpoint may not exist — try to derive counts from bookings
+        if (userId != null && userId.isNotEmpty) {
+          try {
+            final bookingsData =
+                await ApiService.instance.get('/bookings/user/$userId');
+            final list = bookingsData['bookings'] as List? ??
+                bookingsData['data'] as List? ??
+                [];
+            final completed = list
+                .whereType<Map>()
+                .where((b) => b['status'] == 'completed')
+                .length;
+            data = {
+              'bookings': list.length,
+              'completed': completed,
+            };
+          } catch (_) {}
+        }
+      }
+      if (!mounted) return;
+      setState(() {
+        _bookingsCount = (data['bookings'] ??
+                data['totalBookings'] ??
+                data['total_bookings'] ??
+                0)
+            .toString();
+        _completedCount = (data['completed'] ??
+                data['completedBookings'] ??
+                data['completed_bookings'] ??
+                0)
+            .toString();
+        final rating = data['rating'] ??
+            data['averageRating'] ??
+            data['average_rating'];
+        _ratingValue = rating != null ? rating.toString() : '0';
+        _loadingActivity = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      // Silently fail — show zeros rather than an error snackbar
+      setState(() {
+        _bookingsCount = '0';
+        _completedCount = '0';
+        _ratingValue = '0';
+        _loadingActivity = false;
+      });
+    }
+  }
 
   void _goTo(Widget page) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
@@ -112,7 +237,23 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 20),
                 _sectionTitle('Popular Routes'),
                 const SizedBox(height: 10),
-                ...popularRoutes.map(_popularRouteCard),
+                if (_loadingRoutes)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator(color: kPrimaryBlue),
+                    ),
+                  )
+                else if (_popularRoutes.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      'No popular routes yet',
+                      style: TextStyle(color: kTextSecondary),
+                    ),
+                  )
+                else
+                  ..._popularRoutes.map(_popularRouteCard),
               ],
             ),
           ),
@@ -168,28 +309,29 @@ class _HomePageState extends State<HomePage> {
                 child: Icon(Icons.notifications_none, color: kTextPrimary),
               ),
             ),
-            Positioned(
-              top: -2,
-              right: -2,
-              child: Container(
-                height: 18,
-                width: 18,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: kErrorRed,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 1.5),
-                ),
-                child: const Text(
-                  '1',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
+            if (_unreadNotifications > 0)
+              Positioned(
+                top: -2,
+                right: -2,
+                child: Container(
+                  height: 18,
+                  width: 18,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: kErrorRed,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: Text(
+                    _unreadNotifications > 9 ? '9+' : '$_unreadNotifications',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ],
@@ -207,7 +349,7 @@ class _HomePageState extends State<HomePage> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: kPrimaryGreen.withOpacity(0.25),
+              color: kPrimaryGreen.withValues(alpha: 0.25),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -220,7 +362,7 @@ class _HomePageState extends State<HomePage> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.25),
+                color: Colors.white.withValues(alpha: 0.25),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.search, color: Colors.white, size: 22),
@@ -252,13 +394,22 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _activityRow() {
+    if (_loadingActivity) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 24),
+          child: CircularProgressIndicator(color: kPrimaryBlue),
+        ),
+      );
+    }
+
     return Row(
       children: [
         Expanded(
           child: _activityCard(
             icon: Icons.assignment_outlined,
             iconColor: kPrimaryBlue,
-            value: '12',
+            value: _bookingsCount,
             label: 'Bookings',
             onTap: () => switchToTab(AppTab.secondary),
           ),
@@ -268,7 +419,7 @@ class _HomePageState extends State<HomePage> {
           child: _activityCard(
             icon: Icons.check_circle_outline,
             iconColor: kPrimaryGreen,
-            value: '10',
+            value: _completedCount,
             label: 'Completed',
             onTap: () => switchToTab(AppTab.secondary),
           ),
@@ -278,7 +429,7 @@ class _HomePageState extends State<HomePage> {
           child: _activityCard(
             icon: Icons.star_outline,
             iconColor: kAmber,
-            value: '4.9',
+            value: _ratingValue,
             label: 'Rating',
           ),
         ),

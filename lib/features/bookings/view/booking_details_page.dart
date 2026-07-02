@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
+import 'package:travelmateeee/data/repositories/booking_repository.dart';
+
 
 class BookingDetailsPage extends StatefulWidget {
   final String bookingId;
@@ -87,7 +89,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: kPrimaryBlue.withOpacity(0.1),
+                              color: kPrimaryBlue.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -186,10 +188,10 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: kPrimaryBlue.withOpacity(0.07),
+                          color: kPrimaryBlue.withValues(alpha: 0.07),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: kPrimaryBlue.withOpacity(0.2),
+                            color: kPrimaryBlue.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Row(
@@ -282,131 +284,149 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
   // ── Cancel Ride warning dialog ──────────────────────────────────────────────
 
   void _showCancelWarning() {
+    bool isCancelling = false;
     showDialog(
       context: context,
       barrierColor: Colors.black87,
-      builder: (ctx) => Center(
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 24),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: kErrorRed.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.warning_amber_rounded,
-                    color: kErrorRed,
-                    size: 30,
-                  ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) {
+          return Center(
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  "Cancel Ride?",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  "Are you sure you want to cancel this booking? "
-                  "A 5% cancellation fee will be deducted from your refund.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    color: Colors.black54,
-                    height: 1.45,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: kErrorRed.withOpacity(0.06),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: kErrorRed.withOpacity(0.2)),
-                  ),
-                  child: Row(
-                    children: const [
-                      Icon(Icons.info_outline, size: 15, color: kErrorRed),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          "Cancellation fee: 5% of total booking amount",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: kErrorRed,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 22),
-                Row(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => Navigator.pop(ctx),
-                        child: Container(
-                          height: 48,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF0F0F0),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            "Keep Ride",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: kErrorRed.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.warning_amber_rounded,
+                        color: kErrorRed,
+                        size: 30,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          // TODO: confirm cancellation
-                          Navigator.pop(ctx);
-                          Navigator.maybePop(context);
-                        },
-                        child: Container(
-                          height: 48,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: kErrorRed,
-                            borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Cancel Ride?",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "Are you sure you want to cancel this booking? "
+                      "A 5% cancellation fee will be deducted from your refund.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        color: Colors.black54,
+                        height: 1.45,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: kErrorRed.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: kErrorRed.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        children: const [
+                          Icon(Icons.info_outline, size: 15, color: kErrorRed),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              "Cancellation fee: 5% of total booking amount",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: kErrorRed,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ),
-                          child: const Text(
-                            "Cancel Ride",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => Navigator.pop(ctx),
+                            child: Container(
+                              height: 48,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF0F0F0),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Text(
+                                "Keep Ride",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: isCancelling ? null : () async {
+                              setState(() => isCancelling = true);
+                              try {
+                                final repo = createBookingRepository();
+                                await repo.cancelBooking(widget.bookingId, "Cancelled by user");
+                                if (ctx.mounted) Navigator.pop(ctx);
+                                if (mounted) Navigator.maybePop(this.context);
+                              } catch (e) {
+                                setState(() => isCancelling = false);
+                                if (ctx.mounted) {
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                    SnackBar(content: Text('Failed to cancel: $e')),
+                                  );
+                                }
+                              }
+                            },
+                            child: Container(
+                              height: 48,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: isCancelling ? Colors.grey : kErrorRed,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: isCancelling
+                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : const Text(
+                                "Cancel Ride",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        }
       ),
     );
   }
@@ -506,8 +526,8 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: kAmber.withOpacity(0.12),
-        border: Border.all(color: kAmber.withOpacity(0.5)),
+        color: kAmber.withValues(alpha: 0.12),
+        border: Border.all(color: kAmber.withValues(alpha: 0.5)),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -814,8 +834,8 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: kPrimaryBlue.withOpacity(0.05),
-              border: Border.all(color: kPrimaryBlue.withOpacity(0.35)),
+              color: kPrimaryBlue.withValues(alpha: 0.05),
+              border: Border.all(color: kPrimaryBlue.withValues(alpha: 0.35)),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -897,7 +917,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.4)),
+          border: Border.all(color: color.withValues(alpha: 0.4)),
         ),
         child: Column(
           children: [
@@ -920,7 +940,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
             const SizedBox(height: 2),
             Text(
               sublabel,
-              style: TextStyle(fontSize: 11.5, color: color.withOpacity(0.8)),
+              style: TextStyle(fontSize: 11.5, color: color.withValues(alpha: 0.8)),
             ),
           ],
         ),
@@ -933,8 +953,8 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: kAmber.withOpacity(0.1),
-        border: Border.all(color: kAmber.withOpacity(0.5)),
+        color: kAmber.withValues(alpha: 0.1),
+        border: Border.all(color: kAmber.withValues(alpha: 0.5)),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(

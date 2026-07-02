@@ -11,7 +11,7 @@ import 'kyc_page.dart';
 Future<bool?> showKycRequiredDialog(BuildContext context) {
   return showDialog<bool>(
     context: context,
-    barrierColor: Colors.black.withOpacity(0.45),
+    barrierColor: Colors.black.withValues(alpha: 0.45),
     builder: (context) => const KycRequiredDialog(),
   );
 }
@@ -78,7 +78,7 @@ class KycRequiredDialog extends StatelessWidget {
           Container(
             width: 48,
             height: 48,
-            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
             child: const Icon(Icons.shield_outlined, color: Colors.white, size: 24),
           ),
           const SizedBox(width: 14),
@@ -92,7 +92,7 @@ class KycRequiredDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text("Complete verification to continue",
-                    style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13)),
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13)),
               ],
             ),
           ),
@@ -101,7 +101,7 @@ class KycRequiredDialog extends StatelessWidget {
             child: Container(
               width: 32,
               height: 32,
-              decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
               child: const Icon(Icons.close, color: Colors.white, size: 18),
             ),
           ),
@@ -128,7 +128,7 @@ class KycRequiredDialog extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text("Action Blocked",
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: kAmber.withOpacity(0.9))),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: kAmber.withValues(alpha: 0.9))),
                 const SizedBox(height: 4),
                 const Text(
                   "You need to complete your KYC verification before you can search for rides.",
@@ -148,7 +148,7 @@ class KycRequiredDialog extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFFFEBEE),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kErrorRed.withOpacity(0.15)),
+        border: Border.all(color: kErrorRed.withValues(alpha: 0.15)),
       ),
       child: Row(
         children: [
@@ -217,7 +217,7 @@ class KycRequiredDialog extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.black.withOpacity(0.08)),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
         ),
         child: const Text("Not Now",
             style: TextStyle(color: Colors.black87, fontSize: 15.5, fontWeight: FontWeight.w600)),

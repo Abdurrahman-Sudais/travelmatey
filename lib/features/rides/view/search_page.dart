@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:travelmateeee/features/bookings/view/search_results_page.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 //import 'package:travelmateeee/shared/widgets/kyc_required_dialog.dart';
@@ -139,7 +140,7 @@ class _SearchPageState extends State<SearchPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.black.withOpacity(0.06)),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
         ),
         child: Row(
           children: [
@@ -179,7 +180,7 @@ class _SearchPageState extends State<SearchPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.black.withOpacity(0.06)),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
         ),
         child: Row(
           children: [
@@ -218,7 +219,7 @@ class _SearchPageState extends State<SearchPage> {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: kPrimaryBlue.withOpacity(0.1),
+              color: kPrimaryBlue.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.sync_alt,
@@ -245,7 +246,14 @@ class _SearchPageState extends State<SearchPage> {
           ),
           Switch(
             value: isRoundTrip,
-            activeColor: kPrimaryGreen,
+            thumbColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) return kPrimaryGreen;
+              return null;
+            }),
+            trackColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) return kPrimaryGreen.withValues(alpha: 0.4);
+              return null;
+            }),
             onChanged: (v) => setState(() => isRoundTrip = v),
           ),
         ],
@@ -273,7 +281,7 @@ class _SearchPageState extends State<SearchPage> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border:
-                  Border.all(color: Colors.black.withOpacity(0.06)),
+                  Border.all(color: Colors.black.withValues(alpha: 0.06)),
             ),
             child: Text(
               "$passengerCount",
@@ -303,7 +311,7 @@ class _SearchPageState extends State<SearchPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.black.withOpacity(0.06)),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
         ),
         child: Icon(icon, color: Colors.black87),
       ),
@@ -373,7 +381,14 @@ class _SearchPageState extends State<SearchPage> {
           Text(label, style: const TextStyle(fontSize: 13.5)),
           Switch(
             value: value,
-            activeColor: kPrimaryGreen,
+            thumbColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) return kPrimaryGreen;
+              return null;
+            }),
+            trackColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) return kPrimaryGreen.withValues(alpha: 0.4);
+              return null;
+            }),
             onChanged: onChanged,
           ),
         ],
@@ -394,7 +409,7 @@ class _SearchPageState extends State<SearchPage> {
           borderRadius: BorderRadius.circular(100),
           boxShadow: [
             BoxShadow(
-              color: kPrimaryGreen.withOpacity(0.25),
+              color: kPrimaryGreen.withValues(alpha: 0.25),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -490,12 +505,18 @@ class _SearchPageState extends State<SearchPage> {
       );
       return;
     }
-    // TODO: navigate to results page with search params
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-            "Searching $departureState → $destinationState on ${travelDate!.day}/${travelDate!.month}/${travelDate!.year}"),
-        backgroundColor: kPrimaryGreen,
+    final date = travelDate!;
+    final dateStr =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SearchResultsPage(
+          from: departureState!,
+          to: destinationState!,
+          date: dateStr,
+          passengers: passengerCount,
+        ),
       ),
     );
   }

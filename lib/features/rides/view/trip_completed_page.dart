@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:travelmateeee/app/routes.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart' show switchToTab, AppTab;
 
@@ -84,7 +86,7 @@ class TripCompletedPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 2),
                           ),
@@ -117,7 +119,7 @@ class TripCompletedPage extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.of(context).popUntil((route) => route.isFirst);
+                          Get.offAllNamed(RouteConstants.HOME);
                           switchToTab(AppTab.wallet);
                         },
                         style: ElevatedButton.styleFrom(
@@ -144,9 +146,7 @@ class TripCompletedPage extends StatelessWidget {
                       width: double.infinity,
                       child: OutlinedButton(
                         onPressed: () {
-                          Navigator.of(
-                            context,
-                          ).popUntil((route) => route.isFirst);
+                          Get.offAllNamed(RouteConstants.HOME);
                         },
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFFDDDDDD)),

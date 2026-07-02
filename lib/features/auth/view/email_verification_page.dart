@@ -1,11 +1,99 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:travelmateeee/core/services/api_service.dart';
+import 'package:travelmateeee/core/services/auth_service.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
+import 'package:travelmateeee/features/auth/signup_draft.dart';
 import 'password_setup_page.dart';
 
-class EmailVerificationPage extends StatelessWidget {
+class EmailVerificationPage extends StatefulWidget {
   final String email;
 
   const EmailVerificationPage({super.key, required this.email});
+
+  @override
+  State<EmailVerificationPage> createState() => _EmailVerificationPageState();
+}
+
+class _EmailVerificationPageState extends State<EmailVerificationPage> {
+  bool _isChecking = false;
+  bool _isResending = false;
+
+  Future<void> _checkVerified() async {
+    if (_isChecking) return;
+    setState(() => _isChecking = true);
+    try {
+      final verified = await AuthService.instance.isEmailVerified();
+      if (!mounted) return;
+      if (verified) {
+        SignUpDraft.emailVerified = true;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const PasswordSetupPage()),
+        );
+      } else {
+        Get.snackbar(
+          'Email not verified yet',
+          'Open the link in your inbox, then tap the button again.',
+          backgroundColor: kAmber,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    } on ApiException catch (e) {
+      Get.snackbar(
+        e.message,
+        '',
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      if (mounted) setState(() => _isChecking = false);
+    }
+  }
+
+  Future<void> _resendEmail() async {
+    if (_isResending) return;
+    setState(() => _isResending = true);
+    try {
+      await AuthService.instance.resendSignupOtp(
+        firstName: SignUpDraft.firstName,
+        lastName: SignUpDraft.lastName,
+        email: SignUpDraft.email,
+        phone: SignUpDraft.phone,
+        password: SignUpDraft.password,
+        role: SignUpDraft.role,
+      );
+      Get.snackbar(
+        'Verification email resent',
+        'Check your inbox and spam folder.',
+        backgroundColor: kPrimaryGreen,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } on ApiException catch (e) {
+      Get.snackbar(
+        e.message,
+        '',
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      if (mounted) setState(() => _isResending = false);
+    }
+  }
+
+  void _skipForNow() {
+    Get.snackbar(
+      'Email verification required',
+      'Open the link in your inbox, then tap the verification button.',
+      backgroundColor: kErrorRed,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,8 +118,11 @@ class EmailVerificationPage extends StatelessWidget {
                         color: kPrimaryGreen,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.mail_outline,
-                          color: Colors.white, size: 38),
+                      child: const Icon(
+                        Icons.mail_outline,
+                        color: Colors.white,
+                        size: 38,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -39,26 +130,28 @@ class EmailVerificationPage extends StatelessWidget {
                     child: Text(
                       "Check Your Mail",
                       style: TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.bold),
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   const Center(
                     child: Text(
                       "We've sent a verification link to",
-                      style:
-                          TextStyle(fontSize: 14, color: Colors.black54),
+                      style: TextStyle(fontSize: 14, color: Colors.black54),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Center(
                     child: Text(
-                      email,
+                      widget.email,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: kPrimaryBlue),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: kPrimaryBlue,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -68,17 +161,18 @@ class EmailVerificationPage extends StatelessWidget {
                       "account and complete your registration.",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          fontSize: 13.5,
-                          color: Colors.black54,
-                          height: 1.4),
+                        fontSize: 13.5,
+                        color: Colors.black54,
+                        height: 1.4,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 30),
                   _nextStepsCard(),
                   const SizedBox(height: 36),
-                  _verifiedButton(context),
+                  _verifiedButton(),
                   const SizedBox(height: 16),
-                  _bottomLinks(context),
+                  _bottomLinks(),
                 ],
               ),
             ),
@@ -108,12 +202,11 @@ class EmailVerificationPage extends StatelessWidget {
   Widget _backButton(BuildContext context) {
     return InkWell(
       onTap: () => Navigator.maybePop(context),
-      child: Row(
+      child: const Row(
         mainAxisSize: MainAxisSize.min,
-        children: const [
+        children: [
           Icon(Icons.chevron_left, size: 22, color: Colors.black87),
-          Text("Back",
-              style: TextStyle(fontSize: 14, color: Colors.black87)),
+          Text("Back", style: TextStyle(fontSize: 14, color: Colors.black87)),
         ],
       ),
     );
@@ -128,7 +221,7 @@ class EmailVerificationPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -140,9 +233,10 @@ class EmailVerificationPage extends StatelessWidget {
           const Text(
             "Next Steps:",
             style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: kPrimaryBlue),
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: kPrimaryBlue,
+            ),
           ),
           const SizedBox(height: 14),
           _stepRow("1", "Open your email inbox"),
@@ -153,10 +247,9 @@ class EmailVerificationPage extends StatelessWidget {
           const SizedBox(height: 16),
           Container(
             width: double.infinity,
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: kAmber.withOpacity(0.15),
+              color: kAmber.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Text(
@@ -178,93 +271,95 @@ class EmailVerificationPage extends StatelessWidget {
           height: 26,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: kPrimaryBlue.withOpacity(0.12),
+            color: kPrimaryBlue.withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
           child: Text(
             number,
             style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: kPrimaryBlue),
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: kPrimaryBlue,
+            ),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(text,
-              style: const TextStyle(
-                  fontSize: 14, color: Colors.black87)),
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
+          ),
         ),
       ],
     );
   }
 
-  Widget _verifiedButton(BuildContext context) {
+  Widget _verifiedButton() {
+    final enabled = !_isChecking;
     return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const PasswordSetupPage()),
-        );
-      },
+      onTap: enabled ? _checkVerified : null,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: double.infinity,
         height: 54,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: kPrimaryGreen,
+          color: enabled ? kPrimaryGreen : const Color(0xFF9CA3AF),
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: kPrimaryGreen.withOpacity(0.3),
+              color: kPrimaryGreen.withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: const Text(
-          "I've Verified My Email",
-          style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold),
-        ),
+        child: _isChecking
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Colors.white,
+                ),
+              )
+            : const Text(
+                "I've Verified My Email",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
       ),
     );
   }
 
-  Widget _bottomLinks(BuildContext context) {
+  Widget _bottomLinks() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         InkWell(
-          onTap: () {
-            // TODO: resend email
-          },
-          child: const Text(
-            "Resend Email",
+          onTap: _isResending ? null : _resendEmail,
+          child: Text(
+            _isResending ? "Resending..." : "Resend Email",
             style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.bold,
-                color: kPrimaryBlue),
+              fontSize: 13.5,
+              fontWeight: FontWeight.bold,
+              color: _isResending ? Colors.black38 : kPrimaryBlue,
+            ),
           ),
         ),
         const SizedBox(width: 24),
         InkWell(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => const PasswordSetupPage()),
-            );
-          },
+          onTap: _skipForNow,
           child: const Text(
             "Skip for Now",
             style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
-                color: Colors.black38),
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: Colors.black38,
+            ),
           ),
         ),
       ],

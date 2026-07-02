@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 class FontWeightUtils {
   FontWeightUtils._();
 
-  static const FontWeight Thin = FontWeight.w100;
-  static const FontWeight Light = FontWeight.w300;
-  static const FontWeight Regular = FontWeight.w400;
-  static const FontWeight Medium = FontWeight.w500;
-  static const FontWeight SemiBold = FontWeight.w600;
-  static const FontWeight LightBold = FontWeight.w600;
-  static const FontWeight Bold = FontWeight.w700;
-  static const FontWeight ExtraBold = FontWeight.w800;
-  static const FontWeight Black = FontWeight.w900;
+  static const FontWeight thin = FontWeight.w100;
+  static const FontWeight light = FontWeight.w300;
+  static const FontWeight regular = FontWeight.w400;
+  static const FontWeight medium = FontWeight.w500;
+  static const FontWeight semiBold = FontWeight.w600;
+  static const FontWeight lightBold = FontWeight.w600;
+  static const FontWeight bold = FontWeight.w700;
+  static const FontWeight extraBold = FontWeight.w800;
+  static const FontWeight black = FontWeight.w900;
 }

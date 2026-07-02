@@ -56,7 +56,7 @@ class _MakePaymentPageState extends State<MakePaymentPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: kPrimaryBlue.withOpacity(0.08),
+                        color: kPrimaryBlue.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Text(

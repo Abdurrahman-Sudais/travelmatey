@@ -154,15 +154,7 @@ class RideDetailsPage extends StatelessWidget {
                               Expanded(
                                   child: _summaryStatBox(
                                       'Confirmed Seats',
-                                      ride.seats.split('/').first.trim() +
-                                          '/' +
-                                          ride.seats
-                                              .split('/')
-                                              .last
-                                              .replaceAll(
-                                                  RegExp(r'[^0-9]'),
-                                                  '')
-                                              .trim())),
+                                      '${ride.seats.split('/').first.trim()}/${ride.seats.split('/').last.replaceAll(RegExp(r'[^0-9]'), '').trim()}')),
                               const SizedBox(width: 10),
                               Expanded(
                                   child: _summaryStatBox(
@@ -225,7 +217,7 @@ class RideDetailsPage extends StatelessWidget {
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 12, vertical: 5),
                                       decoration: BoxDecoration(
-                                        color: kPrimaryBlue.withOpacity(0.1),
+                                        color: kPrimaryBlue.withValues(alpha: 0.1),
                                         borderRadius:
                                             BorderRadius.circular(20),
                                       ),
@@ -316,7 +308,7 @@ class RideDetailsPage extends StatelessWidget {
                                         BorderRadius.circular(14)),
                                 elevation: 4,
                                 shadowColor:
-                                    kPrimaryGreen.withOpacity(0.3),
+                                    kPrimaryGreen.withValues(alpha: 0.3),
                               ),
                               child: Text(
                                 isInProgress
@@ -393,7 +385,7 @@ class RideDetailsPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2))
         ],

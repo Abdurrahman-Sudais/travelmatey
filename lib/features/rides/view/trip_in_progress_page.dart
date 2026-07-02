@@ -86,9 +86,9 @@ class _TripInProgressPageState extends State<TripInProgressPage> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 5),
                           decoration: BoxDecoration(
-                            color: kAmber.withOpacity(0.15),
+                            color: kAmber.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: kAmber.withOpacity(0.4)),
+                            border: Border.all(color: kAmber.withValues(alpha: 0.4)),
                           ),
                           child: Text('Active',
                               style: TextStyle(
@@ -129,7 +129,7 @@ class _TripInProgressPageState extends State<TripInProgressPage> {
                                   width: 32,
                                   height: 32,
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
+                                    color: Colors.white.withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Icon(Icons.fullscreen,
@@ -235,7 +235,7 @@ class _TripInProgressPageState extends State<TripInProgressPage> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
+                              color: Colors.black.withValues(alpha: 0.04),
                               blurRadius: 8,
                               offset: const Offset(0, 2))
                         ],
@@ -249,7 +249,7 @@ class _TripInProgressPageState extends State<TripInProgressPage> {
                                 width: 40,
                                 height: 40,
                                 decoration: BoxDecoration(
-                                  color: kPrimaryGreen.withOpacity(0.15),
+                                  color: kPrimaryGreen.withValues(alpha: 0.15),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(Icons.bolt,
@@ -444,9 +444,9 @@ class _TripInProgressPageState extends State<TripInProgressPage> {
 
   Widget _riderCard(int index, _TripRider rider) {
     final Color borderColor = rider.isDroppedOff
-        ? kPrimaryGreen.withOpacity(0.3)
+        ? kPrimaryGreen.withValues(alpha: 0.3)
         : rider.isOnBoard
-            ? kPrimaryGreen.withOpacity(0.5)
+            ? kPrimaryGreen.withValues(alpha: 0.5)
             : Colors.transparent;
 
     return Container(
@@ -457,7 +457,7 @@ class _TripInProgressPageState extends State<TripInProgressPage> {
         border: Border.all(color: borderColor, width: 1.5),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 6,
               offset: const Offset(0, 2))
         ],
@@ -565,7 +565,7 @@ class _TripInProgressPageState extends State<TripInProgressPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: kPrimaryGreen.withOpacity(0.1),
+                  color: kPrimaryGreen.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -593,7 +593,7 @@ class _TripInProgressPageState extends State<TripInProgressPage> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: kPrimaryGreen.withOpacity(0.1),
+          color: kPrimaryGreen.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text('Done',
@@ -607,7 +607,7 @@ class _TripInProgressPageState extends State<TripInProgressPage> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: kPrimaryGreen.withOpacity(0.1),
+          color: kPrimaryGreen.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text('On Board',
@@ -620,7 +620,7 @@ class _TripInProgressPageState extends State<TripInProgressPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: kAmber.withOpacity(0.1),
+        color: kAmber.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text('Waiting',

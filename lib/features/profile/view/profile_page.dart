@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:travelmateeee/core/services/media_picker_service.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/data/repositories/user_repository.dart';
+import 'package:travelmateeee/data/models/user_model.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 import 'package:travelmateeee/shared/widgets/edit_profile_sheet.dart';
 import 'package:travelmateeee/shared/widgets/app_bottom_nav.dart' show switchToTab, AppTab;
@@ -19,7 +20,7 @@ import 'privacy_security_page.dart';
 import 'package:travelmateeee/features/auth/view/auth_diagnostics_page.dart';
 import 'terms_policies_page.dart';
 import 'about_page.dart';
-import 'package:get/get.dart';
+import 'package:travelmateeee/core/services/auth_service.dart';
 import 'package:travelmateeee/app/routes.dart';
 import 'package:travelmateeee/features/home/view/home_page.dart' show activeRoleNotifier;
 import 'package:travelmateeee/core/base/active_role.dart';
@@ -38,6 +39,8 @@ class _ProfilePageState extends State<ProfilePage> {
   AppearanceMode appearanceMode = AppearanceMode.light;
   String? _avatarPath;
   bool _uploadingAvatar = false;
+  UserModel? _user;
+  bool _loadingUser = true;
 
   UserRepository get _userRepo => Get.find<UserRepository>();
 
@@ -46,6 +49,31 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     activeRole = activeRoleNotifier.value;
     activeRoleNotifier.addListener(_onRoleChanged);
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    setState(() => _loadingUser = true);
+    try {
+      final user = await _userRepo.getCurrentUser();
+      setState(() {
+        _user = user;
+        _avatarPath = user.avatarUrl;
+        _loadingUser = false;
+        activeRole = user.id.isNotEmpty &&
+                AuthService.instance.currentUser?.role == 'driver'
+            ? ActiveRole.driver
+            : activeRoleNotifier.value;
+      });
+    } catch (e) {
+      setState(() => _loadingUser = false);
+      Get.snackbar(
+        'Error',
+        'Failed to load user profile: $e',
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+      );
+    }
   }
 
   void _onRoleChanged() {
@@ -58,11 +86,22 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
-  void _switchRole(ActiveRole role) {
+  Future<void> _switchRole(ActiveRole role) async {
     if (role == activeRole) return;
-    setState(() => activeRole = role);
-    activeRoleNotifier.value = role;
-    switchToTab(AppTab.home);
+    final apiRole = role == ActiveRole.driver ? 'driver' : 'rider';
+    try {
+      await AuthService.instance.switchRole(apiRole);
+      setState(() => activeRole = role);
+      activeRoleNotifier.value = role;
+      switchToTab(AppTab.home);
+    } catch (e) {
+      Get.snackbar(
+        'Role switch failed',
+        e.toString(),
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+      );
+    }
   }
 
   @override
@@ -73,57 +112,51 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Scaffold(
         backgroundColor: kBackground,
         body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 12),
-                Text(
-                  "Profile & Settings",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: kTextPrimary,
+          child: _loadingUser
+              ? const Center(
+                  child: CircularProgressIndicator(color: kPrimaryBlue),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 12),
+                      Text(
+                        "Profile & Settings",
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: kTextPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _profileCard(),
+                      const SizedBox(height: 16),
+                      // Vehicle info only shown for drivers
+                      if (isDriver) ...[
+                        _vehicleCard(),
+                        const SizedBox(height: 16),
+                      ],
+                      _appearanceCard(),
+                      const SizedBox(height: 16),
+                      _settingsCard(),
+                      const SizedBox(height: 20),
+                      _logoutButton(),
+                      const SizedBox(height: 12),
+                      _deleteAccountButton(),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                _profileCard(),
-                const SizedBox(height: 16),
-                // Vehicle info only shown for drivers
-                if (isDriver) ...[
-                  _vehicleCard(),
-                  const SizedBox(height: 16),
-                ],
-                _appearanceCard(),
-                const SizedBox(height: 16),
-                _settingsCard(),
-                const SizedBox(height: 20),
-                _logoutButton(),
-                const SizedBox(height: 12),
-                _deleteAccountButton(),
-              ],
-            ),
-          ),
         ),
       ),
     );
   }
 
-  Widget _backButton() {
-    return InkWell(
-      onTap: () => Navigator.maybePop(context),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: const [
-          Icon(Icons.chevron_left, size: 22, color: Colors.black87),
-          Text("Back", style: TextStyle(fontSize: 14, color: Colors.black87)),
-        ],
-      ),
-    );
-  }
 
   Widget _profileCard() {
+    final user = _user;
+    if (user == null) return const SizedBox.shrink();
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -143,7 +176,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "User",
+                      user.name,
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
@@ -156,7 +189,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         const Icon(Icons.star, size: 15, color: Color(0xFFF59E0B)),
                         const SizedBox(width: 4),
                         Text(
-                          "4.8 · 47 trips",
+                          "${user.rating} · ${user.tripCount} trips",
                           style: TextStyle(
                             fontSize: 12.5,
                             color: kTextSecondary,
@@ -166,7 +199,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      "Member since January 2024",
+                      "Member since ${user.memberSince}",
                       style: TextStyle(fontSize: 11.5, color: kTextHint),
                     ),
                   ],
@@ -177,9 +210,9 @@ class _ProfilePageState extends State<ProfilePage> {
           const SizedBox(height: 16),
           Divider(height: 1, color: kDivider),
           const SizedBox(height: 12),
-          _contactRow(icon: Icons.email_outlined, text: "user@example.com"),
+          _contactRow(icon: Icons.email_outlined, text: user.email),
           const SizedBox(height: 10),
-          _contactRow(icon: Icons.call_outlined, text: "+234XXXXXXXXXX"),
+          _contactRow(icon: Icons.call_outlined, text: user.phone),
           const SizedBox(height: 16),
           _activeRoleRow(),
           const SizedBox(height: 16),
@@ -216,6 +249,18 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _avatar() {
+    // Determine image provider: network URL, local file, or none
+    ImageProvider? imageProvider;
+    final path = _avatarPath;
+    if (path != null && path.isNotEmpty) {
+      if (path.startsWith('http://') || path.startsWith('https://')) {
+        imageProvider = NetworkImage(path);
+      } else {
+        final f = File(path);
+        if (f.existsSync()) imageProvider = FileImage(f);
+      }
+    }
+
     return GestureDetector(
       onTap: _pickAvatar,
       child: SizedBox(
@@ -223,42 +268,14 @@ class _ProfilePageState extends State<ProfilePage> {
         height: 64,
         child: Stack(
           children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: kPrimaryGreen,
-                shape: BoxShape.circle,
-                image: _avatarPath != null
-                    ? DecorationImage(
-                        image: FileImage(File(_avatarPath!)),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-              ),
-              child: _avatarPath == null
-                  ? const Icon(Icons.person, color: Colors.white, size: 34)
-                  : null,
+            // Avatar circle with error fallback
+            _AvatarCircle(
+              imageProvider: imageProvider,
+              initials: _user != null && _user!.name.isNotEmpty
+                  ? _user!.name[0].toUpperCase()
+                  : 'U',
+              isUploading: _uploadingAvatar,
             ),
-            if (_uploadingAvatar)
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black38,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
             Positioned(
               bottom: 0,
               right: 0,
@@ -396,11 +413,10 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           const SizedBox(height: 14),
-          _vehicleDetailRow("Make & Model", "Toyota Sienna"),
-          _vehicleDetailRow("Year", "2020"),
-          _vehicleDetailRow("Color", "Grey"),
-          _vehicleDetailRow("Plate Number", "ABC-123-XY"),
-          _vehicleDetailRow("Seats", "6", isLast: true),
+          const Text(
+            "Add your vehicle details so riders know what to expect.",
+            style: TextStyle(fontSize: 13, color: Colors.black54, height: 1.4),
+          ),
           const SizedBox(height: 16),
           InkWell(
             onTap: () => _showEditVehicleSheet(context),
@@ -414,7 +430,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(
-                "Edit Vehicle",
+                "Add Vehicle Details",
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -428,27 +444,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _vehicleDetailRow(String label, String value, {bool isLast = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11.5, color: Colors.black45),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
-        if (!isLast) ...[
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFF5F5F5)),
-          const SizedBox(height: 12),
-        ],
-      ],
-    );
-  }
 
   void _showEditVehicleSheet(BuildContext context) {
     showModalBottomSheet(
@@ -751,8 +746,9 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _performLogout(BuildContext context) {
-    // TODO: clear session / auth tokens here
+  void _performLogout(BuildContext context) async {
+    await AuthService.instance.signOut();
+    if (!context.mounted) return;
     Get.offAllNamed(RouteConstants.SIGNIN);
   }
 
@@ -810,8 +806,15 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _performDeleteAccount(BuildContext context) {
-    // TODO: call delete-account API endpoint here
+  void _performDeleteAccount(BuildContext context) async {
+    await AuthService.instance.signOut();
+    if (!context.mounted) return;
+    Get.snackbar(
+      'Account deletion',
+      'Please contact support to permanently delete your account.',
+      backgroundColor: kPrimaryBlue,
+      colorText: Colors.white,
+    );
     Get.offAllNamed(RouteConstants.SIGNIN);
   }
 
@@ -826,7 +829,7 @@ class _ProfilePageState extends State<ProfilePage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: kErrorRed.withOpacity(0.4)),
+          border: Border.all(color: kErrorRed.withValues(alpha: 0.4)),
         ),
         child: const Text(
           "Logout",
@@ -849,9 +852,9 @@ class _ProfilePageState extends State<ProfilePage> {
         height: 50,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: kErrorRed.withOpacity(0.06),
+          color: kErrorRed.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: kErrorRed.withOpacity(0.25)),
+          border: Border.all(color: kErrorRed.withValues(alpha: 0.25)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -884,12 +887,12 @@ class _EditVehicleSheet extends StatefulWidget {
 }
 
 class _EditVehicleSheetState extends State<_EditVehicleSheet> {
-  final _makeCtrl = TextEditingController(text: "Toyota");
-  final _modelCtrl = TextEditingController(text: "Sienna");
-  final _yearCtrl = TextEditingController(text: "2020");
-  final _colorCtrl = TextEditingController(text: "Grey");
-  final _plateCtrl = TextEditingController(text: "ABC-123-XY");
-  final _seatsCtrl = TextEditingController(text: "6");
+  final _makeCtrl = TextEditingController();
+  final _modelCtrl = TextEditingController();
+  final _yearCtrl = TextEditingController();
+  final _colorCtrl = TextEditingController();
+  final _plateCtrl = TextEditingController();
+  final _seatsCtrl = TextEditingController();
 
   @override
   void dispose() {
@@ -930,7 +933,7 @@ class _EditVehicleSheetState extends State<_EditVehicleSheet> {
                       width: 36,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -939,7 +942,7 @@ class _EditVehicleSheetState extends State<_EditVehicleSheet> {
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.25),
+                        color: Colors.white.withValues(alpha: 0.25),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -1069,7 +1072,7 @@ class _EditVehicleSheetState extends State<_EditVehicleSheet> {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: kPrimaryGreen.withOpacity(0.25),
+              color: kPrimaryGreen.withValues(alpha: 0.25),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -1114,4 +1117,88 @@ class _SettingsItem {
   final Color? iconColor;
 
   _SettingsItem(this.icon, this.label, {this.iconColor});
+}
+
+/// Displays an avatar circle from either a network/file image or a text initial,
+/// with graceful fallback when the image fails to load.
+class _AvatarCircle extends StatefulWidget {
+  final ImageProvider? imageProvider;
+  final String initials;
+  final bool isUploading;
+
+  const _AvatarCircle({
+    required this.imageProvider,
+    required this.initials,
+    required this.isUploading,
+  });
+
+  @override
+  State<_AvatarCircle> createState() => _AvatarCircleState();
+}
+
+class _AvatarCircleState extends State<_AvatarCircle> {
+  bool _imageError = false;
+
+  @override
+  void didUpdateWidget(_AvatarCircle old) {
+    super.didUpdateWidget(old);
+    // Reset error state if the image provider changes
+    if (old.imageProvider != widget.imageProvider) {
+      setState(() => _imageError = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final showImage = widget.imageProvider != null && !_imageError;
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        color: kPrimaryGreen,
+        shape: BoxShape.circle,
+        image: showImage
+            ? DecorationImage(
+                image: widget.imageProvider!,
+                fit: BoxFit.cover,
+                onError: (error, stackTrace) {
+                  if (mounted) setState(() => _imageError = true);
+                },
+              )
+            : null,
+      ),
+      child: Stack(
+        children: [
+          if (!showImage)
+            Center(
+              child: Text(
+                widget.initials,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          if (widget.isUploading)
+            Container(
+              decoration: const BoxDecoration(
+                color: Colors.black38,
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }

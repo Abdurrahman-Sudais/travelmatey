@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/keyboard_aware_scaffold.dart';
+import 'package:travelmateeee/data/repositories/wallet_repository.dart';
 
 /// Card Funding page.
 class CardFundingPage extends StatefulWidget {
@@ -16,13 +19,12 @@ class _CardFundingPageState extends State<CardFundingPage> {
   late double _balance;
 
   final TextEditingController _amountController = TextEditingController();
-  final TextEditingController _cardNumberController = TextEditingController();
-  final TextEditingController _cardNameController = TextEditingController();
-  final TextEditingController _expiryController = TextEditingController();
-  final TextEditingController _cvvController = TextEditingController();
 
   bool _showSuccess = false;
   double _amountFunded = 0;
+  bool _isSubmitting = false;
+  bool _isVerifying = false;
+  WalletFundingSession? _fundingSession;
 
   static const List<int> _quickAmounts = [1000, 5000, 10000, 20000];
 
@@ -35,10 +37,6 @@ class _CardFundingPageState extends State<CardFundingPage> {
   @override
   void dispose() {
     _amountController.dispose();
-    _cardNumberController.dispose();
-    _cardNameController.dispose();
-    _expiryController.dispose();
-    _cvvController.dispose();
     super.dispose();
   }
 
@@ -55,21 +53,74 @@ class _CardFundingPageState extends State<CardFundingPage> {
   double get _amount => double.tryParse(_amountController.text) ?? 0;
 
   bool get _canPay {
+    if (_isSubmitting) return false;
     if (_amount < 100 || _amount > 1000000) return false;
-    if (_cardNumberController.text.trim().length < 12) return false;
-    if (_cardNameController.text.trim().isEmpty) return false;
-    if (_expiryController.text.trim().length < 4) return false;
-    if (_cvvController.text.trim().length < 3) return false;
     return true;
   }
 
-  void _pay() {
+  Future<void> _pay() async {
     if (!_canPay) return;
-    setState(() {
-      _amountFunded = _amount;
-      _balance += _amount;
-      _showSuccess = true;
-    });
+    setState(() => _isSubmitting = true);
+    try {
+      final repo = Get.find<WalletRepository>();
+      final session = await repo.initializeWalletFunding(amount: _amount);
+      final launched = await launchUrl(
+        Uri.parse(session.authorizationUrl),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        throw Exception('Could not open Paystack checkout.');
+      }
+      if (!mounted) return;
+      setState(() => _fundingSession = session);
+      Get.snackbar(
+        'Checkout opened',
+        'Complete payment in Paystack, then return here to verify it.',
+        backgroundColor: kPrimaryBlue,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to start payment: $e',
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  Future<void> _verifyPayment() async {
+    final session = _fundingSession;
+    if (session == null || _isVerifying) return;
+    setState(() => _isVerifying = true);
+    try {
+      final repo = Get.find<WalletRepository>();
+      final wallet = await repo.verifyWalletPayment(
+        reference: session.reference,
+      );
+      if (!mounted) return;
+      setState(() {
+        _amountFunded = _amount;
+        _balance = wallet.balance;
+        _showSuccess = true;
+        _fundingSession = null;
+      });
+    } catch (e) {
+      Get.snackbar(
+        'Verification failed',
+        'Payment could not be verified yet: $e',
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isVerifying = false);
+      }
+    }
   }
 
   @override
@@ -145,59 +196,20 @@ class _CardFundingPageState extends State<CardFundingPage> {
               const Divider(height: 1),
               const SizedBox(height: 16),
               const Text(
-                "Card Details",
+                "Paystack Checkout",
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 14),
-              _label("Card Number"),
-              const SizedBox(height: 8),
-              _textField(
-                controller: _cardNumberController,
-                hint: "1234 5678 9012 3456",
-                keyboardType: TextInputType.number,
-                suffixIcon: Icons.credit_card,
-              ),
-              const SizedBox(height: 14),
-              _label("Cardholder Name"),
-              const SizedBox(height: 8),
-              _textField(controller: _cardNameController, hint: "JOHN DOE"),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _label("Expiry Date"),
-                        const SizedBox(height: 8),
-                        _textField(
-                          controller: _expiryController,
-                          hint: "MM/YY",
-                          keyboardType: TextInputType.number,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _label("CVV"),
-                        const SizedBox(height: 8),
-                        _textField(
-                          controller: _cvvController,
-                          hint: "123",
-                          keyboardType: TextInputType.number,
-                          obscure: true,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              const Text(
+                "Card details are entered only on Paystack's secure checkout page. TravelMate never stores your card number or CVV.",
+                style: TextStyle(fontSize: 12.5, color: Colors.black54),
               ),
               const SizedBox(height: 18),
               _payButton(),
+              if (_fundingSession != null) ...[
+                const SizedBox(height: 12),
+                _verifyButton(),
+              ],
             ],
           ),
         ),
@@ -235,7 +247,7 @@ class _CardFundingPageState extends State<CardFundingPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -258,7 +270,7 @@ class _CardFundingPageState extends State<CardFundingPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: kPrimaryBlue.withOpacity(0.25),
+            color: kPrimaryBlue.withValues(alpha: 0.25),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -272,7 +284,7 @@ class _CardFundingPageState extends State<CardFundingPage> {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: Colors.white.withOpacity(0.85),
+              color: Colors.white.withValues(alpha: 0.85),
               letterSpacing: 1,
             ),
           ),
@@ -309,7 +321,7 @@ class _CardFundingPageState extends State<CardFundingPage> {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? kPrimaryBlue.withOpacity(0.12)
+                      ? kPrimaryBlue.withValues(alpha: 0.12)
                       : const Color(0xFFF5F5F5),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
@@ -379,14 +391,56 @@ class _CardFundingPageState extends State<CardFundingPage> {
           color: _canPay ? kPrimaryGreen : const Color(0xFFCCCCCC),
           borderRadius: BorderRadius.circular(14),
         ),
-        child: Text(
-          "Pay ${_formatNaira(_amount)}",
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+        child: _isSubmitting
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.4,
+                  color: Colors.white,
+                ),
+              )
+            : Text(
+                "Open Paystack ${_formatNaira(_amount)}",
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _verifyButton() {
+    return InkWell(
+      onTap: _isVerifying ? null : _verifyPayment,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: double.infinity,
+        height: 52,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: _isVerifying ? const Color(0xFFCCCCCC) : kPrimaryBlue,
+          borderRadius: BorderRadius.circular(14),
         ),
+        child: _isVerifying
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.4,
+                  color: Colors.white,
+                ),
+              )
+            : const Text(
+                "I've completed payment - verify now",
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
       ),
     );
   }
@@ -396,9 +450,9 @@ class _CardFundingPageState extends State<CardFundingPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: kPrimaryGreen.withOpacity(0.08),
+        color: kPrimaryGreen.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kPrimaryGreen.withOpacity(0.25)),
+        border: Border.all(color: kPrimaryGreen.withValues(alpha: 0.25)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,7 +496,7 @@ class _CardFundingPageState extends State<CardFundingPage> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -454,7 +508,7 @@ class _CardFundingPageState extends State<CardFundingPage> {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: kPrimaryGreen.withOpacity(0.12),
+                    color: kPrimaryGreen.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(

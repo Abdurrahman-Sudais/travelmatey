@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
+import 'package:travelmateeee/shared/widgets/conditional_back_button.dart';
+import 'package:travelmateeee/data/repositories/wallet_repository.dart';
 import 'withdraw_funds_page.dart';
 import 'buy_airtime_page.dart';
 import 'buy_data_page.dart';
@@ -28,6 +31,16 @@ class _Transaction {
   });
 }
 
+class _EarningsData {
+  final String amount;
+  final String changeLabel;
+
+  const _EarningsData({
+    required this.amount,
+    required this.changeLabel,
+  });
+}
+
 /// Wallet & Earnings page.
 class WalletPage extends StatefulWidget {
   const WalletPage({super.key});
@@ -38,7 +51,71 @@ class WalletPage extends StatefulWidget {
 
 class _WalletPageState extends State<WalletPage> {
   _EarningsPeriod _period = _EarningsPeriod.week;
-  double _balance = 25000;
+  double _balance = 0.0;
+  double _earningsWeek = 0.0;
+  double _earningsMonth = 0.0;
+  double _earningsYear = 0.0;
+  bool _isLoading = true;
+  List<_Transaction> _transactions = [];
+
+  final WalletRepository _walletRepo = Get.find<WalletRepository>();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWalletData();
+  }
+
+  Future<void> _loadWalletData() async {
+    setState(() => _isLoading = true);
+    try {
+      final wallet = await _walletRepo.getWallet();
+      final txs = await _walletRepo.getTransactions();
+      
+      final mappedTxs = txs.map((e) {
+        _TxStatus status;
+        switch (e['status']?.toString().toLowerCase()) {
+          case 'held':
+            status = _TxStatus.held;
+            break;
+          case 'pending':
+            status = _TxStatus.pending;
+            break;
+          default:
+            status = _TxStatus.completed;
+        }
+        
+        return _Transaction(
+          title: e['title']?.toString() ?? 'Transaction',
+          date: e['date']?.toString() ?? '',
+          status: status,
+          amount: e['amount']?.toString() ?? '',
+          isCredit: e['type'] == 'credit',
+        );
+      }).toList();
+
+      if (mounted) {
+        setState(() {
+          _balance = wallet.balance;
+          _earningsWeek = wallet.earningsWeek;
+          _earningsMonth = wallet.earningsMonth;
+          _earningsYear = wallet.earningsYear;
+          _transactions = mappedTxs;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        Get.snackbar(
+          'Error',
+          'Failed to load wallet data: $e',
+          backgroundColor: kErrorRed,
+          colorText: Colors.white,
+        );
+      }
+    }
+  }
 
   String _formatNaira(double value) {
     final str = value.toStringAsFixed(0);
@@ -50,44 +127,20 @@ class _WalletPageState extends State<WalletPage> {
     return "₦$buffer";
   }
 
-  static const Map<_EarningsPeriod, _EarningsData> _earningsByPeriod = {
-    _EarningsPeriod.week: _EarningsData(
-      amount: "₦120,000",
-      changeLabel: "+8.2% vs last week",
-    ),
-    _EarningsPeriod.month: _EarningsData(
-      amount: "₦450,000",
-      changeLabel: "+12.4% vs last month",
-    ),
-    _EarningsPeriod.year: _EarningsData(
-      amount: "₦4,200,000",
-      changeLabel: "+21.6% vs last year",
-    ),
-  };
-
-  static const _transactions = [
-    _Transaction(
-      title: "Wallet funding via card",
-      date: "Jun 12, 2026",
-      status: _TxStatus.completed,
-      amount: "+₦10,000",
-      isCredit: true,
-    ),
-    _Transaction(
-      title: "Ride payment - Lagos to Ibadan",
-      date: "Jun 11, 2026",
-      status: _TxStatus.held,
-      amount: "₦5,000",
-      isCredit: false,
-    ),
-    _Transaction(
-      title: "Ride earnings",
-      date: "Jun 10, 2026",
-      status: _TxStatus.completed,
-      amount: "+₦4,500",
-      isCredit: true,
-    ),
-  ];
+  Map<_EarningsPeriod, _EarningsData> get _earningsByPeriod => {
+        _EarningsPeriod.week: _EarningsData(
+          amount: _formatNaira(_earningsWeek),
+          changeLabel: 'This week',
+        ),
+        _EarningsPeriod.month: _EarningsData(
+          amount: _formatNaira(_earningsMonth),
+          changeLabel: 'This month',
+        ),
+        _EarningsPeriod.year: _EarningsData(
+          amount: _formatNaira(_earningsYear),
+          changeLabel: 'This year',
+        ),
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -95,55 +148,56 @@ class _WalletPageState extends State<WalletPage> {
       child: Scaffold(
         backgroundColor: kBackground,
         body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _backButton(context),
-                const SizedBox(height: 12),
-                const Text(
-                  "Wallet & Earnings",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          child: _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(color: kPrimaryBlue),
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadWalletData,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const ConditionalBackButton(),
+                      const SizedBox(height: 12),
+                      const Text(
+                        "Wallet & Earnings",
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        "Manage your funds",
+                        style: TextStyle(fontSize: 13, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 18),
+                      _balanceCard(),
+                      const SizedBox(height: 14),
+                      _withdrawButton(),
+                      const SizedBox(height: 20),
+                      _sectionTitle("Quick Services"),
+                      const SizedBox(height: 10),
+                      _quickServicesRow(),
+                      const SizedBox(height: 14),
+                      _transactionsAndEscrowRow(),
+                      const SizedBox(height: 20),
+                      _earningsOverviewCard(),
+                      const SizedBox(height: 20),
+                      _sectionTitle("Recent Transactions"),
+                      const SizedBox(height: 10),
+                      if (_transactions.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text("No recent transactions"),
+                        )
+                      else
+                        ..._transactions.map(_transactionCard),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  "Manage your funds",
-                  style: TextStyle(fontSize: 13, color: Colors.black54),
-                ),
-                const SizedBox(height: 18),
-                _balanceCard(),
-                const SizedBox(height: 14),
-                _withdrawButton(),
-                const SizedBox(height: 20),
-                _sectionTitle("Quick Services"),
-                const SizedBox(height: 10),
-                _quickServicesRow(),
-                const SizedBox(height: 14),
-                _transactionsAndEscrowRow(),
-                const SizedBox(height: 20),
-                _earningsOverviewCard(),
-                const SizedBox(height: 20),
-                _sectionTitle("Recent Transactions"),
-                const SizedBox(height: 10),
-                ..._transactions.map(_transactionCard),
-              ],
-            ),
-          ),
+              ),
         ),
-      ), // Scaffold
-    ); // SosScaffold
-  }
-
-  Widget _backButton(BuildContext context) {
-    return InkWell(
-      onTap: () => Navigator.maybePop(context),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: const [
-          Icon(Icons.chevron_left, size: 22, color: Colors.black87),
-          Text("Back", style: TextStyle(fontSize: 14, color: Colors.black87)),
-        ],
       ),
     );
   }
@@ -173,7 +227,7 @@ class _WalletPageState extends State<WalletPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: kPrimaryGreen.withOpacity(0.25),
+            color: kPrimaryGreen.withValues(alpha: 0.25),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -190,7 +244,7 @@ class _WalletPageState extends State<WalletPage> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white.withOpacity(0.85),
+                  color: Colors.white.withValues(alpha: 0.85),
                   letterSpacing: 1,
                 ),
               ),
@@ -198,7 +252,7 @@ class _WalletPageState extends State<WalletPage> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
+                  color: Colors.white.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -246,7 +300,7 @@ class _WalletPageState extends State<WalletPage> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
+        color: Colors.white.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -257,7 +311,7 @@ class _WalletPageState extends State<WalletPage> {
             style: TextStyle(
               fontSize: 9.5,
               fontWeight: FontWeight.w600,
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
               letterSpacing: 0.5,
             ),
           ),
@@ -278,16 +332,15 @@ class _WalletPageState extends State<WalletPage> {
   Widget _withdrawButton() {
     return InkWell(
       onTap: () async {
-        final result = await Navigator.push<double>(
+        await Navigator.push<double>(
           context,
           MaterialPageRoute(
             builder: (_) =>
                 WithdrawFundsPage(availableBalance: _balance.toInt()),
           ),
         );
-        if (result != null) {
-          setState(() => _balance = result);
-        }
+        // Always reload wallet data after returning, regardless of result
+        _loadWalletData();
       },
       borderRadius: BorderRadius.circular(14),
       child: Container(
@@ -297,10 +350,10 @@ class _WalletPageState extends State<WalletPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: kPrimaryGreen.withOpacity(0.3)),
+          border: Border.all(color: kPrimaryGreen.withValues(alpha: 0.3)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -331,7 +384,7 @@ class _WalletPageState extends State<WalletPage> {
         Expanded(
           child: _quickServiceItem(
             icon: Icons.phone_android,
-            bgColor: kPrimaryBlue.withOpacity(0.1),
+            bgColor: kPrimaryBlue.withValues(alpha: 0.1),
             iconColor: kPrimaryBlue,
             label: "Airtime",
             onTap: () => _showAirtimeSheet(),
@@ -341,7 +394,7 @@ class _WalletPageState extends State<WalletPage> {
         Expanded(
           child: _quickServiceItem(
             icon: Icons.wifi,
-            bgColor: kPrimaryGreen.withOpacity(0.1),
+            bgColor: kPrimaryGreen.withValues(alpha: 0.1),
             iconColor: kPrimaryGreen,
             label: "Data",
             onTap: () => _showDataSheet(),
@@ -351,7 +404,7 @@ class _WalletPageState extends State<WalletPage> {
         Expanded(
           child: _quickServiceItem(
             icon: Icons.description_outlined,
-            bgColor: kAmber.withOpacity(0.12),
+            bgColor: kAmber.withValues(alpha: 0.12),
             iconColor: kAmber,
             label: "Bills",
             onTap: () => _showBillsSheet(),
@@ -361,7 +414,7 @@ class _WalletPageState extends State<WalletPage> {
         Expanded(
           child: _quickServiceItem(
             icon: Icons.add,
-            bgColor: const Color(0xFFEC4899).withOpacity(0.1),
+            bgColor: const Color(0xFFEC4899).withValues(alpha: 0.1),
             iconColor: const Color(0xFFEC4899),
             label: "Fund",
             onTap: () => _showFundSheet(),
@@ -394,7 +447,7 @@ class _WalletPageState extends State<WalletPage> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: kAmber.withOpacity(0.12),
+                      color: kAmber.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
@@ -482,16 +535,14 @@ class _WalletPageState extends State<WalletPage> {
               GestureDetector(
                 onTap: () async {
                   Navigator.pop(sheetContext);
-                  final result = await Navigator.push<double>(
+                  await Navigator.push<double>(
                     context,
                     MaterialPageRoute(
                       builder: (_) =>
                           BuyAirtimePage(availableBalance: _balance),
                     ),
                   );
-                  if (result != null) {
-                    setState(() => _balance = result);
-                  }
+                  _loadWalletData();
                 },
                 child: Container(
                   width: double.infinity,
@@ -545,7 +596,7 @@ class _WalletPageState extends State<WalletPage> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: kPrimaryGreen.withOpacity(0.12),
+                      color: kPrimaryGreen.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
@@ -698,7 +749,7 @@ class _WalletPageState extends State<WalletPage> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: kAmber.withOpacity(0.12),
+                          color: kAmber.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Icon(
@@ -790,16 +841,14 @@ class _WalletPageState extends State<WalletPage> {
                   GestureDetector(
                     onTap: () async {
                       Navigator.pop(sheetContext);
-                      final result = await Navigator.push<double>(
+                      await Navigator.push<double>(
                         context,
                         MaterialPageRoute(
                           builder: (_) =>
                               PayBillsPage(availableBalance: _balance),
                         ),
                       );
-                      if (result != null) {
-                        setState(() => _balance = result);
-                      }
+                      _loadWalletData();
                     },
                     child: Container(
                       width: double.infinity,
@@ -856,7 +905,7 @@ class _WalletPageState extends State<WalletPage> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEC4899).withOpacity(0.1),
+                      color: const Color(0xFFEC4899).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
@@ -1025,7 +1074,7 @@ class _WalletPageState extends State<WalletPage> {
         Expanded(
           child: _navCard(
             icon: Icons.receipt_long_outlined,
-            iconBg: kPrimaryBlue.withOpacity(0.1),
+            iconBg: kPrimaryBlue.withValues(alpha: 0.1),
             iconColor: kPrimaryBlue,
             title: "Transactions",
             subtitle: "Manage & Export",
@@ -1041,7 +1090,7 @@ class _WalletPageState extends State<WalletPage> {
         Expanded(
           child: _navCard(
             icon: Icons.lock_outline,
-            iconBg: kAmber.withOpacity(0.12),
+            iconBg: kAmber.withValues(alpha: 0.12),
             iconColor: kAmber,
             title: "Escrow",
             subtitle: "Held Funds",
@@ -1070,7 +1119,7 @@ class _WalletPageState extends State<WalletPage> {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -1123,7 +1172,7 @@ class _WalletPageState extends State<WalletPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1155,7 +1204,7 @@ class _WalletPageState extends State<WalletPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: kPrimaryGreen.withOpacity(0.1),
+              color: kPrimaryGreen.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -1209,7 +1258,7 @@ class _WalletPageState extends State<WalletPage> {
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 4,
                     offset: const Offset(0, 1),
                   ),
@@ -1237,7 +1286,7 @@ class _WalletPageState extends State<WalletPage> {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1333,9 +1382,3 @@ class _WalletPageState extends State<WalletPage> {
   }
 }
 
-class _EarningsData {
-  final String amount;
-  final String changeLabel;
-
-  const _EarningsData({required this.amount, required this.changeLabel});
-}

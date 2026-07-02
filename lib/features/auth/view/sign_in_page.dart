@@ -2,7 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
 import 'package:travelmateeee/app/routes.dart';
+import 'package:travelmateeee/core/base/active_role.dart';
+import 'package:travelmateeee/core/auth/google_auth_flow.dart';
+import 'package:travelmateeee/core/config/app_config.dart';
+import 'package:travelmateeee/features/auth/view/forgot_password_page.dart';
+import 'package:travelmateeee/core/services/api_service.dart';
+import 'package:travelmateeee/core/services/auth_service.dart';
+import 'package:travelmateeee/core/services/google_sign_in_service.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
+import 'package:travelmateeee/shared/widgets/google_sign_in_button.dart';
+import 'package:travelmateeee/features/home/view/home_page.dart' show activeRoleNotifier;
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -17,10 +26,16 @@ class _SignInPageState extends State<SignInPage> {
   _SignInMethod _method = _SignInMethod.email;
   bool _obscurePassword = true;
   bool _rememberMe = false;
+  bool _isLoading = false;
+  bool _isGoogleLoading = false;
 
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+
+  bool get _googleAvailable =>
+      GoogleSignInService.instance.isConfigured &&
+      AppConfig.isGoogleSignInConfigured;
 
   bool get _canSubmit {
     final hasIdentifier = _method == _SignInMethod.email
@@ -51,8 +66,7 @@ class _SignInPageState extends State<SignInPage> {
               const SizedBox(height: 16),
               const Text(
                 "Welcome Back!",
-                style:
-                    TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 6),
               const Text(
@@ -91,21 +105,31 @@ class _SignInPageState extends State<SignInPage> {
                 alignment: Alignment.centerRight,
                 child: InkWell(
                   onTap: () {
-                    // TODO: navigate to forgot password
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ForgotPasswordPage(),
+                      ),
+                    );
                   },
                   child: const Text(
                     "Forgot Password?",
                     style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
-                        color: kPrimaryBlue),
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: kPrimaryBlue,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: 18),
               _signInButton(),
-              const SizedBox(height: 22),
-              _orDivider(),
+              if (_googleAvailable) ...[
+                const SizedBox(height: 22),
+                _orDivider(),
+                const SizedBox(height: 22),
+                _googleSignInButton(),
+              ],
               const SizedBox(height: 22),
               _signUpRow(),
               const SizedBox(height: 40),
@@ -124,8 +148,7 @@ class _SignInPageState extends State<SignInPage> {
         mainAxisSize: MainAxisSize.min,
         children: const [
           Icon(Icons.chevron_left, size: 22, color: Colors.black87),
-          Text("Back",
-              style: TextStyle(fontSize: 14, color: Colors.black87)),
+          Text("Back", style: TextStyle(fontSize: 14, color: Colors.black87)),
         ],
       ),
     );
@@ -162,7 +185,7 @@ class _SignInPageState extends State<SignInPage> {
             boxShadow: isActive
                 ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -187,9 +210,10 @@ class _SignInPageState extends State<SignInPage> {
       key: key,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Email Address",
-            style: TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w600)),
+        const Text(
+          "Email Address",
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: _emailCtrl,
@@ -203,15 +227,16 @@ class _SignInPageState extends State<SignInPage> {
       ],
     );
   }
- 
+
   Widget _phoneField({Key? key}) {
     return Column(
       key: key,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Phone Number",
-            style: TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w600)),
+        const Text(
+          "Phone Number",
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: _phoneCtrl,
@@ -230,9 +255,10 @@ class _SignInPageState extends State<SignInPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Password",
-            style: TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w600)),
+        const Text(
+          "Password",
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: _passwordCtrl,
@@ -270,8 +296,7 @@ class _SignInPageState extends State<SignInPage> {
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: const Color(0xFFEDEDED),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -292,25 +317,97 @@ class _SignInPageState extends State<SignInPage> {
             value: _rememberMe,
             activeColor: kPrimaryGreen,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4)),
+              borderRadius: BorderRadius.circular(4),
+            ),
             onChanged: (v) => setState(() => _rememberMe = v ?? false),
           ),
         ),
         const SizedBox(width: 10),
-        Text(label,
-            style: const TextStyle(fontSize: 14, color: Colors.black87)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 14, color: Colors.black87),
+        ),
       ],
     );
   }
 
+  Future<void> _submitSignIn() async {
+    if (!_canSubmit || _isLoading) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final identifier = _method == _SignInMethod.email
+          ? _emailCtrl.text.trim()
+          : AuthService.normalizePhone(_phoneCtrl.text.trim());
+      final user = await AuthService.instance.signIn(
+        identifier,
+        _passwordCtrl.text,
+      );
+      activeRoleNotifier.value =
+          user.role == 'driver' ? ActiveRole.driver : ActiveRole.rider;
+      if (!mounted) return;
+      Get.offAllNamed(RouteConstants.HOME);
+    } catch (e) {
+      Get.snackbar(
+        'Sign-in failed',
+        e is ApiException ? e.message : e.toString(),
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _submitGoogleSignIn() async {
+    if (_isLoading || _isGoogleLoading) return;
+
+    setState(() => _isGoogleLoading = true);
+    try {
+      await GoogleAuthFlow.start(context, role: 'rider');
+    } catch (e) {
+      Get.snackbar(
+        'Google sign-in failed',
+        e is ApiException ? e.message : e.toString(),
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
+  }
+
+  Widget _orDivider() {
+    return Row(
+      children: [
+        const Expanded(child: Divider(color: Color(0xFFD9D9D9))),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            "OR",
+            style: TextStyle(fontSize: 12, color: Colors.black45),
+          ),
+        ),
+        const Expanded(child: Divider(color: Color(0xFFD9D9D9))),
+      ],
+    );
+  }
+
+  Widget _googleSignInButton() {
+    final enabled = !_isLoading && !_isGoogleLoading;
+    return GoogleSignInButton(
+      enabled: enabled,
+      isLoading: _isGoogleLoading,
+      onTap: _submitGoogleSignIn,
+    );
+  }
+
   Widget _signInButton() {
-    final bool enabled = _canSubmit;
+    final bool enabled = _canSubmit && !_isLoading;
     return InkWell(
-      onTap: enabled
-          ? () {
-              Get.offAllNamed(RouteConstants.HOME);
-            }
-          : null,
+      onTap: enabled ? _submitSignIn : null,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: double.infinity,
@@ -320,29 +417,24 @@ class _SignInPageState extends State<SignInPage> {
           color: enabled ? kPrimaryBlue : const Color(0xFFCFCFCF),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Text(
-          "Sign In",
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: enabled ? Colors.white : Colors.white70,
-          ),
-        ),
+        child: _isLoading
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Colors.white,
+                ),
+              )
+            : Text(
+                "Sign In",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: enabled ? Colors.white : Colors.white70,
+                ),
+              ),
       ),
-    );
-  }
-
-  Widget _orDivider() {
-    return Row(
-      children: const [
-        Expanded(child: Divider(color: Color(0xFFD9D9D9))),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Text("OR",
-              style: TextStyle(fontSize: 12, color: Colors.black45)),
-        ),
-        Expanded(child: Divider(color: Color(0xFFD9D9D9))),
-      ],
     );
   }
 
@@ -356,7 +448,9 @@ class _SignInPageState extends State<SignInPage> {
             TextSpan(
               text: "Sign Up",
               style: const TextStyle(
-                  color: kPrimaryBlue, fontWeight: FontWeight.bold),
+                color: kPrimaryBlue,
+                fontWeight: FontWeight.bold,
+              ),
               recognizer: TapGestureRecognizer()
                 ..onTap = () {
                   Get.toNamed(RouteConstants.SIGNUP);
@@ -373,8 +467,8 @@ class _SignInPageState extends State<SignInPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: kPrimaryBlue.withOpacity(0.05),
-        border: Border.all(color: kPrimaryBlue.withOpacity(0.3)),
+        color: kPrimaryBlue.withValues(alpha: 0.05),
+        border: Border.all(color: kPrimaryBlue.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -386,7 +480,10 @@ class _SignInPageState extends State<SignInPage> {
               "Your connection is secure. We'll never share your "
               "credentials.",
               style: TextStyle(
-                  fontSize: 12.5, color: kPrimaryBlue, height: 1.4),
+                fontSize: 12.5,
+                color: kPrimaryBlue,
+                height: 1.4,
+              ),
             ),
           ),
         ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
+import 'package:travelmateeee/data/repositories/ride_repository.dart';
 import 'ride_details_page.dart';
 import 'post_ride_page.dart';
 import 'trip_in_progress_page.dart';
@@ -9,6 +10,7 @@ import 'live_route_map.dart';
 enum RideStatus { upcoming, inProgress, completed }
 
 class RideItem {
+  final String id;
   final String from;
   final String to;
   final String departure;
@@ -17,6 +19,7 @@ class RideItem {
   final RideStatus status;
 
   const RideItem({
+    required this.id,
     required this.from,
     required this.to,
     required this.departure,
@@ -36,55 +39,11 @@ class MyRidesPage extends StatefulWidget {
 class _MyRidesPageState extends State<MyRidesPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  final RideRepository _repo = createRideRepository();
 
-  List<RideItem> _upcoming = [
-    const RideItem(
-      from: 'Abuja',
-      to: 'Lagos',
-      departure: 'Dec 25, 2024 · 10:30',
-      seats: '4/6 seats',
-      earnings: '₦100,000',
-      status: RideStatus.upcoming,
-    ),
-    const RideItem(
-      from: 'Lagos',
-      to: 'Port Harcourt',
-      departure: 'Dec 27, 2024 · 08:00',
-      seats: '2/4 seats',
-      earnings: '₦70,000',
-      status: RideStatus.upcoming,
-    ),
-  ];
-
-  final _inProgress = const [
-    RideItem(
-      from: 'Kano',
-      to: 'Abuja',
-      departure: 'Jun 13, 2026 · 06:00',
-      seats: '3/4 seats',
-      earnings: '₦45,000',
-      status: RideStatus.inProgress,
-    ),
-  ];
-
-  final _completed = const [
-    RideItem(
-      from: 'Kaduna',
-      to: 'Lagos',
-      departure: 'Jun 6, 2026 · 07:00',
-      seats: '4/4 seats',
-      earnings: '₦95,000',
-      status: RideStatus.completed,
-    ),
-    RideItem(
-      from: 'Abuja',
-      to: 'Enugu',
-      departure: 'May 28, 2026 · 09:00',
-      seats: '3/4 seats',
-      earnings: '₦60,000',
-      status: RideStatus.completed,
-    ),
-  ];
+  List<RideItem> _upcoming = [];
+  List<RideItem> _inProgress = [];
+  List<RideItem> _completed = [];
 
   int get _totalEarningsK => 450;
   int get _upcomingCount => _upcoming.length + _inProgress.length;
@@ -94,29 +53,60 @@ class _MyRidesPageState extends State<MyRidesPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _fetchRides();
+  }
+
+  Future<void> _fetchRides() async {
+    try {
+      final rides = await _repo.getRides();
+      final upcoming = <RideItem>[];
+      final inProgress = <RideItem>[];
+      final completed = <RideItem>[];
+
+      for (var r in rides) {
+        final earnings = r.pricePerSeat * r.totalSeats;
+        final item = RideItem(
+          id: r.id,
+          from: r.from,
+          to: r.to,
+          departure: r.departureTime,
+          seats: '${r.availableSeats}/${r.totalSeats} seats',
+          earnings: '₦${earnings.toStringAsFixed(0)}',
+          status: r.status == 'in_progress'
+              ? RideStatus.inProgress
+              : r.status == 'completed'
+                  ? RideStatus.completed
+                  : RideStatus.upcoming,
+        );
+        if (item.status == RideStatus.upcoming) {
+          upcoming.add(item);
+        } else if (item.status == RideStatus.inProgress) {
+          inProgress.add(item);
+        } else {
+          completed.add(item);
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _upcoming = upcoming;
+        _inProgress = inProgress;
+        _completed = completed;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load rides: $e'), backgroundColor: kErrorRed),
+      );
+    } finally {
+      // Intentionally left empty as _isLoading was removed
+    }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
-  }
-
-  void _cancelRide(RideItem item) {
-    setState(() {
-      _upcoming.remove(item);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Ride from ${item.from} to ${item.to} cancelled'),
-        backgroundColor: Colors.redAccent,
-        action: SnackBarAction(
-          label: 'Undo',
-          textColor: Colors.white,
-          onPressed: () => setState(() => _upcoming.add(item)),
-        ),
-      ),
-    );
   }
 
   @override
@@ -244,7 +234,7 @@ class _MyRidesPageState extends State<MyRidesPage>
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -295,7 +285,7 @@ class _MyRidesPageState extends State<MyRidesPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -396,9 +386,9 @@ class _MyRidesPageState extends State<MyRidesPage>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Text(
         label,
@@ -549,7 +539,7 @@ class _MyRidesPageState extends State<MyRidesPage>
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: kPrimaryGreen.withOpacity(0.3),
+                      color: kPrimaryGreen.withValues(alpha: 0.3),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),

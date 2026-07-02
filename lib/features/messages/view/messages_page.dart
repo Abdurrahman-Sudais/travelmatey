@@ -1,104 +1,227 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:travelmateeee/core/base/active_role.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
+import 'package:travelmateeee/core/services/auth_service.dart';
+import 'package:travelmateeee/features/home/view/home_page.dart' show activeRoleNotifier;
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
+import 'package:travelmateeee/shared/widgets/conditional_back_button.dart';
 import 'package:travelmateeee/features/messages/view/chat_page.dart';
+import 'package:travelmateeee/data/repositories/chat_repository.dart';
+import 'package:travelmateeee/data/models/conversation_model.dart';
 
 class _ConversationPreview {
+  final String id;
   final String name;
+  final String roleLabel;
   final String initials;
   final Color avatarColor;
   final String time;
-  final String route;
-  final String tripInfo;
+  final String? route;
+  final String? tripInfo;
   final String lastMessage;
   final int unreadCount;
-  final bool online;
+  final String? phone;
 
   const _ConversationPreview({
+    required this.id,
     required this.name,
+    required this.roleLabel,
     required this.initials,
     required this.avatarColor,
     required this.time,
-    required this.route,
-    required this.tripInfo,
+    this.route,
+    this.tripInfo,
     required this.lastMessage,
     this.unreadCount = 0,
-    this.online = false,
+    this.phone,
   });
 }
 
-/// Messages list page — shows all conversations with passengers/drivers.
-///
-/// This page wraps itself in [SosScaffold] so the floating emergency SOS
-/// button is available here. [ChatPage] (an individual conversation
-/// thread) intentionally does NOT show the SOS button.
-class MessagesPage extends StatelessWidget {
+/// Messages list — driver sees passenger threads; rider sees driver threads.
+class MessagesPage extends StatefulWidget {
   const MessagesPage({super.key});
 
-  static final List<_ConversationPreview> _conversations = [
-    _ConversationPreview(
-      name: "Sarah Johnson",
-      initials: "SJ",
-      avatarColor: kPrimaryGreen,
-      time: "2 min ago",
-      route: "Lekki Phase 1 → Victoria Island",
-      tripInfo: "Today, 8:00 AM",
-      lastMessage: "Thanks! See you tomorrow at 8 AM",
-      unreadCount: 2,
-      online: true,
-    ),
-    _ConversationPreview(
-      name: "Michael Adeyemi",
-      initials: "MA",
-      avatarColor: kPrimaryBlue,
-      time: "15 min ago",
-      route: "Ikeja → Maryland",
-      tripInfo: "Today, 3:00 PM",
-      lastMessage: "Can we meet at the bus stop instead?",
-      online: true,
-    ),
-    _ConversationPreview(
-      name: "Amaka Okafor",
-      initials: "AO",
-      avatarColor: kAmber,
-      time: "1 hour ago",
-      route: "Surulere → Yaba",
-      tripInfo: "Tomorrow, 9:00 AM",
-      lastMessage: "Perfect! I'll be there on time",
-    ),
-    _ConversationPreview(
-      name: "Chidi Okonkwo",
-      initials: "CO",
-      avatarColor: Color(0xFF8B5CF6),
-      time: "2 hours ago",
-      route: "Ajah → Ikoyi",
-      tripInfo: "Jan 16, 7:00 AM",
-      lastMessage: "What time should I be ready?",
-      unreadCount: 1,
-    ),
-    _ConversationPreview(
-      name: "Blessing Nwosu",
-      initials: "BN",
-      avatarColor: Color(0xFFEC4899),
-      time: "Yesterday",
-      route: "Festac → VI",
-      tripInfo: "Jan 13, 10:00 AM",
-      lastMessage: "Thank you for the smooth ride!",
-    ),
-  ];
+  @override
+  State<MessagesPage> createState() => _MessagesPageState();
+}
+
+class _MessagesPageState extends State<MessagesPage> {
+  final ChatRepository _chatRepo = Get.find<ChatRepository>();
+  List<_ConversationPreview> _conversations = [];
+  bool _isLoading = true;
+  String? _error;
+
+  bool get _isDriver =>
+      activeRoleNotifier.value == ActiveRole.driver ||
+      AuthService.instance.currentUser?.role == 'driver';
+
+  @override
+  void initState() {
+    super.initState();
+    activeRoleNotifier.addListener(_onRoleChanged);
+    _loadConversations();
+  }
+
+  @override
+  void dispose() {
+    activeRoleNotifier.removeListener(_onRoleChanged);
+    super.dispose();
+  }
+
+  void _onRoleChanged() {
+    _loadConversations();
+  }
+
+  String get _viewerRole => _isDriver ? 'driver' : 'rider';
+
+  String _roleLabelFor(ConversationModel conversation) {
+    final role = conversation.participantRole?.toLowerCase();
+    if (role == 'driver') return 'Driver';
+    if (role == 'rider' || role == 'passenger') return 'Passenger';
+    return _isDriver ? 'Passenger' : 'Driver';
+  }
+
+  Future<void> _loadConversations() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final list = await _chatRepo.getConversations(viewerRole: _viewerRole);
+      const colors = [
+        kPrimaryGreen,
+        kPrimaryBlue,
+        kAmber,
+        Color(0xFF8B5CF6),
+        Color(0xFFEC4899),
+      ];
+
+      setState(() {
+        _conversations = list.asMap().entries.map((entry) {
+          final index = entry.key;
+          final conversation = entry.value;
+          final initials = conversation.participantName
+              .split(' ')
+              .where((part) => part.isNotEmpty)
+              .map((part) => part[0])
+              .take(2)
+              .join()
+              .toUpperCase();
+
+          return _ConversationPreview(
+            id: conversation.id,
+            name: conversation.participantName,
+            roleLabel: _roleLabelFor(conversation),
+            initials: initials.isNotEmpty ? initials : 'U',
+            avatarColor: colors[index % colors.length],
+            time: conversation.lastMessageTime,
+            route: conversation.rideRoute,
+            tripInfo: conversation.tripDate,
+            lastMessage: conversation.lastMessage,
+            unreadCount: conversation.unreadCount,
+            phone: conversation.participantPhone,
+          );
+        }).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  void _startNewConversation() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          _isDriver ? 'Message a Passenger' : 'Message a Driver',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _isDriver
+                  ? 'Enter the booking ID or conversation ID to contact your passenger.'
+                  : 'Chats are created when a driver accepts your booking.\nCheck your Bookings tab to start a conversation.',
+              style: const TextStyle(fontSize: 13, color: Colors.black54),
+            ),
+            if (_isDriver) ...[
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  hintText: 'Conversation / Booking ID',
+                  filled: true,
+                  fillColor: const Color(0xFFF5F5F5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          if (_isDriver)
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: kPrimaryBlue),
+              onPressed: () {
+                final id = controller.text.trim();
+                if (id.isNotEmpty) {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ChatPage(
+                        conversationId: id,
+                        name: 'Passenger',
+                        roleLabel: 'Passenger',
+                        initials: 'P',
+                        avatarColor: kPrimaryBlue,
+                      ),
+                    ),
+                  ).then((_) => _loadConversations());
+                }
+              },
+              child: const Text('Open Chat',
+                  style: TextStyle(color: Colors.white)),
+            ),
+        ],
+      ),
+    );
+  }
 
   void _openChat(BuildContext context, _ConversationPreview convo) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => ChatPage(
+          conversationId: convo.id,
           name: convo.name,
+          roleLabel: convo.roleLabel,
           initials: convo.initials,
           avatarColor: convo.avatarColor,
-          online: convo.online,
+          phoneNumber: convo.phone,
         ),
       ),
-    );
+    ).then((_) => _loadConversations());
   }
 
   @override
@@ -106,45 +229,125 @@ class MessagesPage extends StatelessWidget {
     return SosScaffold(
       child: Scaffold(
         backgroundColor: kBackground,
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: kPrimaryBlue,
+          tooltip: _isDriver ? 'New message to passenger' : 'New message to driver',
+          onPressed: _startNewConversation,
+          child: const Icon(Icons.message_outlined, color: Colors.white),
+        ),
         body: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _backButton(context),
-                    const SizedBox(height: 12),
-                    const Text(
-                      "Messages",
-                      style: TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.bold),
+          child: _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(color: kPrimaryBlue),
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadConversations,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const ConditionalBackButton(),
+                        const SizedBox(height: 12),
+                        const Text(
+                          "Messages",
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _isDriver
+                              ? "Chat with passengers on your trips"
+                              : "Chat with your driver or travel mates",
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        if (_error != null) ...[
+                          _errorBanner(),
+                          const SizedBox(height: 12),
+                        ],
+                        if (_conversations.isEmpty && _error == null)
+                          _emptyState()
+                        else
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _conversations.length,
+                            itemBuilder: (context, index) {
+                              return _conversationCard(context, _conversations[index]);
+                            },
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      "Chat with your passengers",
-                      style: TextStyle(fontSize: 13, color: Colors.black54),
-                    ),
-                    const SizedBox(height: 18),
-                    ..._conversations.map(
-                      (c) => _conversationCard(context, c),
-                    ),
-                  ],
+                  ),
                 ),
-              )),
+        ),
       ),
     );
   }
 
-  Widget _backButton(BuildContext context) {
-    return InkWell(
-      onTap: () => Navigator.maybePop(context),
+  Widget _errorBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: kErrorRed.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: kErrorRed.withValues(alpha: 0.2)),
+      ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: const [
-          Icon(Icons.chevron_left, size: 22, color: Colors.black87),
-          Text("Back",
-              style: TextStyle(fontSize: 14, color: Colors.black87)),
+        children: [
+          const Icon(Icons.error_outline, color: kErrorRed, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Could not load messages. Pull to refresh.',
+              style: TextStyle(fontSize: 13, color: kErrorRed.withValues(alpha: 0.9)),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _emptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 48),
+        child: Column(
+          children: [
+            Icon(
+              _isDriver ? Icons.people_outline : Icons.directions_car_outlined,
+              size: 48,
+              color: Colors.black26,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _isDriver
+                  ? "No passenger messages yet"
+                  : "No messages yet",
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black54,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _isDriver
+                  ? "Messages appear when riders book your trips."
+                  : "Start a chat from an active booking or accepted ride.",
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13, color: Colors.black38),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -161,7 +364,7 @@ class MessagesPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -186,70 +389,110 @@ class MessagesPage extends StatelessWidget {
                               c.name,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.bold),
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             c.time,
                             style: const TextStyle(
-                                fontSize: 11, color: Colors.black38),
+                              fontSize: 11,
+                              color: Colors.black38,
+                            ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _isDriver
+                              ? kPrimaryGreen.withValues(alpha: 0.12)
+                              : kPrimaryBlue.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          c.roleLabel,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: _isDriver ? kPrimaryGreen : kPrimaryBlue,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: kBackground,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.location_on_outlined,
-                      size: 14, color: kPrimaryBlue),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          c.route,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+            if (c.route != null && c.route!.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: kBackground,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on_outlined,
+                      size: 14,
+                      color: kPrimaryBlue,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            c.route!,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w600,
-                              color: kPrimaryBlue),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          c.tripInfo,
-                          style: const TextStyle(
-                              fontSize: 11, color: Colors.black54),
-                        ),
-                      ],
+                              color: kPrimaryBlue,
+                            ),
+                          ),
+                          if (c.tripInfo != null && c.tripInfo!.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              c.tripInfo!,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
             const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    c.lastMessage,
+                    c.lastMessage.isNotEmpty ? c.lastMessage : 'No messages yet',
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 13, color: Colors.black87),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: c.lastMessage.isNotEmpty
+                          ? Colors.black87
+                          : Colors.black38,
+                      fontStyle: c.lastMessage.isEmpty
+                          ? FontStyle.italic
+                          : FontStyle.normal,
+                    ),
                   ),
                 ),
                 if (c.unreadCount > 0) ...[
@@ -265,9 +508,10 @@ class MessagesPage extends StatelessWidget {
                     child: Text(
                       "${c.unreadCount}",
                       style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold),
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -280,44 +524,22 @@ class MessagesPage extends StatelessWidget {
   }
 
   Widget _avatar(_ConversationPreview c) {
-    return SizedBox(
+    return Container(
       width: 44,
       height: 44,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: c.avatarColor,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                c.initials,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold),
-              ),
-            ),
+      decoration: BoxDecoration(
+        color: c.avatarColor,
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          c.initials,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
           ),
-          if (c.online)
-            Positioned(
-              bottom: -1,
-              right: -1,
-              child: Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: kPrimaryGreen,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }

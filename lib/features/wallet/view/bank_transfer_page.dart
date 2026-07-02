@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/keyboard_aware_scaffold.dart';
+import 'package:travelmateeee/data/repositories/wallet_repository.dart';
 
 /// Bank Transfer page.
 class BankTransferPage extends StatefulWidget {
@@ -62,18 +64,33 @@ class _BankTransferPageState extends State<BankTransferPage> {
       builder: (_) => _ConfirmTransferDialog(
         amount: _transferAmount,
         formatNaira: _formatNaira,
-        onConfirm: () {
+        onConfirm: () async {
           Navigator.pop(context); // close dialog
-          setState(() {
-            _balance += _transferAmount;
-            _transferAmountController.clear();
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Transfer confirmed. Wallet credited!"),
-              duration: Duration(seconds: 2),
-            ),
-          );
+          try {
+            final repo = Get.find<WalletRepository>();
+            final wallet = await repo.fundWallet(
+              amount: _transferAmount,
+              method: 'bank_transfer',
+            );
+            if (!mounted) return;
+            setState(() {
+              _balance = wallet.balance;
+              _transferAmountController.clear();
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Transfer confirmed. Wallet credited!"),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          } catch (e) {
+            Get.snackbar(
+              'Error',
+              'Failed to confirm transfer: $e',
+              backgroundColor: kErrorRed,
+              colorText: Colors.white,
+            );
+          }
         },
       ),
     );
@@ -141,7 +158,7 @@ class _BankTransferPageState extends State<BankTransferPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: kPrimaryGreen.withOpacity(0.25),
+            color: kPrimaryGreen.withValues(alpha: 0.25),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -155,7 +172,7 @@ class _BankTransferPageState extends State<BankTransferPage> {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: Colors.white.withOpacity(0.85),
+              color: Colors.white.withValues(alpha: 0.85),
               letterSpacing: 1,
             ),
           ),
@@ -182,7 +199,7 @@ class _BankTransferPageState extends State<BankTransferPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -222,7 +239,7 @@ class _BankTransferPageState extends State<BankTransferPage> {
           _stepHeader(
             "1",
             "Copy Account Details",
-            kPrimaryBlue.withOpacity(0.12),
+            kPrimaryBlue.withValues(alpha: 0.12),
             kPrimaryBlue,
           ),
           const SizedBox(height: 14),
@@ -322,7 +339,7 @@ class _BankTransferPageState extends State<BankTransferPage> {
           _stepHeader(
             "2",
             "Make the Transfer",
-            kPrimaryGreen.withOpacity(0.12),
+            kPrimaryGreen.withValues(alpha: 0.12),
             kPrimaryGreen,
           ),
           const SizedBox(height: 14),
@@ -341,7 +358,7 @@ class _BankTransferPageState extends State<BankTransferPage> {
                     width: 22,
                     height: 22,
                     decoration: BoxDecoration(
-                      color: kPrimaryBlue.withOpacity(0.12),
+                      color: kPrimaryBlue.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -374,7 +391,7 @@ class _BankTransferPageState extends State<BankTransferPage> {
           _stepHeader(
             "3",
             "Confirm Transfer (Optional)",
-            kAmber.withOpacity(0.15),
+            kAmber.withValues(alpha: 0.15),
             kAmber,
           ),
           const SizedBox(height: 14),
@@ -445,9 +462,9 @@ class _BankTransferPageState extends State<BankTransferPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: kPrimaryBlue.withOpacity(0.08),
+        color: kPrimaryBlue.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kPrimaryBlue.withOpacity(0.25)),
+        border: Border.all(color: kPrimaryBlue.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -517,7 +534,7 @@ class _ConfirmTransferDialog extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: kPrimaryGreen.withOpacity(0.12),
+                color: kPrimaryGreen.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -567,9 +584,9 @@ class _ConfirmTransferDialog extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: kAmber.withOpacity(0.12),
+                color: kAmber.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: kAmber.withOpacity(0.3)),
+                border: Border.all(color: kAmber.withValues(alpha: 0.3)),
               ),
               child: const Text(
                 "We'll verify your transfer and credit your wallet within 5-10 minutes. You'll receive a notification once complete.",

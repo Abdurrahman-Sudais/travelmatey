@@ -1,31 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
+import 'package:travelmateeee/data/models/ride_model.dart';
+import 'package:travelmateeee/data/repositories/ride_repository.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 import 'package:travelmateeee/features/bookings/view/ride_listing_details_page.dart';
-
-class _RideListing {
-  final String driverName;
-  final double driverRating;
-  final String currentLocation;
-  final String destination;
-  final String price;
-  final int seatsAvailable;
-  final String date;
-  final String time;
-  final bool verified;
-
-  const _RideListing({
-    required this.driverName,
-    required this.driverRating,
-    required this.currentLocation,
-    required this.destination,
-    required this.price,
-    required this.seatsAvailable,
-    required this.date,
-    required this.time,
-    required this.verified,
-  });
-}
 
 class SearchResultsPage extends StatefulWidget {
   final String from;
@@ -52,65 +31,61 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
   String _minRating = "Any";
   bool _verifiedOnly = true;
 
-  final List<_RideListing> _allListings = const [
-    _RideListing(
-      driverName: "Emanuel Dimka",
-      driverRating: 4.0,
-      currentLocation: "Utako, Abuja",
-      destination: "Alaba, Lagos",
-      price: "₦25,000.00",
-      seatsAvailable: 1,
-      date: "Dec 14, 2015",
-      time: "10:15pm",
-      verified: true,
-    ),
-    _RideListing(
-      driverName: "Chibuzo Onyebuchi",
-      driverRating: 4.0,
-      currentLocation: "Kubwa, Abuja",
-      destination: "Ikeja, Lagos",
-      price: "₦12,500.00",
-      seatsAvailable: 3,
-      date: "Dec 14, 2015",
-      time: "8:45pm",
-      verified: true,
-    ),
-    _RideListing(
-      driverName: "John Rango",
-      driverRating: 4.0,
-      currentLocation: "Gwagwalada, Abuja",
-      destination: "Ibutumeta, Lagos",
-      price: "₦12,500.00",
-      seatsAvailable: 3,
-      date: "Dec 14, 2015",
-      time: "8:45pm",
-      verified: true,
-    ),
-    _RideListing(
-      driverName: "Suleiman Afolabi",
-      driverRating: 4.0,
-      currentLocation: "Kubwa, Abuja",
-      destination: "Yaba, Lagos",
-      price: "₦12,500.00",
-      seatsAvailable: 2,
-      date: "Dec 14, 2015",
-      time: "9:30pm",
-      verified: true,
-    ),
-  ];
+  bool _isLoading = true;
+  List<RideModel> _rides = [];
+  final RideRepository _repo = createRideRepository();
 
-  List<_RideListing> get _filtered {
-    return _allListings.where((l) {
-      final price =
-          double.tryParse(l.price.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
+  @override
+  void initState() {
+    super.initState();
+    _fetchRides();
+  }
+
+  Future<void> _fetchRides() async {
+    setState(() => _isLoading = true);
+    try {
+      _rides = await _repo.searchRides(
+        from: widget.from,
+        to: widget.to,
+        date: widget.date,
+        seats: widget.passengers,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Search Failed',
+        e.toString(),
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  List<RideModel> get _filtered {
+    var list = _rides.where((l) {
+      final price = l.pricePerSeat;
       if (price < _priceRange.start || price > _priceRange.end) return false;
-      if (_verifiedOnly && !l.verified) return false;
+      // Verification logic could go here if we had l.driver.isVerified
       if (_minRating != "Any") {
         final min = double.parse(_minRating.replaceAll("+", ""));
-        if (l.driverRating < min) return false;
+        if ((l.driver?.rating ?? 0.0) < min) return false;
       }
       return true;
     }).toList();
+    
+    if (_sortBy == "Lowest Price") {
+      list.sort((a, b) => a.pricePerSeat.compareTo(b.pricePerSeat));
+    } else if (_sortBy == "Highest Rating") {
+      list.sort((a, b) => (b.driver?.rating ?? 0.0).compareTo(a.driver?.rating ?? 0.0));
+    } else {
+      // Earliest departure by default
+      list.sort((a, b) => a.departureTime.compareTo(b.departureTime));
+    }
+
+    return list;
   }
 
   void _clearFilters() {
@@ -129,7 +104,9 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
       child: Scaffold(
         backgroundColor: kBackground,
         body: SafeArea(
-              child: SingleChildScrollView(
+          child: _isLoading 
+            ? const Center(child: CircularProgressIndicator(color: kPrimaryBlue))
+            : SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,7 +224,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: kPrimaryBlue.withOpacity(0.06),
+        color: kPrimaryBlue.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -393,7 +370,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: kPrimaryGreen.withOpacity(0.12),
+        color: kPrimaryGreen.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -472,12 +449,12 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
     );
   }
 
-  Widget _rideCard(_RideListing l) {
+  Widget _rideCard(RideModel l) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: kPrimaryBlue.withOpacity(0.08),
+        color: kPrimaryBlue.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -497,7 +474,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      l.driverName,
+                      l.driver?.name ?? "Unknown Driver",
                       style: const TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.bold,
@@ -517,7 +494,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    l.price,
+                    "₦${l.pricePerSeat.toStringAsFixed(0)}",
                     style: const TextStyle(
                       fontSize: 14.5,
                       fontWeight: FontWeight.bold,
@@ -525,7 +502,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
                     ),
                   ),
                   Text(
-                    "${l.seatsAvailable} Seats available",
+                    "${l.availableSeats} Seats available",
                     style: const TextStyle(fontSize: 11, color: Colors.black54),
                   ),
                 ],
@@ -537,7 +514,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
             children: [
               const Icon(Icons.circle, size: 10, color: kPrimaryGreen),
               const SizedBox(width: 6),
-              Text(l.currentLocation, style: const TextStyle(fontSize: 13)),
+              Text(l.from, style: const TextStyle(fontSize: 13)),
             ],
           ),
           const SizedBox(height: 4),
@@ -545,7 +522,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
             children: [
               const Icon(Icons.location_on, size: 13, color: kErrorRed),
               const SizedBox(width: 6),
-              Text(l.destination, style: const TextStyle(fontSize: 13)),
+              Text(l.to, style: const TextStyle(fontSize: 13)),
             ],
           ),
           const SizedBox(height: 10),
@@ -558,14 +535,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
               ),
               const SizedBox(width: 6),
               Text(
-                l.date,
-                style: const TextStyle(fontSize: 12, color: Colors.black54),
-              ),
-              const SizedBox(width: 14),
-              const Icon(Icons.access_time, size: 13, color: Colors.black45),
-              const SizedBox(width: 6),
-              Text(
-                l.time,
+                l.departureTime,
                 style: const TextStyle(fontSize: 12, color: Colors.black54),
               ),
               const Spacer(),
@@ -575,12 +545,15 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
                     context,
                     MaterialPageRoute(
                       builder: (_) => RideListingDetailsPage(
-                        driverName: l.driverName,
-                        currentLocation: l.currentLocation,
-                        destination: l.destination,
-                        price: l.price,
-                        date: l.date,
-                        time: l.time,
+                        rideId: l.id,
+                        driverName: l.driver?.name ?? 'Unknown Driver',
+                        currentLocation: l.from,
+                        destination: l.to,
+                        price: '₦${l.pricePerSeat.toStringAsFixed(0)}',
+                        date: l.departureTime,
+                        time: l.departureTime,
+                        driverRating: l.driver?.rating ?? 0.0,
+                        availableSeats: l.availableSeats,
                       ),
                     ),
                   );

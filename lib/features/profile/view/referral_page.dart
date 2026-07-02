@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:travelmateeee/core/api/api_endpoints.dart';
+import 'package:travelmateeee/core/services/api_service.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 
@@ -17,17 +19,71 @@ class _Referral {
   });
 }
 
-class ReferralPage extends StatelessWidget {
+class ReferralPage extends StatefulWidget {
   const ReferralPage({super.key});
 
-  static const String _code = 'TMR15S9J';
+  @override
+  State<ReferralPage> createState() => _ReferralPageState();
+}
 
-  static const List<_Referral> _referrals = [
-    _Referral(name: 'Ahmed Bello', date: 'Jan 15, 2026', earned: '+₦2,000'),
-    _Referral(name: 'Grace Adeyemi', date: 'Jan 10, 2026', earned: '+₦2,000'),
-    _Referral(name: 'Chidi Eze', date: 'Jan 18, 2026', pending: true),
-    _Referral(name: 'Fatima Ibrahim', date: 'Dec 28, 2025', earned: '+₦2,000'),
-  ];
+class _ReferralPageState extends State<ReferralPage> {
+  bool _loading = true;
+  String _code = '';
+  String _referralLink = '';
+  String _totalReferrals = '0';
+  String _totalEarned = '₦0';
+  List<_Referral> _referrals = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReferralData();
+  }
+
+  Future<void> _loadReferralData() async {
+    try {
+      final json = await ApiService.instance.get(ApiEndpoints.referral);
+      final referrals = json['referrals'] as List? ??
+          json['referredUsers'] as List? ??
+          json['data']?['referrals'] as List? ??
+          const [];
+      setState(() {
+        _code = json['code']?.toString() ??
+            json['referralCode']?.toString() ??
+            json['referral_code']?.toString() ??
+            '';
+        _referralLink = json['link']?.toString() ??
+            json['referralLink']?.toString() ??
+            json['referral_link']?.toString() ??
+            '';
+        _totalReferrals = (json['totalReferrals'] ??
+                json['total_referrals'] ??
+                referrals.length)
+            .toString();
+        final earned = json['totalEarned'] ?? json['total_earned'];
+        _totalEarned = earned != null ? '₦$earned' : '₦0';
+        _referrals = referrals.map((item) {
+          final map = item as Map<String, dynamic>;
+          final pending = map['pending'] as bool? ??
+              map['status']?.toString().toLowerCase() == 'pending';
+          return _Referral(
+            name: map['name']?.toString() ?? 'User',
+            date: map['date']?.toString() ??
+                map['createdAt']?.toString() ??
+                map['created_at']?.toString() ??
+                '',
+            earned: pending
+                ? null
+                : '+₦${map['earned'] ?? map['reward'] ?? '0'}',
+            pending: pending,
+          );
+        }).toList();
+        _loading = false;
+      });
+    } catch (_) {
+      setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,11 +91,18 @@ class ReferralPage extends StatelessWidget {
       child: Scaffold(
         backgroundColor: kBackground,
         body: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+          child: _loading
+              ? const Center(
+                  child: CircularProgressIndicator(color: kPrimaryBlue),
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadReferralData,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                     GestureDetector(
                       onTap: () => Navigator.maybePop(context),
                       child: Row(
@@ -65,7 +128,7 @@ class ReferralPage extends StatelessWidget {
                             width: 64,
                             height: 64,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.group_outlined,
@@ -88,11 +151,11 @@ class ReferralPage extends StatelessWidget {
                           Row(
                             children: [
                               Expanded(
-                                child: _statBox('4', 'Total Referrals'),
+                                child: _statBox(_totalReferrals, 'Total Referrals'),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: _statBox('₦6,000', 'Total Earned'),
+                                child: _statBox(_totalEarned, 'Total Earned'),
                               ),
                             ],
                           ),
@@ -108,7 +171,7 @@ class ReferralPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
+                              color: Colors.black.withValues(alpha: 0.04),
                               blurRadius: 8,
                               offset: const Offset(0, 2))
                         ],
@@ -132,8 +195,8 @@ class ReferralPage extends StatelessWidget {
                                         style: BorderStyle.solid),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Text(
-                                    _code,
+                                  child: Text(
+                                    _code.isNotEmpty ? _code : '—',
                                     style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
@@ -144,15 +207,19 @@ class ReferralPage extends StatelessWidget {
                               ),
                               const SizedBox(width: 10),
                               GestureDetector(
-                                onTap: () {
-                                  Clipboard.setData(
-                                      const ClipboardData(text: _code));
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content:
-                                            Text('Code copied to clipboard')),
-                                  );
-                                },
+                                onTap: _code.isEmpty
+                                    ? null
+                                    : () {
+                                        Clipboard.setData(
+                                            ClipboardData(text: _code));
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                            content:
+                                                Text('Code copied to clipboard'),
+                                          ),
+                                        );
+                                      },
                                 child: Container(
                                   width: 48,
                                   height: 48,
@@ -184,13 +251,16 @@ class ReferralPage extends StatelessWidget {
                                   label: 'Copy Link',
                                   filled: false,
                                   onTap: () {
-                                    Clipboard.setData(const ClipboardData(
-                                        text:
-                                            'https://travelmate.app/ref/TMR15S9J'));
+                                    final link = _referralLink.isNotEmpty
+                                        ? _referralLink
+                                        : _code;
+                                    if (link.isEmpty) return;
+                                    Clipboard.setData(
+                                        ClipboardData(text: link));
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                          content:
-                                              Text('Link copied to clipboard')),
+                                        content: Text('Link copied to clipboard'),
+                                      ),
                                     );
                                   },
                                 ),
@@ -250,7 +320,13 @@ class ReferralPage extends StatelessWidget {
                               style: TextStyle(
                                   fontSize: 15, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 14),
-                          ..._referrals.map(_referralItem),
+                          if (_referrals.isEmpty)
+                            const Text(
+                              'No referrals yet. Share your code to get started.',
+                              style: TextStyle(fontSize: 13, color: Colors.black45),
+                            )
+                          else
+                            ..._referrals.map(_referralItem),
                         ],
                       ),
                     ),
@@ -271,7 +347,9 @@ class ReferralPage extends StatelessWidget {
                     ),
                   ],
                 ),
-              )),
+              ),
+            ),
+        ),
       ),
     );
   }
@@ -280,7 +358,7 @@ class ReferralPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(

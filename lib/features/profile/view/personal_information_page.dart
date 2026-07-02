@@ -1,6 +1,14 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:travelmateeee/app/routes.dart';
+import 'package:travelmateeee/core/services/api_service.dart';
+import 'package:travelmateeee/core/services/auth_service.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
-import 'registered_address_page.dart';
+import 'package:travelmateeee/features/auth/signup_draft.dart';
+import 'package:travelmateeee/features/auth/view/email_verification_page.dart';
+import 'package:travelmateeee/features/auth/view/phone_verification_page.dart';
 
 class PersonalInformationPage extends StatefulWidget {
   const PersonalInformationPage({super.key});
@@ -10,13 +18,13 @@ class PersonalInformationPage extends StatefulWidget {
       _PersonalInformationPageState();
 }
 
-class _PersonalInformationPageState
-    extends State<PersonalInformationPage> {
+class _PersonalInformationPageState extends State<PersonalInformationPage> {
   final _firstNameCtrl = TextEditingController();
   final _middleNameCtrl = TextEditingController();
   final _surnameCtrl = TextEditingController();
   DateTime? _dob;
   String? _gender;
+  bool _isLoading = false;
 
   final List<String> _genders = ["Male", "Female"];
 
@@ -25,6 +33,17 @@ class _PersonalInformationPageState
       _surnameCtrl.text.trim().isNotEmpty &&
       _dob != null &&
       _gender != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (SignUpDraft.firstName.isNotEmpty) {
+      _firstNameCtrl.text = SignUpDraft.firstName;
+    }
+    if (SignUpDraft.lastName.isNotEmpty) {
+      _surnameCtrl.text = SignUpDraft.lastName;
+    }
+  }
 
   @override
   void dispose() {
@@ -66,24 +85,20 @@ class _PersonalInformationPageState
                     child: Text(
                       "Personal information",
                       style: TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.bold),
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 30),
-                  _textField(
-                    controller: _firstNameCtrl,
-                    hint: "First name",
-                  ),
+                  _textField(controller: _firstNameCtrl, hint: "First name"),
                   const SizedBox(height: 14),
                   _textField(
                     controller: _middleNameCtrl,
                     hint: "Middle name (Optional)",
                   ),
                   const SizedBox(height: 14),
-                  _textField(
-                    controller: _surnameCtrl,
-                    hint: "Surname",
-                  ),
+                  _textField(controller: _surnameCtrl, hint: "Surname"),
                   const SizedBox(height: 14),
                   _dateField(),
                   const SizedBox(height: 14),
@@ -96,9 +111,10 @@ class _PersonalInformationPageState
                       "information",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          fontSize: 12.5,
-                          color: Colors.black45,
-                          height: 1.4),
+                        fontSize: 12.5,
+                        color: Colors.black45,
+                        height: 1.4,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 30),
@@ -136,8 +152,7 @@ class _PersonalInformationPageState
         mainAxisSize: MainAxisSize.min,
         children: const [
           Icon(Icons.chevron_left, size: 22, color: Colors.black87),
-          Text("Back",
-              style: TextStyle(fontSize: 14, color: Colors.black87)),
+          Text("Back", style: TextStyle(fontSize: 14, color: Colors.black87)),
         ],
       ),
     );
@@ -155,8 +170,10 @@ class _PersonalInformationPageState
         hintStyle: const TextStyle(color: Colors.black38, fontSize: 14),
         filled: true,
         fillColor: const Color(0xFFEDEDED),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -188,8 +205,11 @@ class _PersonalInformationPageState
                 color: _dob == null ? Colors.black38 : Colors.black87,
               ),
             ),
-            const Icon(Icons.calendar_today_outlined,
-                size: 18, color: Colors.black54),
+            const Icon(
+              Icons.calendar_today_outlined,
+              size: 18,
+              color: Colors.black54,
+            ),
           ],
         ),
       ),
@@ -214,8 +234,9 @@ class _PersonalInformationPageState
               _gender ?? "Gender",
               style: TextStyle(
                 fontSize: 14,
-                fontWeight:
-                    _gender != null ? FontWeight.w600 : FontWeight.normal,
+                fontWeight: _gender != null
+                    ? FontWeight.w600
+                    : FontWeight.normal,
                 color: _gender == null ? Colors.black38 : Colors.black87,
               ),
             ),
@@ -238,13 +259,15 @@ class _PersonalInformationPageState
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: _genders
-                .map((g) => ListTile(
-                      title: Text(g),
-                      onTap: () {
-                        setState(() => _gender = g);
-                        Navigator.pop(context);
-                      },
-                    ))
+                .map(
+                  (g) => ListTile(
+                    title: Text(g),
+                    onTap: () {
+                      setState(() => _gender = g);
+                      Navigator.pop(context);
+                    },
+                  ),
+                )
                 .toList(),
           ),
         );
@@ -252,18 +275,84 @@ class _PersonalInformationPageState
     );
   }
 
+  Future<void> _submitProfile() async {
+    if (!_canContinue || _isLoading) return;
+
+    if (!SignUpDraft.isGoogleAuth && !SignUpDraft.phoneVerified) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PhoneVerificationPage(
+            phoneNumber: AuthService.normalizePhone(SignUpDraft.phone),
+            email: SignUpDraft.email,
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (!SignUpDraft.isGoogleAuth && !SignUpDraft.emailVerified) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => EmailVerificationPage(email: SignUpDraft.email),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    SignUpDraft.firstName = _firstNameCtrl.text.trim();
+    SignUpDraft.lastName = _surnameCtrl.text.trim();
+
+    try {
+      final userId = SignUpDraft.userId.isNotEmpty
+          ? SignUpDraft.userId
+          : ApiService.instance.getUserId() ?? '';
+
+      if (userId.isEmpty) {
+        throw ApiException(
+          message: 'Session expired. Please sign up again.',
+          statusCode: 401,
+        );
+      }
+
+      await AuthService.instance.updateProfile(
+        userId: userId,
+        firstName: SignUpDraft.firstName,
+        lastName: SignUpDraft.lastName,
+      );
+
+      await AuthService.instance.completeVerifiedSession(
+        token: SignUpDraft.token.isNotEmpty
+            ? SignUpDraft.token
+            : ApiService.instance.getToken() ?? '',
+        refreshToken: SignUpDraft.refreshToken.isNotEmpty
+            ? SignUpDraft.refreshToken
+            : ApiService.instance.getRefreshToken() ?? '',
+        userId: userId,
+      );
+
+      SignUpDraft.reset();
+      if (!mounted) return;
+      Get.offAllNamed(RouteConstants.HOME);
+    } on ApiException catch (e) {
+      Get.snackbar(
+        e.message,
+        '',
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Widget _continueButton() {
-    final bool enabled = _canContinue;
+    final bool enabled = _canContinue && !_isLoading;
     return InkWell(
-      onTap: enabled
-          ? () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const RegisteredAddressPage()),
-              );
-            }
-          : null,
+      onTap: enabled ? _submitProfile : null,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: double.infinity,
@@ -273,13 +362,23 @@ class _PersonalInformationPageState
           color: enabled ? kPrimaryBlue : const Color(0xFF9CA3AF),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Text(
-          "Continue",
-          style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold),
-        ),
+        child: _isLoading
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Colors.white,
+                ),
+              )
+            : const Text(
+                "Continue",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
       ),
     );
   }

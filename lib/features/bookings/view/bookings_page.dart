@@ -1,34 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
+import 'package:travelmateeee/core/services/auth_service.dart';
+import 'package:travelmateeee/data/models/booking_model.dart';
+import 'package:travelmateeee/data/repositories/booking_repository.dart';
+import 'package:travelmateeee/core/base/active_role.dart';
+import 'package:travelmateeee/features/home/view/home_page.dart' show activeRoleNotifier;
+import 'package:travelmateeee/shared/widgets/conditional_back_button.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 import 'package:travelmateeee/features/bookings/view/booking_details_page.dart';
 import 'package:travelmateeee/features/bookings/view/search_ride_page.dart';
-
-enum _BookingStatus { pending, accepted, paid, completed }
-
-class _BookingRequest {
-  final String id;
-  final String driverName;
-  final double driverRating;
-  final String from;
-  final String to;
-  final String dateTime;
-  final int seats;
-  final String price;
-  final _BookingStatus status;
-
-  const _BookingRequest({
-    required this.id,
-    required this.driverName,
-    required this.driverRating,
-    required this.from,
-    required this.to,
-    required this.dateTime,
-    required this.seats,
-    required this.price,
-    required this.status,
-  });
-}
 
 class BookingsPage extends StatefulWidget {
   const BookingsPage({super.key});
@@ -39,59 +20,61 @@ class BookingsPage extends StatefulWidget {
 
 class _BookingsPageState extends State<BookingsPage> {
   String _filter = "All";
+  bool _isLoading = true;
+  List<BookingModel> _requests = [];
+  final BookingRepository _repo = createBookingRepository();
 
-  final List<_BookingRequest> requests = const [
-    _BookingRequest(
-      id: "booking_1",
-      driverName: "Unknown Driver",
-      driverRating: 4.8,
-      from: "Lagos",
-      to: "Ibadan",
-      dateTime: "Jun 2, 2026 at 08:00",
-      seats: 2,
-      price: "₦10,000",
-      status: _BookingStatus.pending,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchBookings();
+  }
 
-  List<_BookingRequest> get _filtered {
-    switch (_filter) {
-      case "Pending":
-        return requests
-            .where((r) => r.status == _BookingStatus.pending)
-            .toList();
-      case "Accepted":
-        return requests
-            .where((r) => r.status == _BookingStatus.accepted)
-            .toList();
-      case "Paid":
-        return requests.where((r) => r.status == _BookingStatus.paid).toList();
-      case "Completed":
-        return requests
-            .where((r) => r.status == _BookingStatus.completed)
-            .toList();
-      default:
-        return requests;
+  Future<void> _fetchBookings() async {
+    setState(() => _isLoading = true);
+    try {
+      var user = AuthService.instance.currentUser;
+      user ??= await AuthService.instance.getMe();
+
+      if (activeRoleNotifier.value == ActiveRole.driver) {
+        _requests = await _repo.getDriverPendingBookings();
+      } else {
+        _requests = await _repo.getUserBookings(user.id);
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error fetching bookings',
+        e.toString(),
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
+  List<BookingModel> get _filtered {
+    if (_filter == "All") return _requests;
+    return _requests.where((r) {
+      if (_filter == "Pending") return r.status == "pending";
+      if (_filter == "Accepted") return r.status == "accepted";
+      if (_filter == "Paid") return r.paymentStatus == "paid";
+      if (_filter == "Completed") return r.status == "completed";
+      return true;
+    }).toList();
+  }
+
   int _countFor(String filter) {
-    switch (filter) {
-      case "Pending":
-        return requests.where((r) => r.status == _BookingStatus.pending).length;
-      case "Accepted":
-        return requests
-            .where((r) => r.status == _BookingStatus.accepted)
-            .length;
-      case "Paid":
-        return requests.where((r) => r.status == _BookingStatus.paid).length;
-      case "Completed":
-        return requests
-            .where((r) => r.status == _BookingStatus.completed)
-            .length;
-      default:
-        return requests.length;
-    }
+    if (filter == "All") return _requests.length;
+    return _requests.where((r) {
+      if (filter == "Pending") return r.status == "pending";
+      if (filter == "Accepted") return r.status == "accepted";
+      if (filter == "Paid") return r.paymentStatus == "paid";
+      if (filter == "Completed") return r.status == "completed";
+      return true;
+    }).length;
   }
 
   @override
@@ -100,80 +83,76 @@ class _BookingsPageState extends State<BookingsPage> {
       child: Scaffold(
         backgroundColor: kBackground,
         body: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _backButton(),
-                        InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const SearchRidePage(),
-                              ),
-                            );
-                          },
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(Icons.add, size: 16, color: kPrimaryBlue),
-                              SizedBox(width: 4),
-                              Text(
-                                "New Search",
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: kPrimaryBlue,
+          child: _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(color: kPrimaryBlue),
+                )
+              : RefreshIndicator(
+                  onRefresh: _fetchBookings,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
+                    child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const ConditionalBackButton(),
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const SearchRidePage(),
                                 ),
-                              ),
-                            ],
+                              ).then((_) => _fetchBookings());
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(Icons.add, size: 16, color: kPrimaryBlue),
+                                SizedBox(width: 4),
+                                Text(
+                                  "New Search",
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: kPrimaryBlue,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      "My Booking Requests",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      "Active booking requests sent to drivers",
-                      style: TextStyle(fontSize: 13, color: Colors.black54),
-                    ),
-                    const SizedBox(height: 16),
-                    _infoBanner(),
-                    const SizedBox(height: 16),
-                    _filterRow(),
-                    const SizedBox(height: 16),
-                    if (_filtered.isEmpty)
-                      _emptyState()
-                    else
-                      ..._filtered.map(_bookingCard),
-                  ],
+                      const SizedBox(height: 12),
+                      const Text(
+                        "My Booking Requests",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        "Active booking requests sent to drivers",
+                        style: TextStyle(fontSize: 13, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 16),
+                      _infoBanner(),
+                      const SizedBox(height: 16),
+                      _filterRow(),
+                      const SizedBox(height: 16),
+                      if (_filtered.isEmpty)
+                        _emptyState()
+                      else
+                        ..._filtered.map(_bookingCard),
+                    ],
+                  ),
                 ),
-              )),
-      ),
-    );
-  }
-
-  Widget _backButton() {
-    return InkWell(
-      onTap: () => Navigator.maybePop(context),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: const [
-          Icon(Icons.chevron_left, size: 22, color: Colors.black87),
-          Text("Back", style: TextStyle(fontSize: 14, color: Colors.black87)),
-        ],
+              ),
+        ),
       ),
     );
   }
@@ -185,7 +164,7 @@ class _BookingsPageState extends State<BookingsPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kPrimaryBlue.withOpacity(0.35)),
+        border: Border.all(color: kPrimaryBlue.withValues(alpha: 0.35)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,7 +239,15 @@ class _BookingsPageState extends State<BookingsPage> {
     );
   }
 
-  Widget _bookingCard(_BookingRequest r) {
+  Widget _bookingCard(BookingModel r) {
+    final driverName = r.driver?.name ?? "Unknown Driver";
+    final driverRating = r.driver?.rating ?? 0.0;
+    final from = r.ride?.from ?? "Unknown";
+    final to = r.ride?.to ?? "Unknown";
+    final dateTime = r.ride?.departureTime ?? r.createdAt;
+    final seats = r.seatsBooked;
+    final priceStr = "₦${r.totalPrice.toStringAsFixed(0)}";
+
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
@@ -269,7 +256,7 @@ class _BookingsPageState extends State<BookingsPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -285,7 +272,7 @@ class _BookingsPageState extends State<BookingsPage> {
                 child: Row(
                   children: [
                     Text(
-                      r.driverName,
+                      driverName,
                       style: const TextStyle(
                         fontSize: 15.5,
                         fontWeight: FontWeight.bold,
@@ -295,7 +282,7 @@ class _BookingsPageState extends State<BookingsPage> {
                     const Icon(Icons.star, size: 14, color: kAmber),
                     const SizedBox(width: 2),
                     Text(
-                      "${r.driverRating}",
+                      "$driverRating",
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -304,14 +291,14 @@ class _BookingsPageState extends State<BookingsPage> {
                   ],
                 ),
               ),
-              _statusBadge(r.status),
+              _statusBadge(r.status, r.paymentStatus),
             ],
           ),
           const SizedBox(height: 8),
           Row(
             children: [
               Text(
-                r.from,
+                from,
                 style: const TextStyle(
                   fontSize: 14.5,
                   fontWeight: FontWeight.bold,
@@ -321,7 +308,7 @@ class _BookingsPageState extends State<BookingsPage> {
               const Icon(Icons.chevron_right, size: 16, color: Colors.black38),
               const SizedBox(width: 6),
               Text(
-                r.to,
+                to,
                 style: const TextStyle(
                   fontSize: 14.5,
                   fontWeight: FontWeight.bold,
@@ -341,14 +328,14 @@ class _BookingsPageState extends State<BookingsPage> {
               ),
               const SizedBox(width: 6),
               Text(
-                r.dateTime,
+                dateTime,
                 style: const TextStyle(fontSize: 12.5, color: Colors.black87),
               ),
               const Spacer(),
               const Icon(Icons.people_outline, size: 15, color: Colors.black45),
               const SizedBox(width: 6),
               Text(
-                "${r.seats} seats",
+                "$seats seats",
                 style: const TextStyle(fontSize: 12.5, color: Colors.black87),
               ),
             ],
@@ -358,7 +345,7 @@ class _BookingsPageState extends State<BookingsPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                r.price,
+                priceStr,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -372,16 +359,16 @@ class _BookingsPageState extends State<BookingsPage> {
                     MaterialPageRoute(
                       builder: (_) => BookingDetailsPage(
                         bookingId: r.id,
-                        driverName: r.driverName,
-                        driverRating: r.driverRating,
-                        from: r.from,
-                        to: r.to,
-                        dateTime: r.dateTime,
-                        seats: r.seats,
-                        price: r.price,
+                        driverName: driverName,
+                        driverRating: driverRating,
+                        from: from,
+                        to: to,
+                        dateTime: dateTime,
+                        seats: seats,
+                        price: priceStr,
                       ),
                     ),
-                  );
+                  ).then((_) => _fetchBookings());
                 },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -406,19 +393,24 @@ class _BookingsPageState extends State<BookingsPage> {
     );
   }
 
-  Widget _statusBadge(_BookingStatus status) {
-    final label = switch (status) {
-      _BookingStatus.pending => "Awaiting Driver",
-      _BookingStatus.accepted => "Accepted",
-      _BookingStatus.paid => "Paid",
-      _BookingStatus.completed => "Completed",
-    };
-    final color = switch (status) {
-      _BookingStatus.pending => kAmber,
-      _BookingStatus.accepted => kPrimaryBlue,
-      _BookingStatus.paid => kPrimaryGreen,
-      _BookingStatus.completed => kPrimaryGreen,
-    };
+  Widget _statusBadge(String status, String paymentStatus) {
+    String label = "Pending";
+    Color color = kAmber;
+    
+    if (status == 'completed') {
+      label = "Completed";
+      color = kPrimaryGreen;
+    } else if (paymentStatus == 'paid') {
+      label = "Paid";
+      color = kPrimaryGreen;
+    } else if (status == 'accepted') {
+      label = "Accepted";
+      color = kPrimaryBlue;
+    } else if (status == 'cancelled') {
+      label = "Cancelled";
+      color = kErrorRed;
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(

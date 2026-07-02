@@ -251,7 +251,7 @@ class _AuthDiagnosticsPageState extends State<AuthDiagnosticsPage> {
       decoration: BoxDecoration(
         color: const Color(0xFFFFEBEE),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kErrorRed.withOpacity(0.3)),
+        border: Border.all(color: kErrorRed.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -312,7 +312,7 @@ class _AuthDiagnosticsPageState extends State<AuthDiagnosticsPage> {
 
     if (isPassed) {
       bgColor = const Color(0xFFE8F5E9);
-      borderColor = kPrimaryGreen.withOpacity(0.3);
+      borderColor = kPrimaryGreen.withValues(alpha: 0.3);
       titleColor = kPrimaryGreen;
     } else if (isFailed) {
       bgColor = Colors.white;
@@ -351,7 +351,7 @@ class _AuthDiagnosticsPageState extends State<AuthDiagnosticsPage> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -389,7 +389,7 @@ class _AuthDiagnosticsPageState extends State<AuthDiagnosticsPage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 6,
               offset: const Offset(0, 2))
         ],

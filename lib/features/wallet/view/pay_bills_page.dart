@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
+import 'package:travelmateeee/data/repositories/wallet_repository.dart';
 
 class _BillCategory {
   final String label;
@@ -46,6 +48,7 @@ class _PayBillsPageState extends State<PayBillsPage> {
   bool _showSuccess = false;
   double _amountPaid = 0;
   String _accountNumberPaid = "";
+  bool _isSubmitting = false;
 
   static const List<_BillCategory> _categories = [
     _BillCategory(
@@ -120,6 +123,7 @@ class _PayBillsPageState extends State<PayBillsPage> {
   }
 
   bool get _canPay {
+    if (_isSubmitting) return false;
     if (_selectedCategoryIndex == null || _selectedProviderIndex == null) {
       return false;
     }
@@ -130,16 +134,41 @@ class _PayBillsPageState extends State<PayBillsPage> {
     return true;
   }
 
-  void _payBill() {
+  Future<void> _payBill() async {
     final amount = double.tryParse(_amountController.text) ?? 0;
     if (!_canPay) return;
 
-    setState(() {
-      _balance -= amount;
-      _amountPaid = amount;
-      _accountNumberPaid = _accountController.text.trim();
-      _showSuccess = true;
-    });
+    setState(() => _isSubmitting = true);
+    try {
+      final category = _categories[_selectedCategoryIndex!].label;
+      final provider = _categories[_selectedCategoryIndex!].providers[_selectedProviderIndex!].name;
+      
+      final repo = Get.find<WalletRepository>();
+      final wallet = await repo.payBill(
+        category: category,
+        provider: provider,
+        accountNumber: _accountController.text.trim(),
+        amount: amount,
+      );
+
+      setState(() {
+        _balance = wallet.balance;
+        _amountPaid = amount;
+        _accountNumberPaid = _accountController.text.trim();
+        _showSuccess = true;
+      });
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to pay bill: $e',
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -180,7 +209,7 @@ class _PayBillsPageState extends State<PayBillsPage> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: kPrimaryGreen.withOpacity(0.12),
+                color: kPrimaryGreen.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
@@ -291,7 +320,7 @@ class _PayBillsPageState extends State<PayBillsPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -359,7 +388,7 @@ class _PayBillsPageState extends State<PayBillsPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: isSelected
-              ? category.color.withOpacity(0.12)
+              ? category.color.withValues(alpha: 0.12)
               : const Color(0xFFF5F5F5),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
@@ -453,7 +482,7 @@ class _PayBillsPageState extends State<PayBillsPage> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -465,7 +494,7 @@ class _PayBillsPageState extends State<PayBillsPage> {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: kPrimaryGreen.withOpacity(0.12),
+                    color: kPrimaryGreen.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(

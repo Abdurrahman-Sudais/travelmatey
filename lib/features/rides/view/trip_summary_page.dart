@@ -14,7 +14,7 @@ class TripSummaryPage extends StatefulWidget {
   final String totalFare;
   final String platformFee;
   final String netEarning;
-  final List<_RaterRider> riders;
+  final List<RaterRider> riders;
 
   const TripSummaryPage({
     super.key,
@@ -290,7 +290,7 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -376,12 +376,12 @@ class _TripSummaryPageState extends State<TripSummaryPage> {
   }
 }
 
-class _RaterRider {
+class RaterRider {
   final String initials;
   final Color color;
   final String name;
 
-  const _RaterRider({
+  const RaterRider({
     required this.initials,
     required this.color,
     required this.name,
@@ -389,12 +389,12 @@ class _RaterRider {
 }
 
 // Helper to build default riders list for the summary page
-List<_RaterRider> defaultTripRiders() => const [
-  _RaterRider(
+List<RaterRider> defaultTripRiders() => const [
+  RaterRider(
     initials: 'AJ',
     color: Color(0xFFE57373),
     name: 'Adebayo Johnson',
   ),
-  _RaterRider(initials: 'CO', color: Color(0xFF4DB6AC), name: 'Chioma Okafor'),
-  _RaterRider(initials: 'IM', color: Color(0xFF7986CB), name: 'Ibrahim Musa'),
+  RaterRider(initials: 'CO', color: Color(0xFF4DB6AC), name: 'Chioma Okafor'),
+  RaterRider(initials: 'IM', color: Color(0xFF7986CB), name: 'Ibrahim Musa'),
 ];

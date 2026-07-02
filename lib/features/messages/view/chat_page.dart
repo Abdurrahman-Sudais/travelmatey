@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:travelmateeee/core/services/auth_service.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/features/messages/view/call_page.dart';
+import 'package:travelmateeee/data/repositories/chat_repository.dart';
 
 enum _MessageSender { me, them }
 
@@ -19,23 +22,22 @@ class _ChatMessage {
 }
 
 /// A single chat conversation thread.
-///
-/// Does NOT show the floating emergency SOS button — that lives on
-/// [MessagesPage] (the conversation list) instead.
 class ChatPage extends StatefulWidget {
+  final String conversationId;
   final String name;
+  final String roleLabel;
   final String initials;
   final Color avatarColor;
-  final bool online;
-  final String phoneNumber; // ← new
+  final String? phoneNumber;
 
   const ChatPage({
     super.key,
+    required this.conversationId,
     required this.name,
+    required this.roleLabel,
     required this.initials,
     required this.avatarColor,
-    this.online = true,
-    this.phoneNumber = "+234 800 000 0000", // ← new
+    this.phoneNumber,
   });
 
   @override
@@ -45,37 +47,71 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final ChatRepository _chatRepo = Get.find<ChatRepository>();
 
-  late final List<_ChatMessage> _messages = [
-    const _ChatMessage(
-      text: "Hi! I just booked your ride. Is the pickup location at Lekki "
-          "Phase 1 correct?",
-      time: "09:15 AM",
-      sender: _MessageSender.them,
-    ),
-    const _ChatMessage(
-      text: "Yes, that's correct! I'll be there at 8:00 AM sharp.",
-      time: "09:17 AM",
-      sender: _MessageSender.me,
-      read: true,
-    ),
-    const _ChatMessage(
-      text: "Perfect! Should I wait by the main gate or inside the estate?",
-      time: "09:18 AM",
-      sender: _MessageSender.them,
-    ),
-    const _ChatMessage(
-      text: "Please wait by the main gate. It's easier to find you there.",
-      time: "09:20 AM",
-      sender: _MessageSender.me,
-      read: true,
-    ),
-    const _ChatMessage(
-      text: "Great! Thanks for confirming. See you tomorrow!",
-      time: "09:22 AM",
-      sender: _MessageSender.them,
-    ),
-  ];
+  final List<_ChatMessage> _messages = [];
+  bool _isLoading = true;
+  String? _currentUserId;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentUserId = AuthService.instance.currentUser?.id;
+    _ensureCurrentUser().then((_) => _loadMessages());
+  }
+
+  Future<void> _ensureCurrentUser() async {
+    if (_currentUserId != null && _currentUserId!.isNotEmpty) return;
+    try {
+      final user = await AuthService.instance.getMe();
+      if (mounted) setState(() => _currentUserId = user.id);
+    } catch (_) {}
+  }
+
+  Future<void> _loadMessages() async {
+    setState(() => _isLoading = true);
+    try {
+      final list = await _chatRepo.getMessages(widget.conversationId);
+      await _chatRepo.markAsRead(widget.conversationId);
+
+      final userId = _currentUserId ?? AuthService.instance.currentUser?.id;
+
+      setState(() {
+        _messages
+          ..clear()
+          ..addAll(list.map((message) {
+            final isMe = userId != null && message.senderId == userId;
+            return _ChatMessage(
+              text: message.content,
+              time: _formatTimestamp(message.timestamp),
+              sender: isMe ? _MessageSender.me : _MessageSender.them,
+              read: message.isRead,
+            );
+          }));
+        _isLoading = false;
+      });
+      _scrollToBottom(animate: false);
+    } catch (e) {
+      setState(() => _isLoading = false);
+      Get.snackbar(
+        'Error',
+        'Failed to load messages',
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  String _formatTimestamp(String raw) {
+    if (raw.isEmpty) return '';
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return raw;
+    final local = parsed.toLocal();
+    final hour = local.hour > 12 ? local.hour - 12 : (local.hour == 0 ? 12 : local.hour);
+    final period = local.hour >= 12 ? 'PM' : 'AM';
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '$hour:$minute $period';
+  }
 
   @override
   void dispose() {
@@ -84,9 +120,12 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+
+    _controller.clear();
+
     setState(() {
       _messages.add(
         _ChatMessage(
@@ -96,15 +135,33 @@ class _ChatPageState extends State<ChatPage> {
           read: false,
         ),
       );
-      _controller.clear();
     });
+    _scrollToBottom();
+
+    try {
+      await _chatRepo.sendMessage(widget.conversationId, text);
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to send message',
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  void _scrollToBottom({bool animate = true}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-        );
+        if (animate) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
+        } else {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        }
       }
     });
   }
@@ -117,6 +174,30 @@ class _ChatPageState extends State<ChatPage> {
     return "$hour12:$minute $period";
   }
 
+  void _callParticipant() {
+    final phone = widget.phoneNumber?.trim();
+    if (phone == null || phone.isEmpty) {
+      Get.snackbar(
+        'No phone number',
+        'This contact has not shared a phone number yet.',
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+      );
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VoiceCallPage(
+          name: widget.name,
+          initials: widget.initials,
+          avatarColor: widget.avatarColor,
+          phoneNumber: phone,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -126,7 +207,11 @@ class _ChatPageState extends State<ChatPage> {
           children: [
             _header(context),
             Expanded(
-              child: _messageList(),
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: kPrimaryBlue),
+                    )
+                  : _messageList(),
             ),
             _composer(),
           ],
@@ -136,6 +221,8 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _header(BuildContext context) {
+    final hasPhone = widget.phoneNumber?.trim().isNotEmpty == true;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 10, 16, 10),
       decoration: BoxDecoration(
@@ -164,49 +251,27 @@ class _ChatPageState extends State<ChatPage> {
                   widget.name,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.bold),
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  widget.online ? "Online" : "Offline",
-                  style: TextStyle(
+                  widget.roleLabel,
+                  style: const TextStyle(
                     fontSize: 12,
-                    color: widget.online ? kPrimaryGreen : Colors.black38,
+                    color: Colors.black54,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
-          GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => VoiceCallPage(
-                  name: widget.name,
-                  initials: widget.initials,
-                  avatarColor: widget.avatarColor,
-                  phoneNumber: widget.phoneNumber,
-                ),
-              ),
+          if (hasPhone)
+            GestureDetector(
+              onTap: _callParticipant,
+              child: _circleIconButton(Icons.call_outlined, kPrimaryBlue),
             ),
-            child: _circleIconButton(Icons.call_outlined, kPrimaryBlue),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => VideoCallPage(
-                  name: widget.name,
-                  initials: widget.initials,
-                  avatarColor: widget.avatarColor,
-                  phoneNumber: widget.phoneNumber,
-                ),
-              ),
-            ),
-            child: _circleIconButton(Icons.videocam_outlined, kPrimaryGreen),
-          ),
         ],
       ),
     );
@@ -222,73 +287,40 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _avatar() {
-    return SizedBox(
+    return Container(
       width: 38,
       height: 38,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: widget.avatarColor,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                widget.initials,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold),
-              ),
-            ),
+      decoration: BoxDecoration(
+        color: widget.avatarColor,
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          widget.initials,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
           ),
-          if (widget.online)
-            Positioned(
-              bottom: -1,
-              right: -1,
-              child: Container(
-                width: 11,
-                height: 11,
-                decoration: BoxDecoration(
-                  color: kPrimaryGreen,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _messageList() {
+    if (_messages.isEmpty) {
+      return Center(
+        child: Text(
+          'Say hello to ${widget.name.split(' ').first}',
+          style: const TextStyle(color: Colors.black38, fontSize: 14),
+        ),
+      );
+    }
+
     return ListView(
       controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      children: [
-        _dateChip("Today"),
-        const SizedBox(height: 12),
-        ..._messages.map(_messageBubble),
-      ],
-    );
-  }
-
-  Widget _dateChip(String label) {
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: Colors.black54),
-        ),
-      ),
+      children: _messages.map(_messageBubble).toList(),
     );
   }
 
@@ -304,8 +336,7 @@ class _ChatPageState extends State<ChatPage> {
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.75,
             ),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: isMe ? kPrimaryBlue : Colors.white,
               borderRadius: BorderRadius.only(
@@ -337,13 +368,11 @@ class _ChatPageState extends State<ChatPage> {
             children: [
               Text(
                 message.time,
-                style:
-                    const TextStyle(fontSize: 11, color: Colors.black38),
+                style: const TextStyle(fontSize: 11, color: Colors.black38),
               ),
               if (isMe && message.read) ...[
                 const SizedBox(width: 4),
-                const Icon(Icons.done_all,
-                    size: 14, color: kPrimaryBlue),
+                const Icon(Icons.done_all, size: 14, color: kPrimaryBlue),
               ],
             ],
           ),
@@ -369,12 +398,9 @@ class _ChatPageState extends State<ChatPage> {
         top: false,
         child: Row(
           children: [
-            const Icon(Icons.attach_file, color: Colors.black45),
-            const SizedBox(width: 8),
             Expanded(
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF0F0F0),
                   borderRadius: BorderRadius.circular(24),
@@ -402,8 +428,7 @@ class _ChatPageState extends State<ChatPage> {
                   color: kPrimaryGreen,
                   shape: BoxShape.circle,
                 ),
-                child:
-                    const Icon(Icons.send, color: Colors.white, size: 18),
+                child: const Icon(Icons.send, color: Colors.white, size: 18),
               ),
             ),
           ],

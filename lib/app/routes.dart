@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:travelmateeee/features/auth/view/sign_in_page.dart';
 import 'package:travelmateeee/features/auth/view/sign_up_page.dart';
+import 'package:travelmateeee/features/auth/view/splash_page.dart';
 import 'package:travelmateeee/shared/widgets/main_shell.dart';
 import 'package:travelmateeee/features/onboarding/view/onboarding_page.dart';
 import 'package:travelmateeee/features/onboarding/view_model/onboarding_view_model.dart';
@@ -35,9 +36,14 @@ class OnboardingBinding extends Bindings {
 class AppPages {
   AppPages._();
 
-  static const String initial = RouteConstants.ONBOARDING;
+  static const String initial = '/';
 
   static final List<GetPage<dynamic>> routes = [
+    GetPage(
+      name: '/',
+      page: () => const SplashPage(),
+      transition: Transition.fadeIn,
+    ),
     GetPage(
       name: RouteConstants.ONBOARDING,
       page: () => const OnboardingPage(),

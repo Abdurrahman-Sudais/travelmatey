@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:travelmateeee/core/api/api_endpoints.dart';
+import 'package:travelmateeee/core/services/api_service.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
 
@@ -45,18 +47,47 @@ class _BankAccountsPageState extends State<BankAccountsPage> {
 
   Future<void> _verify() async {
     setState(() => _isVerifying = true);
-    await Future.delayed(const Duration(milliseconds: 900));
-    setState(() {
-      _isVerifying = false;
-      _isVerified = true;
-      // Mock resolved account name
-      _verifiedName = "JOHN DOE ADEBAYO";
-    });
+    try {
+      final json = await ApiService.instance.post(
+        ApiEndpoints.walletResolveAccount,
+        body: {
+          'bankCode': _selectedBank,
+          'accountNumber': _accountNumberCtrl.text.trim(),
+        },
+      );
+      final name = json['accountName']?.toString() ??
+          json['account_name']?.toString() ??
+          json['data']?['accountName']?.toString() ??
+          json['data']?['account_name']?.toString();
+      if (!mounted) return;
+      setState(() {
+        _isVerifying = false;
+        _isVerified = name != null && name.isNotEmpty;
+        _verifiedName = name;
+      });
+      if (!_isVerified) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not verify account. Check details and try again.'),
+            backgroundColor: kErrorRed,
+          ),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isVerifying = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account verification failed.'),
+          backgroundColor: kErrorRed,
+        ),
+      );
+    }
   }
 
   void _addAccount() {
     final account = BankAccount(
-      accountName: _verifiedName ?? "JOHN DOE ADEBAYO",
+      accountName: _verifiedName ?? '',
       bankName: _selectedBank!,
       accountNumber: _accountNumberCtrl.text.trim(),
     );
@@ -248,7 +279,7 @@ class _BankAccountsPageState extends State<BankAccountsPage> {
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: kPrimaryGreen.withOpacity(0.3),
+                            color: kPrimaryGreen.withValues(alpha: 0.3),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -354,13 +385,13 @@ class _BankAccountsPageState extends State<BankAccountsPage> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
@@ -414,8 +445,8 @@ class _BankAccountsPageState extends State<BankAccountsPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: kPrimaryGreen.withOpacity(0.08),
-                border: Border.all(color: kPrimaryGreen.withOpacity(0.4)),
+                color: kPrimaryGreen.withValues(alpha: 0.08),
+                border: Border.all(color: kPrimaryGreen.withValues(alpha: 0.4)),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Column(
@@ -488,7 +519,7 @@ class _BankAccountsPageState extends State<BankAccountsPage> {
           border: Border.all(
             color: _selectedBank != null
                 ? kPrimaryBlue
-                : Colors.black.withOpacity(0.08),
+                : Colors.black.withValues(alpha: 0.08),
             width: _selectedBank != null ? 1.4 : 1,
           ),
         ),
@@ -567,7 +598,7 @@ class _BankAccountsPageState extends State<BankAccountsPage> {
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: kPrimaryGreen.withOpacity(0.3),
+                  color: kPrimaryGreen.withValues(alpha: 0.3),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -603,7 +634,7 @@ class _BankAccountsPageState extends State<BankAccountsPage> {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -706,8 +737,8 @@ class _BankAccountsPageState extends State<BankAccountsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: kAmber.withOpacity(0.12),
-        border: Border.all(color: kAmber.withOpacity(0.4)),
+        color: kAmber.withValues(alpha: 0.12),
+        border: Border.all(color: kAmber.withValues(alpha: 0.4)),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(

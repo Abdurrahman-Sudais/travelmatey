@@ -96,7 +96,7 @@ class _FundWalletPageState extends State<FundWalletPage> {
                     const SizedBox(height: 10),
                     _methodTile(
                       icon: Icons.credit_card,
-                      iconBg: kPrimaryBlue.withOpacity(0.1),
+                      iconBg: kPrimaryBlue.withValues(alpha: 0.1),
                       iconColor: kPrimaryBlue,
                       title: "Fund with Card",
                       subtitle: "Instant funding via debit/credit card",
@@ -105,7 +105,7 @@ class _FundWalletPageState extends State<FundWalletPage> {
                     const SizedBox(height: 12),
                     _methodTile(
                       icon: Icons.swap_horiz,
-                      iconBg: kPrimaryGreen.withOpacity(0.1),
+                      iconBg: kPrimaryGreen.withValues(alpha: 0.1),
                       iconColor: kPrimaryGreen,
                       title: "Bank Transfer",
                       subtitle: "Transfer from your bank app",
@@ -147,7 +147,7 @@ class _FundWalletPageState extends State<FundWalletPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: kPrimaryGreen.withOpacity(0.25),
+            color: kPrimaryGreen.withValues(alpha: 0.25),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -161,7 +161,7 @@ class _FundWalletPageState extends State<FundWalletPage> {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: Colors.white.withOpacity(0.85),
+              color: Colors.white.withValues(alpha: 0.85),
               letterSpacing: 1,
             ),
           ),
@@ -198,7 +198,7 @@ class _FundWalletPageState extends State<FundWalletPage> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -250,9 +250,9 @@ class _FundWalletPageState extends State<FundWalletPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: kAmber.withOpacity(0.12),
+        color: kAmber.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kAmber.withOpacity(0.3)),
+        border: Border.all(color: kAmber.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

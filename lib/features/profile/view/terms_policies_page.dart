@@ -129,10 +129,10 @@ class TermsPoliciesPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: kPrimaryBlue.withOpacity(0.2)),
+        border: Border.all(color: kPrimaryBlue.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -193,7 +193,7 @@ class TermsPoliciesPage extends StatelessWidget {
     decoration: BoxDecoration(
       color: const Color(0xFFE8F0FE),
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: kPrimaryBlue.withOpacity(0.2)),
+      border: Border.all(color: kPrimaryBlue.withValues(alpha: 0.2)),
     ),
     child: Text(
       text,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
+import 'package:travelmateeee/data/repositories/ride_repository.dart';
+
 
 class PostRidePage extends StatefulWidget {
   const PostRidePage({super.key});
@@ -207,7 +209,7 @@ class _PostRidePageState extends State<PostRidePage> {
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14)),
                               elevation: 4,
-                              shadowColor: kPrimaryGreen.withOpacity(0.3),
+                              shadowColor: kPrimaryGreen.withValues(alpha: 0.3),
                             ),
                             child: const Text('Post Ride',
                                 style: TextStyle(
@@ -228,7 +230,7 @@ class _PostRidePageState extends State<PostRidePage> {
     );
   }
 
-  void _postRide() {
+  void _postRide() async {
     if (_selectedFrom == null || _selectedTo == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -245,25 +247,72 @@ class _PostRidePageState extends State<PostRidePage> {
       );
       return;
     }
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Ride Posted!'),
-        content: Text(
-            'Your ride from $_selectedFrom to $_selectedTo has been posted successfully.'),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: kPrimaryGreen),
-            child: const Text('Great!',
-                style: TextStyle(color: Colors.white)),
+
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(
+          child: CircularProgressIndicator(color: kPrimaryGreen),
+        ),
+      );
+
+      final repo = createRideRepository();
+      await repo.createRide({
+        'from': _selectedFrom,
+        'to': _selectedTo,
+        'departureTime': '$_selectedDate at $_selectedTime',
+        'pricePerSeat': double.tryParse(_priceCtrl.text) ?? 0.0,
+        'availableSeats': int.tryParse(_seatsCtrl.text) ?? 1,
+        'totalSeats': int.tryParse(_seatsCtrl.text) ?? 1,
+        'pickupPoints': _pickupCtrl.text.split(','),
+        'dropoffPoints': _dropoffCtrl.text.split(','),
+        'vehicle': {
+          'make': _makeCtrl.text,
+          'color': _colorCtrl.text,
+          'plateNumber': _plateCtrl.text,
+        },
+        'amenities': {
+          'ac': _ac,
+          'music': _music,
+          'charter': _charter,
+          'smoking': _smoking,
+        }
+      });
+
+      if (mounted) Navigator.pop(context); // close loading
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Ride Posted!'),
+            content: Text(
+                'Your ride from $_selectedFrom to $_selectedTo has been posted successfully.'),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: kPrimaryGreen),
+                child: const Text('Great!',
+                    style: TextStyle(color: Colors.white)),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        );
+      }
+    } catch (e) {
+      if (mounted) Navigator.pop(context); // close loading
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Failed to post ride: $e'),
+              backgroundColor: kErrorRed),
+        );
+      }
+    }
   }
 
   Widget _backButton(BuildContext context) {

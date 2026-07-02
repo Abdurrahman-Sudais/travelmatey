@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/features/home/view/home_page.dart'
     show activeRoleNotifier;
 import 'package:travelmateeee/core/base/active_role.dart';
+import 'package:travelmateeee/data/repositories/chat_repository.dart';
+import 'package:travelmateeee/core/services/api_service.dart';
+import 'package:travelmateeee/core/api/api_endpoints.dart';
 
 /// Which tab is currently active, shared across rider & driver layouts.
 enum AppTab { home, secondary, wallet, chats, profile }
@@ -20,14 +24,81 @@ void switchToTab(AppTab tab) {
 }
 
 /// Single bottom navigation bar — only rendered once inside [MainShell].
-class AppBottomNavBar extends StatelessWidget {
+class AppBottomNavBar extends StatefulWidget {
   final AppTab? current;
 
   const AppBottomNavBar({super.key, this.current});
 
+  @override
+  State<AppBottomNavBar> createState() => _AppBottomNavBarState();
+}
+
+class _AppBottomNavBarState extends State<AppBottomNavBar> {
+  int _chatUnread = 0;
+  int _pendingBookings = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    currentTabNotifier.addListener(_onTabChanged);
+    _loadBadges();
+  }
+
+  @override
+  void dispose() {
+    currentTabNotifier.removeListener(_onTabChanged);
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (currentTabNotifier.value == AppTab.chats) {
+      _loadBadges();
+    }
+  }
+
+  Future<void> _loadBadges() async {
+    try {
+      final chatRepo = Get.find<ChatRepository>();
+      final unread = await chatRepo.getTotalUnreadCount();
+      int pending = 0;
+
+      final isDriver = activeRoleNotifier.value == ActiveRole.driver;
+      if (isDriver) {
+        try {
+          final json =
+              await ApiService.instance.get(ApiEndpoints.bookingsDriverPending);
+          final list = json['bookings'] as List? ??
+              json['data'] as List? ??
+              json['pending'] as List?;
+          pending = list?.length ?? 0;
+        } catch (_) {}
+      }
+
+      if (mounted) {
+        setState(() {
+          _chatUnread = unread;
+          _pendingBookings = pending;
+        });
+      }
+    } catch (_) {}
+  }
+
   void _selectTab(AppTab tab) {
-    if (current == tab) return;
+    if (widget.current == tab) return;
     switchToTab(tab);
+    if (tab == AppTab.chats || tab == AppTab.secondary) {
+      _loadBadges();
+    }
+  }
+
+  String? _badgeFor(AppTab tab) {
+    if (tab == AppTab.chats && _chatUnread > 0) {
+      return _chatUnread > 9 ? '9+' : '$_chatUnread';
+    }
+    if (tab == AppTab.secondary && _pendingBookings > 0) {
+      return _pendingBookings > 9 ? '9+' : '$_pendingBookings';
+    }
+    return null;
   }
 
   @override
@@ -58,21 +129,15 @@ class AppBottomNavBar extends StatelessWidget {
                 tab: AppTab.home,
                 onTap: () => _selectTab(AppTab.home),
               ),
-              isDriver
-                  ? _navItem(
-                      icon: Icons.directions_car_outlined,
-                      label: "My Rides",
-                      tab: AppTab.secondary,
-                      badge: "3",
-                      onTap: () => _selectTab(AppTab.secondary),
-                    )
-                  : _navItem(
-                      icon: Icons.calendar_month_outlined,
-                      label: "Bookings",
-                      tab: AppTab.secondary,
-                      badge: "2",
-                      onTap: () => _selectTab(AppTab.secondary),
-                    ),
+              _navItem(
+                icon: isDriver
+                    ? Icons.directions_car_outlined
+                    : Icons.calendar_month_outlined,
+                label: isDriver ? "My Rides" : "Bookings",
+                tab: AppTab.secondary,
+                badge: _badgeFor(AppTab.secondary),
+                onTap: () => _selectTab(AppTab.secondary),
+              ),
               _navItem(
                 icon: Icons.account_balance_wallet_outlined,
                 label: "Wallet",
@@ -83,7 +148,7 @@ class AppBottomNavBar extends StatelessWidget {
                 icon: Icons.chat_bubble_outline,
                 label: "Chats",
                 tab: AppTab.chats,
-                badge: "2",
+                badge: _badgeFor(AppTab.chats),
                 onTap: () => _selectTab(AppTab.chats),
               ),
               _navItem(
@@ -106,7 +171,7 @@ class AppBottomNavBar extends StatelessWidget {
     String? badge,
     VoidCallback? onTap,
   }) {
-    final bool active = current == tab;
+    final bool active = widget.current == tab;
     final color = active ? kPrimaryGreen : kTextSecondary;
     return GestureDetector(
       onTap: onTap,

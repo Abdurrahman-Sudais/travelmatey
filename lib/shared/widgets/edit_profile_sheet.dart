@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
+import 'package:travelmateeee/data/repositories/user_repository.dart';
 
 /// Call this to show the Edit Profile bottom sheet.
 Future<void> showEditProfileSheet(BuildContext context) {
@@ -19,20 +21,73 @@ class _EditProfileSheet extends StatefulWidget {
 }
 
 class _EditProfileSheetState extends State<_EditProfileSheet> {
-  // Basic info controllers (read-only — user must contact support)
-  final _nameCtrl =
-      TextEditingController(text: "Michael Adeyemi");
-  final _emailCtrl =
-      TextEditingController(text: "michael.adeyemi@example.com");
-  final _phoneCtrl =
-      TextEditingController(text: "+234 803 123 4567");
+  final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _streetCtrl = TextEditingController();
+  final _cityCtrl = TextEditingController();
+  final _stateCtrl = TextEditingController();
+  final _lgaCtrl = TextEditingController();
 
-  // Editable address fields
-  final _streetCtrl =
-      TextEditingController(text: "15 Admiralty Way, Lekki Phase 1");
-  final _cityCtrl = TextEditingController(text: "Lagos");
-  final _stateCtrl = TextEditingController(text: "Lagos");
-  final _lgaCtrl = TextEditingController(text: "Eti-Osa");
+  bool _loading = true;
+  bool _saving = false;
+
+  UserRepository get _userRepo => Get.find<UserRepository>();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final user = await _userRepo.getCurrentUser();
+      if (!mounted) return;
+      setState(() {
+        _nameCtrl.text = user.name;
+        _emailCtrl.text = user.email;
+        _phoneCtrl.text = user.phone;
+        _streetCtrl.text = user.street;
+        _cityCtrl.text = user.city;
+        _stateCtrl.text = user.state;
+        _lgaCtrl.text = user.lga;
+        _loading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    try {
+      await _userRepo.updateAddress(
+        street: _streetCtrl.text.trim(),
+        city: _cityCtrl.text.trim(),
+        state: _stateCtrl.text.trim(),
+        lga: _lgaCtrl.text.trim(),
+      );
+      if (!mounted) return;
+      Navigator.pop(context);
+      Get.snackbar(
+        'Profile updated',
+        'Your address has been saved.',
+        backgroundColor: kPrimaryGreen,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Get.snackbar(
+        'Save failed',
+        e.toString(),
+        backgroundColor: kErrorRed,
+        colorText: Colors.white,
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -58,13 +113,11 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         return Container(
           decoration: BoxDecoration(
             color: kBackground,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
-              // Header gradient
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
@@ -73,12 +126,11 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 ),
                 child: Column(
                   children: [
-                    // Drag handle
                     Container(
                       width: 36,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -87,112 +139,96 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                       width: 52,
                       height: 52,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.25),
+                        color: Colors.white.withValues(alpha: 0.25),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.edit_outlined,
-                          color: Colors.white, size: 24),
+                      child: const Icon(
+                        Icons.edit_outlined,
+                        color: Colors.white,
+                        size: 24,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     const Text(
                       "Edit Profile",
                       style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ],
                 ),
               ),
-              // Scrollable content
               Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollCtrl,
-                  padding: EdgeInsets.fromLTRB(16, 20, 16, bottom + 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _sectionLabel("Basic Information", kPrimaryBlue),
-                      const SizedBox(height: 14),
-                      _readonlyField(
-                        label: "Name",
-                        controller: _nameCtrl,
-                        hint: "Contact support to change your name",
-                      ),
-                      const SizedBox(height: 14),
-                      _readonlyField(
-                        label: "Email",
-                        controller: _emailCtrl,
-                        hint: "Contact support to change your email",
-                        keyboardType: TextInputType.emailAddress,
-                      ),
-                      const SizedBox(height: 14),
-                      _readonlyField(
-                        label: "Phone",
-                        controller: _phoneCtrl,
-                        hint: "Contact support to change your phone number",
-                        keyboardType: TextInputType.phone,
-                      ),
-                      const SizedBox(height: 22),
-                      Row(
-                        children: [
-                          _sectionLabel(
-                              "Registered Address (Editable)", null),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: kPrimaryBlue.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                  color: kPrimaryBlue.withOpacity(0.3)),
+                child: _loading
+                    ? const Center(
+                        child: CircularProgressIndicator(color: kPrimaryBlue),
+                      )
+                    : SingleChildScrollView(
+                        controller: scrollCtrl,
+                        padding: EdgeInsets.fromLTRB(16, 20, 16, bottom + 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _sectionLabel("Basic Information", kPrimaryBlue),
+                            const SizedBox(height: 14),
+                            _readonlyField(
+                              label: "Name",
+                              controller: _nameCtrl,
+                              hint: "Contact support to change your name",
                             ),
-                            child: const Text(
-                              "KYC Required",
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: kPrimaryBlue,
-                                  fontWeight: FontWeight.w600),
+                            const SizedBox(height: 14),
+                            _readonlyField(
+                              label: "Email",
+                              controller: _emailCtrl,
+                              hint: "Contact support to change your email",
+                              keyboardType: TextInputType.emailAddress,
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      _editableField(
-                        label: "Street Address",
-                        controller: _streetCtrl,
-                      ),
-                      const SizedBox(height: 14),
-                      _editableField(
-                        label: "City",
-                        controller: _cityCtrl,
-                      ),
-                      const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _editableField(
-                              label: "State",
-                              controller: _stateCtrl,
+                            const SizedBox(height: 14),
+                            _readonlyField(
+                              label: "Phone",
+                              controller: _phoneCtrl,
+                              hint: "Contact support to change your phone number",
+                              keyboardType: TextInputType.phone,
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _editableField(
-                              label: "LGA",
-                              controller: _lgaCtrl,
+                            const SizedBox(height: 22),
+                            _sectionLabel("Registered Address (Editable)", null),
+                            const SizedBox(height: 14),
+                            _editableField(
+                              label: "Street Address",
+                              controller: _streetCtrl,
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 14),
+                            _editableField(
+                              label: "City",
+                              controller: _cityCtrl,
+                            ),
+                            const SizedBox(height: 14),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _editableField(
+                                    label: "State",
+                                    controller: _stateCtrl,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _editableField(
+                                    label: "LGA",
+                                    controller: _lgaCtrl,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 28),
+                            _saveButton(),
+                            const SizedBox(height: 12),
+                            _cancelButton(),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 28),
-                      _saveButton(),
-                      const SizedBox(height: 12),
-                      _cancelButton(),
-                    ],
-                  ),
-                ),
               ),
             ],
           ),
@@ -221,9 +257,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 12, color: Colors.black54)),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.black54)),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
@@ -233,35 +267,18 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 13),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: Colors.black.withOpacity(0.08)),
+              borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: Colors.black.withOpacity(0.08)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: Colors.black.withOpacity(0.08)),
+              borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
             ),
             hintText: hint,
-            hintStyle: const TextStyle(
-                fontSize: 11, color: Colors.black38),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Padding(
-          padding: const EdgeInsets.only(left: 2),
-          child: Text(
-            hint,
-            style:
-                const TextStyle(fontSize: 10.5, color: Colors.black38),
+            hintStyle: const TextStyle(fontSize: 11, color: Colors.black38),
           ),
         ),
       ],
@@ -276,9 +293,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 12, color: Colors.black54)),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.black54)),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
@@ -287,17 +302,15 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 13),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: Colors.black.withOpacity(0.1)),
+              borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.1)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: Colors.black.withOpacity(0.1)),
+              borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.1)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -311,10 +324,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
 
   Widget _saveButton() {
     return InkWell(
-      onTap: () {
-        // TODO: submit changes
-        Navigator.pop(context);
-      },
+      onTap: _saving ? null : _save,
       borderRadius: BorderRadius.circular(14),
       child: Container(
         width: double.infinity,
@@ -323,21 +333,24 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         decoration: BoxDecoration(
           gradient: kPrimaryGradient,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: kPrimaryGreen.withOpacity(0.25),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
-        child: const Text(
-          "Save Changes",
-          style: TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.bold),
-        ),
+        child: _saving
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Text(
+                "Save Changes",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
       ),
     );
   }
@@ -353,9 +366,10 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         child: const Text(
           "Cancel",
           style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.black54),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black54,
+          ),
         ),
       ),
     );

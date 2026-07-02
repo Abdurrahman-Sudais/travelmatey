@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
+import 'package:travelmateeee/data/repositories/wallet_repository.dart';
 import 'purchase_success_page.dart';
 
 class BuyAirtimePage extends StatefulWidget {
@@ -17,6 +19,7 @@ class _BuyAirtimePageState extends State<BuyAirtimePage> {
   final _customAmountController = TextEditingController();
   double? _selectedAmount;
   bool _saveAsBeneficiary = false;
+  bool _isSubmitting = false;
 
   static const _networks = [
     {'name': 'MTN', 'icon': Icons.phone_iphone, 'color': Color(0xFFFFC107)},
@@ -28,9 +31,11 @@ class _BuyAirtimePageState extends State<BuyAirtimePage> {
   static const _presetAmounts = [100.0, 200.0, 500.0, 1000.0, 2000.0, 5000.0];
 
   bool get _canProceed =>
+      !_isSubmitting &&
       _selectedNetwork != null &&
       _phoneController.text.trim().length >= 10 &&
-      (_selectedAmount != null || _customAmount > 0);
+      (_selectedAmount != null || _customAmount > 0) &&
+      _finalAmount <= widget.availableBalance;
 
   double get _customAmount =>
       double.tryParse(_customAmountController.text) ?? 0;
@@ -55,20 +60,45 @@ class _BuyAirtimePageState extends State<BuyAirtimePage> {
     });
   }
 
-  void _buyAirtime() {
+  Future<void> _buyAirtime() async {
     if (!_canProceed) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PurchaseSuccessPage(
-          type: PurchaseType.airtime,
-          network: _selectedNetwork!,
-          phoneNumber: _phoneController.text.trim(),
-          amount: _finalAmount,
-          previousBalance: widget.availableBalance,
-        ),
-      ),
-    );
+    setState(() => _isSubmitting = true);
+    try {
+      final repo = Get.find<WalletRepository>();
+      await repo.buyAirtime(
+        network: _selectedNetwork!,
+        phone: _phoneController.text.trim(),
+        amount: _finalAmount,
+      );
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PurchaseSuccessPage(
+              type: PurchaseType.airtime,
+              network: _selectedNetwork!,
+              phoneNumber: _phoneController.text.trim(),
+              amount: _finalAmount,
+              previousBalance: widget.availableBalance,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Get.snackbar(
+          'Error',
+          'Failed to buy airtime: $e',
+          backgroundColor: kErrorRed,
+          colorText: Colors.white,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -138,7 +168,7 @@ class _BuyAirtimePageState extends State<BuyAirtimePage> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: kAmber.withOpacity(0.12),
+            color: kAmber.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(14),
           ),
           child: const Icon(Icons.phone_android, color: kAmber, size: 24),
@@ -255,7 +285,7 @@ class _BuyAirtimePageState extends State<BuyAirtimePage> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: kPrimaryGreen.withOpacity(0.5)),
+                borderSide: BorderSide(color: kPrimaryGreen.withValues(alpha: 0.5)),
               ),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -329,7 +359,7 @@ class _BuyAirtimePageState extends State<BuyAirtimePage> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: kPrimaryGreen.withOpacity(0.5)),
+                borderSide: BorderSide(color: kPrimaryGreen.withValues(alpha: 0.5)),
               ),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -357,7 +387,7 @@ class _BuyAirtimePageState extends State<BuyAirtimePage> {
               height: 48,
               decoration: BoxDecoration(
                 color: _saveAsBeneficiary
-                    ? kPrimaryGreen.withOpacity(0.15)
+                    ? kPrimaryGreen.withValues(alpha: 0.15)
                     : const Color(0xFF424242),
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -394,7 +424,7 @@ class _BuyAirtimePageState extends State<BuyAirtimePage> {
         ),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2)),
         ],
@@ -457,7 +487,7 @@ class _BuyAirtimePageState extends State<BuyAirtimePage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2)),
         ],

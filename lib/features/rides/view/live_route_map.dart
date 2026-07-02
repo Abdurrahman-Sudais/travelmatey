@@ -1,12 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 
-/// A single geographic point. Swap this out for whatever your backend
-/// engineer gives you (e.g. a `LatLng` from google_maps_flutter, or a
-/// custom model from your sockets/Firebase stream). Keeping it this
-/// simple means nothing else in this widget needs to change later —
-/// you'd just feed real numbers into [origin], [destination], and
-/// [driverPosition] instead of the mock defaults.
 class RoutePoint {
   final String label;
   final double lat;
@@ -15,28 +11,10 @@ class RoutePoint {
   const RoutePoint({required this.label, required this.lat, required this.lng});
 }
 
-/// Stylized "Live Route" card matching the TravelMate Figma design.
-///
-/// This is intentionally NOT a real map (no tiles, no SDK) so it has
-/// zero extra dependencies right now. It's built so a real map can be
-/// dropped in later without touching any calling code:
-///
-///   - All geographic data comes in as props ([origin], [destination],
-///     [driverPosition]) rather than being hardcoded.
-///   - [driverProgress] (0.0 -> 1.0) drives where the car icon sits
-///     along the route — your backend engineer just needs to send you
-///     a single progress value (or you compute it from coordinates).
-///   - The whole illustrated area is isolated in [_RouteCanvas]. To go
-///     real later: replace [_RouteCanvas] with a GoogleMap/FlutterMap
-///     widget and keep the header/footer chrome around it as-is.
 class LiveRouteMap extends StatelessWidget {
   final RoutePoint origin;
   final RoutePoint destination;
-
-  /// 0.0 = at origin, 1.0 = at destination. Drives the car icon position
-  /// along the route. Defaults to a mock mid-route value.
   final double driverProgress;
-
   final VoidCallback? onExpand;
 
   const LiveRouteMap({
@@ -93,8 +71,8 @@ class LiveRouteMap extends StatelessWidget {
           child: AspectRatio(
             aspectRatio: 16 / 10,
             child: _RouteCanvas(
-              originLabel: origin.label,
-              destinationLabel: destination.label,
+              origin: origin,
+              destination: destination,
               progress: driverProgress.clamp(0.0, 1.0),
             ),
           ),
@@ -104,17 +82,145 @@ class LiveRouteMap extends StatelessWidget {
   }
 }
 
-/// Isolated illustrated map surface. Swap this whole widget out for a
-/// real map later — everything it needs comes in as constructor params.
-class _RouteCanvas extends StatelessWidget {
-  final String originLabel;
-  final String destinationLabel;
+class _RouteCanvas extends StatefulWidget {
+  final RoutePoint origin;
+  final RoutePoint destination;
   final double progress;
 
   const _RouteCanvas({
+    required this.origin,
+    required this.destination,
+    required this.progress,
+  });
+
+  @override
+  State<_RouteCanvas> createState() => _RouteCanvasState();
+}
+
+class _RouteCanvasState extends State<_RouteCanvas> {
+  bool get _canRenderMapbox {
+    if (kIsWeb) return false;
+    return defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
+  }
+
+  RoutePoint get _driverPosition {
+    return RoutePoint(
+      label: 'Driver',
+      lat: widget.origin.lat +
+          ((widget.destination.lat - widget.origin.lat) * widget.progress),
+      lng: widget.origin.lng +
+          ((widget.destination.lng - widget.origin.lng) * widget.progress),
+    );
+  }
+
+  Point _point(RoutePoint point) {
+    return Point(coordinates: Position(point.lng, point.lat));
+  }
+
+  Point _centerPoint() {
+    return Point(
+      coordinates: Position(
+        (widget.origin.lng + widget.destination.lng) / 2,
+        (widget.origin.lat + widget.destination.lat) / 2,
+      ),
+    );
+  }
+
+  Future<void> _onMapCreated(MapboxMap mapboxMap) async {
+    await mapboxMap.setCamera(
+      CameraOptions(center: _centerPoint(), zoom: 5.3, pitch: 0),
+    );
+
+    final polylineManager =
+        await mapboxMap.annotations.createPolylineAnnotationManager();
+    await polylineManager.create(
+      PolylineAnnotationOptions(
+        geometry: LineString(
+          coordinates: [
+            Position(widget.origin.lng, widget.origin.lat),
+            Position(_driverPosition.lng, _driverPosition.lat),
+            Position(widget.destination.lng, widget.destination.lat),
+          ],
+        ),
+        lineColor: kPrimaryBlue.toARGB32(),
+        lineWidth: 4,
+      ),
+    );
+
+    final circleManager =
+        await mapboxMap.annotations.createCircleAnnotationManager();
+    await circleManager.createMulti([
+      CircleAnnotationOptions(
+        geometry: _point(widget.origin),
+        circleColor: kPrimaryGreen.toARGB32(),
+        circleRadius: 7,
+        circleStrokeColor: Colors.white.toARGB32(),
+        circleStrokeWidth: 2,
+      ),
+      CircleAnnotationOptions(
+        geometry: _point(widget.destination),
+        circleColor: kErrorRed.toARGB32(),
+        circleRadius: 7,
+        circleStrokeColor: Colors.white.toARGB32(),
+        circleStrokeWidth: 2,
+      ),
+      CircleAnnotationOptions(
+        geometry: _point(_driverPosition),
+        circleColor: const Color(0xFF6C63FF).toARGB32(),
+        circleRadius: 6,
+        circleStrokeColor: Colors.white.toARGB32(),
+        circleStrokeWidth: 2,
+      ),
+    ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_canRenderMapbox) {
+      return _MapboxUnsupportedFallback(
+        originLabel: widget.origin.label,
+        destinationLabel: widget.destination.label,
+      );
+    }
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        MapWidget(
+          styleUri: MapboxStyles.STANDARD,
+          viewport: CameraViewportState(center: _centerPoint(), zoom: 5.3),
+          onMapCreated: _onMapCreated,
+        ),
+        Align(
+          alignment: const Alignment(-0.72, -0.68),
+          child: _Pin(
+            label: widget.origin.label,
+            color: kPrimaryGreen,
+            icon: Icons.location_on,
+          ),
+        ),
+        Align(
+          alignment: const Alignment(0.74, 0.7),
+          child: _Pin(
+            label: widget.destination.label,
+            color: kErrorRed,
+            icon: Icons.location_on,
+          ),
+        ),
+        const Positioned(top: 10, left: 10, child: _LiveBadge()),
+      ],
+    );
+  }
+}
+
+class _MapboxUnsupportedFallback extends StatelessWidget {
+  final String originLabel;
+  final String destinationLabel;
+
+  const _MapboxUnsupportedFallback({
     required this.originLabel,
     required this.destinationLabel,
-    required this.progress,
   });
 
   @override
@@ -122,19 +228,19 @@ class _RouteCanvas extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Base "map" surface
         Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFFEFF3F1), Color(0xFFE6ECE9)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+          color: const Color(0xFFEFF3F1),
+          child: const Center(
+            child: Text(
+              'Live map available on Android and iOS',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.black54,
+              ),
             ),
           ),
         ),
-        // Decorative road network + route, drawn with CustomPaint
-        CustomPaint(painter: _MapPainter(progress: progress)),
-        // Origin pin
         Align(
           alignment: const Alignment(-0.72, -0.68),
           child: _Pin(
@@ -143,7 +249,6 @@ class _RouteCanvas extends StatelessWidget {
             icon: Icons.location_on,
           ),
         ),
-        // Destination pin
         Align(
           alignment: const Alignment(0.74, 0.7),
           child: _Pin(
@@ -152,95 +257,10 @@ class _RouteCanvas extends StatelessWidget {
             icon: Icons.location_on,
           ),
         ),
-        // Live badge
         const Positioned(top: 10, left: 10, child: _LiveBadge()),
       ],
     );
   }
-}
-
-class _MapPainter extends CustomPainter {
-  final double progress;
-  _MapPainter({required this.progress});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final routeStart = Offset(size.width * 0.16, size.height * 0.22);
-    final routeEnd = Offset(size.width * 0.86, size.height * 0.86);
-
-    // Faint background streets for map texture
-    final streetPaint = Paint()
-      ..color = Colors.white.withOpacity(0.55)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-    for (final f in [0.18, 0.4, 0.62, 0.84]) {
-      canvas.drawLine(
-        Offset(0, size.height * f),
-        Offset(size.width, size.height * f * 0.9),
-        streetPaint,
-      );
-    }
-    for (final f in [0.2, 0.45, 0.7]) {
-      canvas.drawLine(
-        Offset(size.width * f, 0),
-        Offset(size.width * f * 0.85, size.height),
-        streetPaint,
-      );
-    }
-
-    // Route path: a gentle curve from origin to destination
-    final routePath = Path()
-      ..moveTo(routeStart.dx, routeStart.dy)
-      ..quadraticBezierTo(
-        size.width * 0.5,
-        size.height * 0.42,
-        routeEnd.dx,
-        routeEnd.dy,
-      );
-
-    final routePaint = Paint()
-      ..color = const Color(0xFF9E9E9E)
-      ..strokeWidth = 4.5
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    canvas.drawPath(routePath, routePaint);
-
-    // Car position along the path at `progress`
-    final metrics = routePath.computeMetrics().first;
-    final carPos = metrics.getTangentForOffset(metrics.length * progress);
-    if (carPos != null) {
-      _drawCar(canvas, carPos.position, carPos.angle);
-    }
-  }
-
-  void _drawCar(Canvas canvas, Offset center, double angle) {
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(angle);
-
-    final bodyPaint = Paint()..color = const Color(0xFF6C63FF);
-    final rect = RRect.fromRectAndRadius(
-      const Rect.fromLTWH(-13, -7, 26, 14),
-      const Radius.circular(5),
-    );
-    canvas.drawShadow(Path()..addRRect(rect), Colors.black, 3, true);
-    canvas.drawRRect(rect, bodyPaint);
-
-    final windowPaint = Paint()..color = Colors.white.withOpacity(0.85);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(-6, -5, 10, 6),
-        const Radius.circular(2),
-      ),
-      windowPaint,
-    );
-
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant _MapPainter oldDelegate) =>
-      oldDelegate.progress != progress;
 }
 
 class _Pin extends StatelessWidget {
@@ -258,13 +278,14 @@ class _Pin extends StatelessWidget {
         Icon(icon, size: 16, color: color),
         const SizedBox(width: 3),
         Container(
+          constraints: const BoxConstraints(maxWidth: 130),
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(6),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 4,
                 offset: const Offset(0, 1),
               ),
@@ -272,6 +293,8 @@ class _Pin extends StatelessWidget {
           ),
           child: Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 10.5,
               fontWeight: FontWeight.w600,
@@ -296,7 +319,7 @@ class _LiveBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.red.withOpacity(0.3),
+            color: Colors.red.withValues(alpha: 0.3),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),

@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:travelmateeee/core/api/api_endpoints.dart';
+import 'package:travelmateeee/core/services/api_service.dart';
+import 'package:travelmateeee/core/services/auth_service.dart';
 import 'package:travelmateeee/core/theme/app_colors.dart';
 import 'package:travelmateeee/shared/widgets/emergency_sos.dart';
+import 'package:travelmateeee/features/rides/view/post_ride_page.dart';
 import 'package:travelmateeee/features/rides/view/my_rides_page.dart';
 import 'package:travelmateeee/features/wallet/view/wallet_page.dart';
 import 'package:travelmateeee/features/profile/view/notifications_page.dart';
+import 'package:travelmateeee/data/repositories/user_repository.dart';
+import 'package:travelmateeee/data/repositories/wallet_repository.dart';
 import 'package:travelmateeee/shared/widgets/kyc_popup.dart';
 
 class DriverHomePage extends StatefulWidget {
@@ -14,8 +21,82 @@ class DriverHomePage extends StatefulWidget {
 }
 
 class _DriverHomePageState extends State<DriverHomePage> {
-  // TODO: replace with real KYC status from your auth/user provider
   bool _kycCompleted = false;
+  bool _loadingStats = true;
+  String _earnings = '—';
+  String _trips = '—';
+  String _rating = '—';
+  String _walletBalance = '—';
+  // ignore: prefer_final_fields — updated via setState in _loadStats
+  int _notificationCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+    _loadKycStatus();
+    _loadWalletBalance();
+  }
+
+  Future<void> _loadKycStatus() async {
+    try {
+      final user = await Get.find<UserRepository>().getCurrentUser();
+      if (!mounted) return;
+      setState(() => _kycCompleted = user.kycVerified);
+    } catch (_) {}
+  }
+
+  Future<void> _loadStats() async {
+    setState(() => _loadingStats = true);
+    try {
+      final userId = AuthService.instance.currentUser?.id ??
+          ApiService.instance.getUserId();
+      if (userId != null && userId.isNotEmpty) {
+        final stats =
+            await ApiService.instance.get(ApiEndpoints.profileStats(userId));
+        final earnings = stats['totalEarnings'] ??
+            stats['total_earnings'] ??
+            stats['earnings'];
+        final trips = stats['totalTrips'] ??
+            stats['total_trips'] ??
+            stats['trips'];
+        final rating = stats['rating'] ??
+            stats['averageRating'] ??
+            stats['average_rating'];
+        if (mounted) {
+          setState(() {
+            _earnings = _formatEarnings(earnings);
+            _trips = trips?.toString() ?? '0';
+            _rating = rating?.toString() ?? '0';
+            _loadingStats = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _loadingStats = false);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingStats = false);
+    }
+  }
+
+  Future<void> _loadWalletBalance() async {
+    try {
+      final wallet = await Get.find<WalletRepository>().getWallet();
+      if (mounted) {
+        setState(() => _walletBalance = _formatEarnings(wallet.balance));
+      }
+    } catch (_) {
+      // Non-critical — keep showing '—'
+    }
+  }
+
+  String _formatEarnings(dynamic value) {
+    if (value == null) return '₦0';
+    final amount = value is num ? value.toDouble() : double.tryParse('$value') ?? 0;
+    if (amount >= 1000000) return '₦${(amount / 1000000).toStringAsFixed(1)}M';
+    if (amount >= 1000) return '₦${(amount / 1000).toStringAsFixed(0)}k';
+    return '₦${amount.toStringAsFixed(0)}';
+  }
 
   void _goTo(Widget page) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
@@ -93,7 +174,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                   borderRadius: BorderRadius.circular(22),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -105,23 +186,28 @@ class _DriverHomePageState extends State<DriverHomePage> {
               Positioned(
                 top: -2,
                 right: -2,
-                child: Container(
-                  height: 18,
-                  width: 18,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: kErrorRed,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 1.5),
-                  ),
-                  child: const Text(
-                    "2",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ),
+                child: _notificationCount > 0
+                    ? Container(
+                        height: 18,
+                        width: 18,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: kErrorRed,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                        child: Text(
+                          _notificationCount > 9
+                              ? '9+'
+                              : '$_notificationCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
               ),
             ],
           ),
@@ -131,24 +217,33 @@ class _DriverHomePageState extends State<DriverHomePage> {
   }
 
   Widget _statsRow() {
+    if (_loadingStats) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 24),
+          child: CircularProgressIndicator(color: kPrimaryBlue),
+        ),
+      );
+    }
+
     return Row(
       children: [
         Expanded(
           child: _statCard(
             label: "Total Earnings",
-            value: "₦450k",
+            value: _earnings,
             valueColor: kPrimaryGreen,
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _statCard(label: "Trips", value: "47"),
+          child: _statCard(label: "Trips", value: _trips),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: _statCard(
             label: "Rating",
-            value: "4.8",
+            value: _rating,
             showStar: true,
           ),
         ),
@@ -169,7 +264,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -206,9 +301,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
   Widget _postNewRideButton() {
     return InkWell(
-      onTap: () => _kycGated(() {
-        // TODO: navigate to Post New Ride screen
-      }),
+      onTap: () => _kycGated(() => _goTo(const PostRidePage())),
       borderRadius: BorderRadius.circular(14),
       child: Container(
         width: double.infinity,
@@ -219,7 +312,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: kPrimaryGreen.withOpacity(0.3),
+              color: kPrimaryGreen.withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -262,7 +355,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
             icon: Icons.account_balance_wallet_outlined,
             iconColor: kPrimaryGreen,
             title: "Wallet",
-            subtitle: "₦450,000",
+            subtitle: _walletBalance,
             onTap: () => _goTo(const WalletPage()),
           ),
         ),
@@ -286,7 +379,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -299,7 +392,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
+                color: iconColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: iconColor, size: 20),

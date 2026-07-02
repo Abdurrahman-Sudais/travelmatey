@@ -20,7 +20,7 @@ class MainShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeModeNotifier,
-      builder: (context, _, __) {
+      builder: (context, theme, child) {
         return ValueListenableBuilder<AppTab>(
           valueListenable: currentTabNotifier,
           builder: (context, tab, _) {
